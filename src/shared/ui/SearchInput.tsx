@@ -4,12 +4,14 @@ import { Loader2, Search, X } from 'lucide-react'
 import { debounce, parseAsString, useQueryState } from 'nuqs'
 import { useTransition } from 'react'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 type Props = {
   placeholder?: string
+  className?: string
 }
 
-export function SearchInput({ placeholder = 'Search...' }: Props) {
+export function SearchInput({ placeholder = 'Search...', className }: Props) {
   const [isPending, startTransition] = useTransition()
 
   const [search, setSearch] = useQueryState(
@@ -31,7 +33,7 @@ export function SearchInput({ placeholder = 'Search...' }: Props) {
   }
 
   return (
-    <div className="relative w-full max-w-xs">
+    <div className={cn('relative', className)}>
       <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
 
       <Input
@@ -39,7 +41,7 @@ export function SearchInput({ placeholder = 'Search...' }: Props) {
         value={search}
         maxLength={32}
         placeholder={placeholder}
-        className="pr-9 pl-9"
+        className="px-9 py-5"
         onChange={(e) => handleSearch(e.target.value)}
       />
 
