@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { Body, Button, Container, Head, Heading, Hr, Html, Link, Preview, Section, Text } from 'react-email'
 
 type ResetPasswordEmailProps = {

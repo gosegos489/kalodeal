@@ -1,3 +1,5 @@
+import 'server-only'
+
 import type { Metadata } from 'next'
 
 const PROJECT_NAME = process.env.PROJECT_NAME!

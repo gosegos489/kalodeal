@@ -2,7 +2,7 @@ import z from 'zod'
 
 export const registerSchema = z
   .object({
-    full_name: z
+    name: z
       .string()
       .min(3, {
         message: 'Name must be at least 3 characters long'
@@ -35,4 +35,4 @@ export const registerSchema = z
     path: ['confirm_password']
   })
 
-export type RegisterSchema = z.infer<typeof registerSchema>
+export type RegisterSchemaTypes = z.infer<typeof registerSchema>

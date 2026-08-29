@@ -1,9 +1,12 @@
 import { Resend } from 'resend'
+import 'server-only'
 
-const RESEND_URL = process.env.RESEND_URL
+const resendApiKey = process.env.RESEND_API_KEY
 
-if (!RESEND_URL) {
-  throw new Error('RESEND is not defined')
+if (!resendApiKey) {
+  throw new Error('RESEND_API_KEY is not defined')
 }
 
-export const resend = new Resend(RESEND_URL)
+export const resendFrom = process.env.RESEND_FROM_EMAIL!
+
+export const resend = new Resend(resendApiKey)

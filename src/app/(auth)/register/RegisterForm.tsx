@@ -23,20 +23,20 @@ export default function RegisterForm() {
   }
 
   return (
-    <form onSubmit={onSubmit}>
+    <form className="flex flex-col items-center justify-center gap-6" onSubmit={onSubmit}>
       <FieldGroup>
         <Controller
-          name="full_name"
+          name="name"
           control={registerForm.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Full name</FieldLabel>
+              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
 
               <Input
                 {...field}
                 id={field.name}
                 aria-invalid={fieldState.invalid}
-                placeholder="Enter your full name"
+                placeholder="Enter your name"
                 autoComplete="name"
                 disabled={isSubmitting}
                 type="text"
@@ -118,7 +118,7 @@ export default function RegisterForm() {
                 />
 
                 <button onClick={handleToggleConfirmPassword} className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer" type="button">
-                  {confirmPassword ? <EyeOff className="size-4" /> : <EyeOff className="size-4" />}
+                  {confirmPassword ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                 </button>
               </div>
 
@@ -128,8 +128,8 @@ export default function RegisterForm() {
         />
       </FieldGroup>
 
-      <Button type="submit" disabled={isSubmitting}>
-        Register
+      <Button className="w-full max-w-50 cursor-pointer" type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Signing up...' : 'Sign up'}
       </Button>
     </form>
   )

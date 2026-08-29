@@ -1,3 +1,5 @@
+import 'server-only'
+
 import jwt from 'jsonwebtoken'
 
 const apiKey = process.env.ABLY_CHAT_API_KEY

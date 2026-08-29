@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { S3Client } from '@aws-sdk/client-s3'
 
 const endpoint = process.env.R2_ENDPOINT
