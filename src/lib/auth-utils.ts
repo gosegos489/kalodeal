@@ -1,13 +1,26 @@
-import 'server-only'
-
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import 'server-only'
 import { auth } from './auth'
 
-export async function requireUser() {
-  const session = await auth.api.getSession({
+type Role = 'user' | 'moderator' | 'admin'
+
+export async function getSession() {
+  return auth.api.getSession({
     headers: await headers()
   })
+}
+
+export async function requireGuest() {
+  const session = await getSession()
+
+  if (session) {
+    redirect('/dashboard')
+  }
+}
+
+export async function requireUser() {
+  const session = await getSession()
 
   if (!session) {
     redirect('/login')
@@ -15,8 +28,6 @@ export async function requireUser() {
 
   return session
 }
-
-type Role = 'user' | 'moderator' | 'admin'
 
 export async function requireRole(roles: Role[]) {
   const session = await requireUser()

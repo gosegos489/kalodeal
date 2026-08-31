@@ -1,5 +1,7 @@
+import { Suspense } from 'react'
 import { PublicFooter } from '@/widgets/public-footer/PublicFooter'
 import { PublicHeader } from '@/widgets/public-header/PublicHeader'
+import GuestGuard from './GuestGuard'
 
 export default function AuthLayout({
   children
@@ -9,7 +11,11 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-dvh flex-col">
       <PublicHeader />
-      <main className="flex-1">{children}</main>
+
+      <Suspense fallback={null}>
+        <GuestGuard> {children}</GuestGuard>
+      </Suspense>
+
       <PublicFooter />
     </div>
   )
