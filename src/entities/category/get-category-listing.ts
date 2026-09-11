@@ -1,10 +1,11 @@
 import { cacheLife, cacheTag } from 'next/cache'
+import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'
 
 export async function getCategoryListings(categoryId: string) {
   'use cache'
 
-  cacheTag(`category-listings-${categoryId}`)
+  cacheTag(cacheTags.categoryListings(categoryId))
   cacheLife('hours')
 
   const posts = await prisma.listing.findMany({

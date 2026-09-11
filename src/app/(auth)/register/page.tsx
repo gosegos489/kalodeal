@@ -1,6 +1,6 @@
 import { CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
-import RegisterForm from './RegisterForm'
+import { RegisterForm } from '@/features/auth/register'
 
 const benefits = ['Post listings in a few minutes', 'Manage your listings from one place', 'Save and compare interesting offers']
 

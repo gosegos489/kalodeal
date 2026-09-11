@@ -1,8 +1,7 @@
 import { CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
-import ResetPasswordForm from './ResetPasswordForm'
-import ResetPasswordSkeleton from './ResetPasswordSkeleton'
+import { ResetPasswordForm, ResetPasswordSkeleton } from '@/features/auth/reset-password'
 
 const benefits = ['Create a new secure password for your account', 'Restore access to your KaloDeal account', 'Sign in again with your new password']
 

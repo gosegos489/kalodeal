@@ -1,6 +1,6 @@
 import { CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
-import LoginForm from './LoginForm'
+import { LoginForm } from '@/features/auth/login'
 
 const benefits = ['Access your saved listings and favorites', 'Manage your active listings', 'Continue browsing deals from where you left off']
 

@@ -4,7 +4,7 @@ import { Controller } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { useForgotPassword } from './useForgotPassword'
+import { useForgotPassword } from '../model/useForgotPassword'
 
 export default function ForgotPasswordForm() {
   const { form, isSubmitting, onSubmit } = useForgotPassword()

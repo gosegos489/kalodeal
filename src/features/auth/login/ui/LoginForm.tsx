@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { useLogin } from './useLogin'
+import { useLogin } from '../model/useLogin'
 
 export default function LoginForm() {
   const { form, isSubmitting, onSubmit } = useLogin()

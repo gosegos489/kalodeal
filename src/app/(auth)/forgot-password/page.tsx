@@ -1,6 +1,6 @@
 import { CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
-import ForgotPasswordForm from './ForgotPasswordForm'
+import { ForgotPasswordForm } from '@/features/auth/forgot-password'
 
 const benefits = [
   'Receive a secure password reset link by email',

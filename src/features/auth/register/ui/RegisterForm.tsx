@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { useRegister } from './useRegister'
+import { useRegister } from '../model/useRegister'
 
 export default function RegisterForm() {
   const { registerForm, isSubmitting, onSubmit } = useRegister()
