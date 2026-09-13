@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 
 const PROJECT_NAME = process.env.PROJECT_NAME!
 const DOMAIN_URL = process.env.DOMAIN_URL
-const DEFAULT_DESCRIPTION = 'Track blockchain fees, crypto card rates, and transaction costs in one place'
+const DEFAULT_DESCRIPTION = 'Buy, sell, and discover local deals on Kalodeal — a simple marketplace for listings, services, and everyday finds.'
 const DEFAULT_OG_IMAGE = '/og-image.png'
 const DEFAULT_LOCALE = 'en_US'
 
@@ -32,7 +32,7 @@ export const rootMetadata: Metadata = {
   openGraph: {
     title: PROJECT_NAME,
     description: DEFAULT_DESCRIPTION,
-    url: PROJECT_NAME,
+    url: DOMAIN_URL,
     siteName: PROJECT_NAME,
     images: [
       {
@@ -59,7 +59,7 @@ export function buildMetadata({
   path = '/',
   image = DEFAULT_OG_IMAGE
 }: BuildMetadataParams = {}): Metadata {
-  const url = new URL(path, PROJECT_NAME).toString()
+  const url = new URL(path, DOMAIN_URL).toString()
 
   const socialTitle = title ? `${title} | ${PROJECT_NAME}` : PROJECT_NAME
 

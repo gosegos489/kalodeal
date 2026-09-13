@@ -1,15 +1,30 @@
-import { Plus } from 'lucide-react'
+import { Plus, UserRound } from 'lucide-react'
 import Link from 'next/link'
-import { buttonVariants } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
-export default function ActionButtons() {
+type Props = {
+  isAuth: boolean
+}
+
+export default function ActionButtons({ isAuth }: Props) {
+
   return (
     <div className="flex items-center gap-2 sm:gap-3">
-      <Link className={cn(buttonVariants({ variant: 'ghost' }), 'hidden h-10 px-3 text-sm font-medium sm:inline-flex')} href="/login">
-        Sign in
-      </Link>
-      <Link href="/sell" className={cn(buttonVariants(), 'h-10 rounded-lg px-3 text-sm font-semibold sm:px-4')}>
+      {isAuth ? (
+        <Link
+          href="/profile"
+          className="text-foreground hover:bg-muted hidden size-10 items-center justify-center rounded-lg transition-colors sm:inline-flex"
+        >
+          <UserRound className="size-5" strokeWidth={2} />
+        </Link>
+      ) : (
+        <Link href="/login" className="hover:text-primary hidden h-10 items-center px-3 text-sm font-medium transition-colors sm:inline-flex">
+          Sign in
+        </Link>
+      )}
+      <Link
+        href={isAuth ? '/sell' : '/login'}
+        className="bg-primary text-primary-foreground hover:bg-primary/80 inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors sm:px-4"
+      >
         <Plus className="size-4 shrink-0" strokeWidth={2} />
         <span className="hidden sm:inline">Post a listing</span>
         <span className="sm:hidden">Post</span>

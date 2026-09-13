@@ -1,10 +1,14 @@
+'use client'
+
 import { MapPin } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-
+import { usePathname } from 'next/navigation'
 import { footerLinks } from './mocks/mocks'
 
 export const PublicFooter = () => {
+  const pathname = usePathname()
+
   return (
     <footer className="bg-muted text-foreground">
       <div className="container px-4 py-10 sm:px-6 lg:px-8">
@@ -28,13 +32,21 @@ export const PublicFooter = () => {
                 <h2 className="mb-3 text-sm font-semibold">{group.title}</h2>
 
                 <ul className="text-muted-foreground space-y-2 text-sm">
-                  {group.links.map(([label, href]) => (
-                    <li key={label}>
-                      <Link href={href} className="transition-colors hover:text-primary">
-                        {label}
-                      </Link>
-                    </li>
-                  ))}
+                  {group.links.map(([label, href]) => {
+                    const isActive = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)
+
+                    return (
+                      <li key={label}>
+                        <Link
+                          href={href}
+                          className={`hover:text-primary transition-colors ${isActive ? 'text-primary' : ''}`}
+                          aria-current={isActive ? 'page' : undefined}
+                        >
+                          {label}
+                        </Link>
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
             ))}

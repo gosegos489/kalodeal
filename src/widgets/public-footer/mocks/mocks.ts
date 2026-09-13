@@ -11,7 +11,7 @@ export const footerLinks = [
   {
     title: 'Company',
     links: [
-      ['About Kalodeal', '/about'],
+      ['How it works', '/how-it-works'],
       ['Safety', '/safety'],
       ['Contact', '/contact']
     ]

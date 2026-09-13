@@ -1,16 +1,27 @@
 import { cacheLife, cacheTag } from 'next/cache'
+import { z } from 'zod'
 import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'
 
-export async function getCategoryListings(categoryId: string) {
+const categoryIdSchema = z.string().cuid()
+
+export async function getCategoryListings(categoryId: unknown) {
   'use cache'
 
-  cacheTag(cacheTags.categoryListings(categoryId))
+  const result = categoryIdSchema.safeParse(categoryId)
+
+  if (!result.success) {
+    return []
+  }
+
+  const validCategoryId = result.data
+
+  cacheTag(cacheTags.categoryListings(validCategoryId))
   cacheLife('hours')
 
   const posts = await prisma.listing.findMany({
     where: {
-      categoryId
+      categoryId: validCategoryId
     },
     orderBy: {
       createdAt: 'desc'

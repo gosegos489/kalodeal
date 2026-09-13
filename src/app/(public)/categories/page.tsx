@@ -31,7 +31,7 @@ export default async function CategoriesPage() {
           </div>
 
           <Link href="/" className="text-primary flex items-center gap-2 font-semibold">
-            <p>View all listings</p> <MoveRight className="size-4" />
+            <p>View latest listings</p> <MoveRight className="size-4" />
           </Link>
         </div>
 
@@ -43,9 +43,7 @@ export default async function CategoriesPage() {
                   <CategoryCard {...category} />
 
                   <div className="border-border flex min-w-0 flex-col gap-3 border-t p-4 sm:border-t-0 sm:border-l">
-                    <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                      Subcategories
-                    </p>
+                    <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Subcategories</p>
 
                     {category.children.length > 0 ? (
                       <ul className="grid gap-2 sm:grid-cols-2">
@@ -53,7 +51,7 @@ export default async function CategoriesPage() {
                           <li key={child.id} className="min-w-0">
                             <Link
                               href={`/?category=${child.slug}`}
-                              className="hover:text-primary focus-visible:ring-ring/50 flex items-center gap-1 rounded-sm text-sm font-medium outline-none focus-visible:ring-2"
+                              className="hover:text-primary focus-visible:ring-ring/50 flex w-fit items-center gap-1 rounded-sm text-sm font-medium outline-none focus-visible:ring-2"
                             >
                               <span className="bg-muted text-muted-foreground flex size-5 shrink-0 items-center justify-center rounded">
                                 {child.image ? (
@@ -72,16 +70,10 @@ export default async function CategoriesPage() {
                                   <Link
                                     key={grandchild.id}
                                     href={`/?category=${grandchild.slug}`}
-                                    className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs underline-offset-4 hover:underline"
+                                    className="text-muted-foreground hover:text-primary flex w-fit items-center gap-1 text-xs"
                                   >
                                     {grandchild.image ? (
-                                      <Image
-                                        src={grandchild.image}
-                                        alt=""
-                                        width={10}
-                                        height={10}
-                                        className="size-2.5 shrink-0 object-contain"
-                                      />
+                                      <Image src={grandchild.image} alt="" width={10} height={10} className="size-2.5 shrink-0 object-contain" />
                                     ) : (
                                       <Tag className="size-2.5 shrink-0" aria-hidden="true" />
                                     )}

@@ -1,7 +1,15 @@
 import { Suspense } from 'react'
+import type { Metadata } from 'next'
 import { requireGuest } from '@/lib/auth-utils'
 import { PublicFooter } from '@/widgets/public-footer/public-footer'
 import { PublicHeader } from '@/widgets/public-header/public-header'
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false
+  }
+}
 
 async function GuestGuard({ children }: { children: React.ReactNode }) {
   await requireGuest()
