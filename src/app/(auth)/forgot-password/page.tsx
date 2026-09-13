@@ -1,6 +1,6 @@
 import { CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
-import { ForgotPasswordForm } from '@/features/auth/forgot-password'
+import { ForgotPasswordForm } from '@/features/auth'
 
 const benefits = [
   'Receive a secure password reset link by email',
@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
 
           <p className="text-muted-foreground text-center text-sm">
             Remember your password?{' '}
-            <Link href="/login" className="text-primary font-medium hover:underline">
+            <Link href="/login" className="text-primary font-medium">
               Sign in
             </Link>
           </p>

@@ -1,6 +1,6 @@
 import { CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
-import { LoginForm } from '@/features/auth/login'
+import { LoginForm } from '@/features/auth'
 
 const benefits = ['Access your saved listings and favorites', 'Manage your active listings', 'Continue browsing deals from where you left off']
 
@@ -40,13 +40,13 @@ export default function LoginPage() {
           <LoginForm />
 
           <div className="flex flex-col items-center justify-center gap-2 text-center text-sm">
-            <Link href="/forgot-password" className="text-primary w-fit font-medium hover:underline">
+            <Link href="/forgot-password" className="text-primary w-fit font-medium">
               Forgot your password?
             </Link>
 
             <p className="text-muted-foreground">
               Don&apos;t have an account?{' '}
-              <Link href="/register" className="text-primary font-medium hover:underline">
+              <Link href="/register" className="text-primary font-medium">
                 Create account
               </Link>
             </p>

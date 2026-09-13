@@ -1,6 +1,6 @@
 import { CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
-import { RegisterForm } from '@/features/auth/register'
+import { RegisterForm } from '@/features/auth'
 
 const benefits = ['Post listings in a few minutes', 'Manage your listings from one place', 'Save and compare interesting offers']
 
@@ -39,7 +39,7 @@ export default function RegisterPage() {
 
           <p className="text-muted-foreground text-center text-sm">
             Already have an account?{' '}
-            <Link href="/login" className="text-primary font-medium hover:underline">
+            <Link href="/login" className="text-primary font-medium">
               Sign in
             </Link>
           </p>

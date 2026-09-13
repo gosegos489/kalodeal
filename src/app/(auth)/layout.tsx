@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { requireGuest } from '@/lib/auth-utils'
-import { PublicFooter } from '@/widgets/public-footer/PublicFooter'
-import { PublicHeader } from '@/widgets/public-header/PublicHeader'
+import { PublicFooter } from '@/widgets/public-footer/public-footer'
+import { PublicHeader } from '@/widgets/public-header/public-header'
 
 async function GuestGuard({ children }: { children: React.ReactNode }) {
   await requireGuest()

@@ -1,7 +1,7 @@
 import { ArrowLeft, Home } from 'lucide-react'
 import Link from 'next/link'
-import { PublicFooter } from '@/widgets/public-footer/PublicFooter'
-import { PublicHeader } from '@/widgets/public-header/PublicHeader'
+import { PublicFooter } from '@/widgets/public-footer/public-footer'
+import { PublicHeader } from '@/widgets/public-header/public-header'
 
 export default function NotFound() {
   return (

@@ -2,7 +2,7 @@ import 'server-only'
 
 import { cookies } from 'next/headers'
 import { AnalyticsGate } from './analytics-gate'
-import { CookieModal } from './CookieModal'
+import { CookieModal } from './cookie-modal'
 import { COOKIE_CONSENT_KEY, type CookieConsent } from './constants'
 
 function getCookieConsent(value?: string): CookieConsent | undefined {

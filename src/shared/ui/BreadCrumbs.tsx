@@ -21,7 +21,9 @@ export function BreadCrumbs({ items }: Props) {
                 {isLast ? (
                   <BreadcrumbPage>{item.label}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink render={<Link href={item.href!} />}>{item.label}</BreadcrumbLink>
+                  <BreadcrumbLink className="hover:text-primary transition-colors" render={<Link href={item.href!} />}>
+                    {item.label}
+                  </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
 

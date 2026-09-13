@@ -1,7 +1,7 @@
 import { CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { ResetPasswordForm, ResetPasswordSkeleton } from '@/features/auth/reset-password'
+import { ResetPasswordForm, ResetPasswordSkeleton } from '@/features/auth'
 
 const benefits = ['Create a new secure password for your account', 'Restore access to your KaloDeal account', 'Sign in again with your new password']
 
@@ -48,7 +48,7 @@ export default function ResetPasswordPage({ searchParams }: Props) {
 
           <p className="text-muted-foreground text-center text-sm">
             Remember your password?{' '}
-            <Link href="/login" className="text-primary font-medium hover:underline">
+            <Link href="/login" className="text-primary font-medium">
               Sign in
             </Link>
           </p>
