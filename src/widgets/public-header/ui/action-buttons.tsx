@@ -1,21 +1,25 @@
-import { Plus, UserRound } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
+import { accountNavigation } from '../mocks/mocks'
 
 type Props = {
   isAuth: boolean
 }
 
 export default function ActionButtons({ isAuth }: Props) {
-
   return (
-    <div className="flex items-center gap-2 sm:gap-3">
+    <div className="flex items-center gap-1 sm:gap-2">
       {isAuth ? (
-        <Link
-          href="/profile"
-          className="text-foreground hover:bg-muted hidden size-10 items-center justify-center rounded-lg transition-colors sm:inline-flex"
-        >
-          <UserRound className="size-5" strokeWidth={2} />
-        </Link>
+        accountNavigation.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-label={item.label}
+            className="text-foreground hover:bg-muted hidden size-10 items-center justify-center rounded-lg transition-colors sm:inline-flex"
+          >
+            <item.icon className="size-5" strokeWidth={2} />
+          </Link>
+        ))
       ) : (
         <Link href="/login" className="hover:text-primary hidden h-10 items-center px-3 text-sm font-medium transition-colors sm:inline-flex">
           Sign in

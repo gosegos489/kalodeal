@@ -136,3 +136,18 @@ model ListingImage {
   @@index([listingId])
   @@map("listing_image")
 }
+
+enum LegalDocumentType {
+  PRIVACY_POLICY
+  TERMS_OF_USE
+}
+
+model LegalDocument {
+  id        String            @id @default(cuid())
+  type      LegalDocumentType @unique
+  content   String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@map("legal_document")
+}

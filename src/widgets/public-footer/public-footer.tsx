@@ -14,7 +14,9 @@ export const PublicFooter = () => {
       <div className="container px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-2">
           <div className="space-y-4">
-            <Image src="/logo.svg" alt="Kalodeal" width={116} height={34} />
+            <Link href="/">
+              <Image src="/logo.svg" alt="Kalodeal" width={590} height={169} className="h-auto w-29.5" priority />
+            </Link>
 
             <p className="text-muted-foreground max-w-sm text-sm leading-6">
               A modern marketplace for finding great deals, trusted services, and local opportunities.

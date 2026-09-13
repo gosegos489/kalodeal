@@ -12,7 +12,7 @@ export const metadata = buildMetadata({
 
 export default function HowItWorksPage() {
   return (
-    <div className="flex flex-col gap-16 px-4 py-16 md:px-8 lg:px-16">
+    <div className="container flex flex-col gap-10 py-10">
       <section className="flex flex-col items-center gap-4 text-center">
         <Badge variant="secondary">Getting started</Badge>
         <h1 className="text-4xl font-bold tracking-tight md:text-5xl">

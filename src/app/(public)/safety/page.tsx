@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 }
 export default function SafetyPage() {
   return (
-    <div className="flex flex-col gap-16 px-4 py-16 md:px-8 lg:px-16">
+    <div className="container flex flex-col gap-10 py-10">
       <section className="flex flex-col items-center gap-4 text-center">
         <Badge variant="secondary">Trust & Safety</Badge>
         <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
@@ -76,7 +76,7 @@ export default function SafetyPage() {
         </div>
       </section>
 
-      <Alert className="flex flex-col gap-2">
+      <Alert className="flex flex-col gap-2 p-4">
         <div className="flex items-center gap-2">
           <Flag className="size-4" />
           <AlertTitle>See something suspicious?</AlertTitle>
