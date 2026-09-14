@@ -1,22 +1,18 @@
-'use client'
-
 import { MapPin } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { footerLinks } from './mocks/mocks'
+import FooterLink from './ui/footer-link'
+import { getCurrentYear } from '@/lib/get-current-year'
 
-export const PublicFooter = () => {
-  const pathname = usePathname()
+export const PublicFooter = async () => {
+  const currentYear = await getCurrentYear()
 
   return (
     <footer className="bg-muted text-foreground">
-      <div className="container px-4 py-10 sm:px-6 lg:px-8">
+      <div className="container flex flex-col gap-4 px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-2">
           <div className="space-y-4">
-            <Link href="/">
-              <Image src="/logo.svg" alt="Kalodeal" width={590} height={169} className="h-auto w-29.5" priority />
-            </Link>
+            <Image src="/logo.svg" alt="Kalodeal" width={590} height={169} className="h-auto w-29.5" />
 
             <p className="text-muted-foreground max-w-sm text-sm leading-6">
               A modern marketplace for finding great deals, trusted services, and local opportunities.
@@ -30,22 +26,14 @@ export const PublicFooter = () => {
 
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
             {footerLinks.map((group) => (
-              <div key={group.title}>
-                <h2 className="mb-3 text-sm font-semibold">{group.title}</h2>
+              <div className="flex flex-col gap-3" key={group.title}>
+                <h2 className="text-sm font-semibold">{group.title}</h2>
 
-                <ul className="text-muted-foreground space-y-2 text-sm">
+                <ul className="text-muted-foreground flex flex-col gap-2 text-sm">
                   {group.links.map(([label, href]) => {
-                    const isActive = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)
-
                     return (
                       <li key={label}>
-                        <Link
-                          href={href}
-                          className={`hover:text-primary transition-colors ${isActive ? 'text-primary' : ''}`}
-                          aria-current={isActive ? 'page' : undefined}
-                        >
-                          {label}
-                        </Link>
+                        <FooterLink href={href} label={label} />
                       </li>
                     )
                   })}
@@ -53,6 +41,10 @@ export const PublicFooter = () => {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="border-t border-t-gray-300 pt-4">
+          <p className="text-muted-foreground text-sm">© {currentYear} Kalodeal. All rights reserved.</p>
         </div>
       </div>
     </footer>

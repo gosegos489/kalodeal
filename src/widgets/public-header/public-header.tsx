@@ -27,7 +27,7 @@ export function PublicHeader() {
           <Suspense fallback={<ActionButtons isAuth={false} />}>
             <ActionButtonsWithSession />
           </Suspense>
-          <Suspense fallback={<MobileMenu isAuth={false} />}>
+          <Suspense fallback={<MobileMenu isAuth={false} currentYear={2026} />}>
             <MobileMenuWithSession />
           </Suspense>
         </div>
