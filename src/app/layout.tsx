@@ -14,6 +14,8 @@ const geistSans = Geist({
   subsets: ['latin']
 })
 
+const isUnderDevelopment = process.env.SHOW_UNDER_DEVELOPMENT === 'true'
+
 export const metadata: Metadata = rootMetadata
 
 export default function RootLayout({
@@ -26,9 +28,11 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>
 
-        <Suspense fallback={null}>
-          <CookieConsentGate />
-        </Suspense>
+        {!isUnderDevelopment && (
+          <Suspense fallback={null}>
+            <CookieConsentGate />
+          </Suspense>
+        )}
 
         <Toaster />
         <Analytics />
