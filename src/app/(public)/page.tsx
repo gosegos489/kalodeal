@@ -1,4 +1,5 @@
 import { getListings, listingFiltersSchema } from '@/entities/listing/get-listings'
+import Image from 'next/image'
 import { Suspense } from 'react'
 
 type Props = {
@@ -32,6 +33,11 @@ async function ListingResults({ searchParams }: Props) {
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {listings.map((listing) => (
             <article key={listing.id} className="border-border bg-card rounded-xl border p-4">
+              {listing.coverUrl && (
+                <div className="bg-muted relative mb-4 aspect-[4/3] overflow-hidden rounded-lg">
+                  <Image src={listing.coverUrl} alt={listing.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
+                </div>
+              )}
               <p className="text-muted-foreground text-xs">{listing.category.name}</p>
               <h2 className="mt-1 font-semibold">{listing.title}</h2>
               <p className="text-muted-foreground mt-2 line-clamp-2 text-sm">{listing.description}</p>

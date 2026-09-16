@@ -1,0 +1,85 @@
+enum ListingStatus {
+  ACTIVE
+  INACTIVE
+  SOLD
+}
+
+model Listing {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  price       Decimal?
+  phone       String
+  youtube     String?
+
+  status ListingStatus @default(ACTIVE)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  images ListingImage[]
+
+  stats     ListingStats?
+  favorites Favorite[]
+
+  bumpedAt DateTime?
+
+  sortDate DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([categoryId])
+  @@index([status, sortDate])
+  @@map("listing")
+}
+
+model ListingStats {
+  id String @id @default(cuid())
+
+  listingId String  @unique
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  views         Int @default(0)
+  contactClicks Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("listing_stats")
+}
+
+model Favorite {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+  @@index([listingId])
+  @@map("favorite")
+}
+
+model ListingImage {
+  id String @id @default(cuid())
+
+  key       String @unique
+  sortOrder Int    @default(0)
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([listingId])
+  @@map("listing_image")
+}

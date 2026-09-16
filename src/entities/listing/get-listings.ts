@@ -51,6 +51,11 @@ export async function getListings(filters: ListingFilters = {}) {
         : {})
     },
     include: {
+      images: {
+        select: { key: true },
+        orderBy: { sortOrder: 'asc' },
+        take: 1
+      },
       category: {
         select: {
           name: true
@@ -65,6 +70,9 @@ export async function getListings(filters: ListingFilters = {}) {
 
   return listings.map((listing) => ({
     ...listing,
+    coverUrl: listing.images[0] && process.env.R2_PUBLIC_URL
+      ? `${process.env.R2_PUBLIC_URL.replace(/\/$/, '')}/${listing.images[0].key.split('/').map(encodeURIComponent).join('/')}`
+      : null,
     price: listing.price?.toNumber() ?? null
   }))
 }

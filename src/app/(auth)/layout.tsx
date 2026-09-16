@@ -1,8 +1,6 @@
-import { Suspense } from 'react'
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { requireGuest } from '@/lib/auth-utils'
-import { PublicFooter } from '@/widgets/public-footer/public-footer'
-import { PublicHeader } from '@/widgets/public-header/public-header'
 
 export const metadata: Metadata = {
   robots: {
@@ -19,16 +17,8 @@ async function GuestGuard({ children }: { children: React.ReactNode }) {
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col">
-      <PublicHeader />
-
-      <main className="flex-1">
-        <Suspense fallback={null}>
-          <GuestGuard>{children}</GuestGuard>
-        </Suspense>
-      </main>
-
-      <PublicFooter />
-    </div>
+    <Suspense fallback={null}>
+      <GuestGuard>{children}</GuestGuard>
+    </Suspense>
   )
 }

@@ -6,6 +6,8 @@ import { Suspense } from 'react'
 import { Toaster } from '@/components/ui/toast'
 import { rootMetadata } from '@/lib/metadata'
 import { CookieConsentGate } from '@/widgets/cookie-modal/cookie-consent-gate'
+import { PublicFooter } from '@/widgets/public-footer/public-footer'
+import { PublicHeader } from '@/widgets/public-header/public-header'
 import './globals.css'
 import { Providers } from './providers'
 
@@ -26,7 +28,17 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <Providers>{children}</Providers>
+        <Providers>
+          {isUnderDevelopment ? (
+            children
+          ) : (
+            <div className="flex min-h-dvh flex-col">
+              <PublicHeader />
+              <main className="flex-1">{children}</main>
+              <PublicFooter />
+            </div>
+          )}
+        </Providers>
 
         {!isUnderDevelopment && (
           <Suspense fallback={null}>
