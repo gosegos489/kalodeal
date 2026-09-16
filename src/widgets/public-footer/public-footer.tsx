@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { footerLinks } from './mocks/mocks'
 import FooterLink from './ui/footer-link'
 import { getCurrentYear } from '@/lib/get-current-year'
+import { Suspense } from 'react'
 
 export const PublicFooter = async () => {
   const currentYear = await getCurrentYear()
@@ -33,7 +34,9 @@ export const PublicFooter = async () => {
                   {group.links.map(([label, href]) => {
                     return (
                       <li key={label}>
-                        <FooterLink href={href} label={label} />
+                        <Suspense fallback={null}>
+                          <FooterLink href={href} label={label} />
+                        </Suspense>
                       </li>
                     )
                   })}

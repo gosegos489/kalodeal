@@ -151,3 +151,29 @@ model LegalDocument {
 
   @@map("legal_document")
 }
+
+enum ContactUsQuestion {
+  GENERAL
+  TECHNICAL
+  BILLING
+  OTHER
+}
+
+enum ContactUsStatus {
+  NEW
+  IN_PROGRESS
+  CLOSED
+}
+
+model ContactUs {
+  id           String            @id @default(cuid())
+  question     ContactUsQuestion
+  message      String
+  contactEmail String
+  status       ContactUsStatus   @default(NEW)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contact_us")
+}

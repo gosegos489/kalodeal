@@ -9,8 +9,8 @@ export const navigation = [
 export const mobileNavigation = [
   { label: 'Safety', href: '/safety' },
   { label: 'Contact', href: '/contact' },
-  { label: 'Terms of use', href: '/terms' },
-  { label: 'Privacy policy', href: '/privacy' }
+  { label: 'Terms of use', href: '/legal/terms-of-use' },
+  { label: 'Privacy policy', href: '/legal/privacy-policy' }
 ]
 
 export const accountNavigation = [

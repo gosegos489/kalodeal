@@ -13,14 +13,14 @@ export const footerLinks = [
     links: [
       ['How it works', '/how-it-works'],
       ['Safety', '/safety'],
-      ['Contact', '/contact']
+      ['Contact', '/contact-us']
     ]
   },
   {
     title: 'Legal',
     links: [
-      ['Terms of use', '/terms'],
-      ['Privacy policy', '/privacy']
+      ['Terms of use', '/legal/terms-of-use'],
+      ['Privacy policy', '/legal/privacy-policy']
     ]
   }
 ]

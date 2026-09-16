@@ -25,8 +25,8 @@ export function NavigationLinks({ mobile = false, onNavigate }: NavigationLinksP
               aria-current={isActive ? 'page' : undefined}
               className={
                 mobile
-                  ? `flex h-11 items-center rounded-lg px-3 text-sm font-medium transition-colors hover:bg-muted ${isActive ? 'bg-muted text-primary' : 'text-muted-foreground'}`
-                  : `transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`
+                  ? `hover:bg-muted flex h-11 items-center rounded-lg px-3 text-sm font-medium transition-colors ${isActive ? 'bg-muted text-primary' : 'text-muted-foreground'}`
+                  : `hover:text-primary transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground'}`
               }
             >
               {item.label}
@@ -35,13 +35,5 @@ export function NavigationLinks({ mobile = false, onNavigate }: NavigationLinksP
         )
       })}
     </ul>
-  )
-}
-
-export default function HeaderNavigation() {
-  return (
-    <nav aria-label="Primary" className="hidden md:block">
-      <NavigationLinks />
-    </nav>
   )
 }

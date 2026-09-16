@@ -16,8 +16,8 @@ type Props = {
 }
 
 export default function MobileMenu({ isAuth, currentYear }: Props) {
-  const [open, setOpen] = useState(false)
   const pathname = usePathname()
+  const [open, setOpen] = useState(false)
   const closeMenu = () => setOpen(false)
 
   return (
@@ -45,7 +45,6 @@ export default function MobileMenu({ isAuth, currentYear }: Props) {
               <ul className="flex flex-col gap-1">
                 {mobileNavigation.map((item) => {
                   const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-
                   return (
                     <li key={item.href}>
                       <Link
@@ -67,7 +66,6 @@ export default function MobileMenu({ isAuth, currentYear }: Props) {
                 <ul className="flex flex-col gap-1">
                   {accountNavigation.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-
                     return (
                       <li key={item.href}>
                         <Link
