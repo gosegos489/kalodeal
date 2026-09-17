@@ -22,6 +22,8 @@
     "@prisma/client": "^7.9.1",
     "@react-email/ui": "^6.9.2",
     "@tanstack/react-query": "^5.101.4",
+    "@upstash/ratelimit": "^2.1.0",
+    "@upstash/redis": "^1.38.4",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "ably": "^2.27.0",
@@ -65,5 +67,5 @@
     "tsx": "^4.23.12",
     "typescript": "^6.0.2"
   },
-  "packageManager": "pnpm@11.23.0+sha512.f00082e5b283a199b74e079da28d155c008fe232f44c8a06ea7ddfa014ecf719fc362f790ecc67b28106ddac2afb24c49a9a079159da560b2ce7d1e98efd11af"
+  "packageManager": "pnpm@12.4.2"
 }

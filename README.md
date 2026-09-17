@@ -192,9 +192,14 @@ BETTER_AUTH_URL="http://localhost:3000"
 
 DOMAIN_URL="http://localhost:3000"
 PROJECT_NAME="Kalodeal"
+
+UPSTASH_REDIS_REST_URL="https://...upstash.io"
+UPSTASH_REDIS_REST_TOKEN="..."
 ```
 
 Additional environment variables may be required depending on the enabled services.
+
+Upstash Redis protects listing creation (5 attempts per user per 10 minutes) and Contact Us (3 attempts per IP per 10 minutes). Both environment variables are required locally and in the deployment environment. Submissions are temporarily rejected if Redis is unavailable. On Vercel, the client IP comes from platform headers; a self-hosted reverse proxy must overwrite `x-real-ip` or provide a single trusted IP in `x-forwarded-for`.
 
 > Never commit production secrets or your `.env` file to Git.
 
