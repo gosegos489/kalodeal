@@ -43,7 +43,7 @@ function ImagePreview({ file }: { file: File }) {
     return () => URL.revokeObjectURL(url)
   }, [file])
 
-  // eslint-disable-next-line @next/next/no-img-element -- Local blob previews do not need image optimization.
+  // eslint-disable-next-line @next/next/no-img-element
   return <img ref={imageRef} alt={`Preview of ${file.name}`} width={160} height={160} className="aspect-square w-full object-cover" />
 }
 
@@ -105,7 +105,7 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
     <div className="flex flex-col gap-3">
       <div
         className={cn(
-          'flex flex-col items-center gap-3 rounded-xl border border-dashed p-6 text-center transition-colors motion-reduce:transition-none',
+          'bg-muted/30 flex min-h-52 flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 text-center transition-colors motion-reduce:transition-none sm:p-8',
           isDragging && 'border-primary bg-primary/5',
           invalid && 'border-destructive',
           disabled && 'opacity-60'
@@ -123,8 +123,13 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
           addFiles(Array.from(event.dataTransfer.files))
         }}
       >
-        <ImagePlus className="text-muted-foreground size-8" aria-hidden="true" />
-        <p className="text-sm font-medium">Drop photos here or choose files</p>
+        <span className="bg-card text-primary flex size-12 items-center justify-center rounded-xl border shadow-xs">
+          <ImagePlus className="size-6" />
+        </span>
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-medium">Drop your photos here</p>
+          <p className="text-muted-foreground text-xs">Or choose up to {maxImages} photos from your device</p>
+        </div>
         <Input
           id="images"
           name="images"
@@ -137,8 +142,6 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
           multiple
           disabled={disabled || value.length >= maxImages}
           className="sr-only"
-          aria-invalid={invalid}
-          aria-describedby="images-description"
           onBlur={onBlur}
           onChange={(event) => {
             addFiles(Array.from(event.currentTarget.files ?? []))
@@ -146,12 +149,12 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
           }}
         />
         <Button type="button" variant="outline" disabled={disabled || value.length >= maxImages} onClick={() => pickerRef.current?.click()}>
-          <Upload className="size-4" aria-hidden="true" /> Choose photos
+          <Upload className="size-4" /> Choose photos
         </Button>
       </div>
 
       <FieldDescription id="images-description">JPEG, PNG or WebP, up to 5 MB each. The first photo will be your cover.</FieldDescription>
-      <p className="text-muted-foreground text-xs" aria-live="polite">
+      <p className="text-muted-foreground text-xs">
         {value.length}/{maxImages} photos selected
       </p>
 
@@ -171,7 +174,7 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
               >
                 <AttachmentMedia variant="image">
                   <ImagePreview file={file} />
-                  {isSubmitting && <Loader2 className="absolute size-6 motion-safe:animate-spin" aria-label="Uploading photo" />}
+                  {isSubmitting && <Loader2 className="absolute size-6 motion-safe:animate-spin" />}
                 </AttachmentMedia>
                 <AttachmentContent>
                   <AttachmentTitle className="motion-reduce:animate-none" title={file.name}>
@@ -184,7 +187,7 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
                     type="button"
                     variant="outline"
                     className="bg-background/90"
-                    aria-label={`Remove ${file.name}`}
+                    title={`Remove ${file.name}`}
                     disabled={disabled || removing}
                     onClick={() => removeFile(file)}
                   >

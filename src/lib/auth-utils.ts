@@ -15,7 +15,7 @@ export async function requireGuest() {
   const session = await getSession()
 
   if (session) {
-    redirect('/dashboard')
+    redirect('/account')
   }
 }
 

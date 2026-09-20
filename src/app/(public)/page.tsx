@@ -31,11 +31,18 @@ async function ListingResults({ searchParams }: Props) {
 
       {listings.length > 0 ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {listings.map((listing) => (
+          {listings.map((listing, index) => (
             <article key={listing.id} className="border-border bg-card rounded-xl border p-4">
               {listing.coverUrl && (
-                <div className="bg-muted relative mb-4 aspect-[4/3] overflow-hidden rounded-lg">
-                  <Image src={listing.coverUrl} alt={listing.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
+                <div className="bg-muted relative mb-4 aspect-4/3 overflow-hidden rounded-lg">
+                  <Image
+                    src={listing.coverUrl}
+                    alt={listing.title}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    loading={index < 3 ? 'eager' : 'lazy'}
+                    className="object-cover"
+                  />
                 </div>
               )}
               <p className="text-muted-foreground text-xs">{listing.category.name}</p>

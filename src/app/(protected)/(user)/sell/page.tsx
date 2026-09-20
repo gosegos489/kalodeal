@@ -1,40 +1,48 @@
+import { ArrowLeft, ArrowUpRight } from 'lucide-react'
+import Link from 'next/link'
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getCategoryTree } from '@/entities/category/get-category-tree'
+import { getAccount } from '@/features/account/data'
 import CreateListingForm from '@/features/create-listing/create-listing-form'
-import type { ListingCategoryOption } from '@/features/create-listing/types'
-import { requireUser } from '@/lib/auth-utils'
-import { getListingPlan } from '@/lib/plan-limits'
-import prisma from '@/lib/prisma'
-
-type CategoryNode = { id: string; name: string; children?: CategoryNode[] }
-
-function categoryOptions(categories: CategoryNode[], prefix = ''): ListingCategoryOption[] {
-  return categories.flatMap((category) => {
-    const name = prefix ? `${prefix} / ${category.name}` : category.name
-    return [{ id: category.id, name }, ...categoryOptions(category.children ?? [], name)]
-  })
-}
+import { getListingCategoryOptions } from '@/features/create-listing/get-category-options'
 
 async function SellForm() {
-  const session = await requireUser()
-  const [categories, subscription, activeListingCount] = await Promise.all([
-    getCategoryTree(),
-    prisma.subscription.findUnique({ where: { userId: session.user.id } }),
-    prisma.listing.count({ where: { userId: session.user.id, status: 'ACTIVE' } })
-  ])
+  const [categories, account] = await Promise.all([getListingCategoryOptions(), getAccount()])
 
-  return <CreateListingForm categories={categoryOptions(categories)} plan={getListingPlan(subscription)} activeListingCount={activeListingCount} />
+  return <CreateListingForm categories={categories} plan={account.plan} activeListingCount={account.activeCount} />
 }
 
 export default function SellPage() {
   return (
     <div className="flex flex-col gap-8">
-      <div className="max-w-2xl space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Post a listing</h1>
-        <p className="text-muted-foreground">Turn something you no longer need into someone else’s next great find.</p>
+      <div className="flex flex-col gap-6">
+        <Link href="/account/listings" className="text-muted-foreground inline-flex items-center gap-2 text-sm transition-colors">
+          <ArrowLeft className="size-4" /> My listings
+        </Link>
+        <div className="flex flex-col gap-4 border-b pb-8 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-3">
+            <p className="text-primary text-xs font-semibold uppercase">Sell on KaloDeal</p>
+            <h1 className="text-3xl font-semibold sm:text-4xl">Give your item a new home.</h1>
+            <p className="text-muted-foreground max-w-xl text-sm leading-relaxed sm:text-base">
+              Add a few photos, tell buyers what makes it great, and publish your listing.
+            </p>
+          </div>
+          <Link href="/how-it-works" className="text-muted-foreground inline-flex shrink-0 items-center gap-1.5 text-sm transition-colors">
+            How selling works <ArrowUpRight className="size-4" />
+          </Link>
+        </div>
       </div>
-      <Suspense fallback={<Skeleton className="h-96 w-full max-w-2xl rounded-xl" />}>
+      <Suspense
+        fallback={
+          <div className="grid gap-6 lg:grid-cols-3" role="status">
+            <div className="flex flex-col gap-6 lg:col-span-2">
+              <Skeleton className="h-96 w-full rounded-2xl" />
+              <Skeleton className="h-64 w-full rounded-2xl" />
+            </div>
+            <Skeleton className="h-80 w-full rounded-2xl" />
+          </div>
+        }
+      >
         <SellForm />
       </Suspense>
     </div>

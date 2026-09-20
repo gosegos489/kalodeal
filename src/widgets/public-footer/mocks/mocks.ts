@@ -5,7 +5,7 @@ export const footerLinks = [
       ['Browse listings', '/'],
       ['Categories', '/categories'],
       ['Post a listing', '/sell'],
-      ['Saved items', '/favorites']
+      ['Saved items', '/account/favorites']
     ]
   },
   {

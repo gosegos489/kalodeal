@@ -21,10 +21,11 @@ export async function getCategoryListings(categoryId: unknown) {
 
   const posts = await prisma.listing.findMany({
     where: {
-      categoryId: validCategoryId
+      categoryId: validCategoryId,
+      status: 'ACTIVE'
     },
     orderBy: {
-      createdAt: 'desc'
+      sortDate: 'desc'
     },
     take: 10
   })

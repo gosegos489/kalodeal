@@ -6,7 +6,12 @@ import prisma from '@/lib/prisma'
 export const listingFiltersSchema = z
   .object({
     query: z.string().trim().max(100).optional(),
-    category: z.string().trim().max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional()
+    category: z
+      .string()
+      .trim()
+      .max(100)
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+      .optional()
   })
   .strict()
 
@@ -30,22 +35,16 @@ export async function getListings(filters: ListingFilters = {}) {
 
   const listings = await prisma.listing.findMany({
     where: {
+      status: 'ACTIVE',
       ...(search
         ? {
-            OR: [
-              { title: { contains: search, mode: 'insensitive' } },
-              { description: { contains: search, mode: 'insensitive' } }
-            ]
+            OR: [{ title: { contains: search, mode: 'insensitive' } }, { description: { contains: search, mode: 'insensitive' } }]
           }
         : {}),
       ...(categorySlug
         ? {
             category: {
-              OR: [
-                { slug: categorySlug },
-                { parent: { is: { slug: categorySlug } } },
-                { parent: { is: { parent: { is: { slug: categorySlug } } } } }
-              ]
+              OR: [{ slug: categorySlug }, { parent: { is: { slug: categorySlug } } }, { parent: { is: { parent: { is: { slug: categorySlug } } } } }]
             }
           }
         : {})
@@ -63,16 +62,17 @@ export async function getListings(filters: ListingFilters = {}) {
       }
     },
     orderBy: {
-      createdAt: 'desc'
+      sortDate: 'desc'
     },
     take: 50
   })
 
   return listings.map((listing) => ({
     ...listing,
-    coverUrl: listing.images[0] && process.env.R2_PUBLIC_URL
-      ? `${process.env.R2_PUBLIC_URL.replace(/\/$/, '')}/${listing.images[0].key.split('/').map(encodeURIComponent).join('/')}`
-      : null,
+    coverUrl:
+      listing.images[0] && process.env.R2_PUBLIC_URL
+        ? `${process.env.R2_PUBLIC_URL.replace(/\/$/, '')}/${listing.images[0].key.split('/').map(encodeURIComponent).join('/')}`
+        : null,
     price: listing.price?.toNumber() ?? null
   }))
 }

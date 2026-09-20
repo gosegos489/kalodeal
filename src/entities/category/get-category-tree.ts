@@ -21,7 +21,7 @@ export async function getCategoryTree() {
     include: {
       _count: {
         select: {
-          listings: true
+          listings: { where: { status: 'ACTIVE' } }
         }
       },
 
@@ -37,7 +37,7 @@ export async function getCategoryTree() {
         include: {
           _count: {
             select: {
-              listings: true
+              listings: { where: { status: 'ACTIVE' } }
             }
           },
 
@@ -53,7 +53,7 @@ export async function getCategoryTree() {
             include: {
               _count: {
                 select: {
-                  listings: true
+                  listings: { where: { status: 'ACTIVE' } }
                 }
               }
             }
