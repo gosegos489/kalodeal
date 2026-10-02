@@ -205,6 +205,20 @@ Upstash Redis protects listing creation (5 attempts per user per 10 minutes), Co
 
 ---
 
+## Stripe subscriptions
+
+Billing requires `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRO_PRICE_ID`, and `DOMAIN_URL` in the deployment environment. The PRO price must be an active, positive, monthly recurring price in the same Stripe mode as the secret key.
+
+Configure Stripe Customer Portal to allow payment method updates, billing address updates, and subscription cancellation **at the end of the period**. Keep subscription plan/quantity changes disabled. Invoice history is optional; disabling it does not prevent subscription management. Set `STRIPE_PORTAL_CONFIGURATION_ID` to use a specific active configuration, or leave it unset to use the Dashboard default. The application reads these settings and does not create or change portal configurations during requests. Test and live environments need their own configuration.
+
+Subscribe the webhook at `/api/webhook/stripe` to `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, and `invoice.payment_failed`. Only webhook reconciliation updates subscription entitlements; the Checkout return URL does not grant PRO. Each confirmed paid monthly period grants `PRO_BUMPS_PER_PERIOD` bumps, with no carryover. Scheduled cancellation preserves access until the paid period ends.
+
+The same listing can be bumped once every 24 hours, using its persisted `bumpedAt` timestamp. Cooldown is enforced in the server transaction and does not block bumps on other listings or reset with a billing renewal. My listings shows cooldown availability and the last bump time.
+
+Run billing regression checks with `pnpm test:billing`, type checking with `pnpm exec tsc --noEmit`, and lint with `pnpm lint`.
+
+---
+
 ## Database
 
 Kalodeal uses **PostgreSQL** with **Prisma ORM**.

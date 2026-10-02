@@ -1,21 +1,52 @@
 'use client'
 
 import { ArrowUp, Loader2 } from 'lucide-react'
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
+import { getBumpCooldownRemainingMs } from './bump-cooldown'
 import { bumpListing } from './bump-listing'
 
-export function BumpListingButton({ listingId, title, disabled }: { listingId: string; title: string; disabled: boolean }) {
+type BumpListingButtonProps = { listingId: string; title: string; bumpedAt: string | null; initialCooldownRemainingMs: number }
+
+export function BumpListingButton({ listingId, title, bumpedAt, initialCooldownRemainingMs }: BumpListingButtonProps) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [cooldownRemainingMs, setCooldownRemainingMs] = useState(initialCooldownRemainingMs)
+
+  useEffect(() => {
+    if (!bumpedAt || initialCooldownRemainingMs <= 0) return
+    const lastBump = new Date(bumpedAt)
+    const updateCooldown = () => setCooldownRemainingMs(getBumpCooldownRemainingMs(lastBump))
+    const interval = setInterval(updateCooldown, 60_000)
+    const expiry = setTimeout(() => {
+      updateCooldown()
+      clearInterval(interval)
+    }, getBumpCooldownRemainingMs(lastBump))
+    return () => {
+      clearInterval(interval)
+      clearTimeout(expiry)
+    }
+  }, [bumpedAt, initialCooldownRemainingMs])
+
+  if (cooldownRemainingMs > 0) {
+    const duration =
+      cooldownRemainingMs >= 60 * 60 * 1000
+        ? `${Math.ceil(cooldownRemainingMs / (60 * 60 * 1000))}h`
+        : `${Math.ceil(cooldownRemainingMs / (60 * 1000))}m`
+    return (
+      <p role="status" className="text-muted-foreground text-xs">
+        Available again in {duration}
+      </p>
+    )
+  }
 
   return (
     <div className="flex flex-col items-start gap-1">
       <Button
         variant="outline"
         size="sm"
-        disabled={disabled || pending}
+        disabled={pending}
         aria-label={`Bump listing: ${title}`}
         onClick={() => {
           setError(null)
@@ -37,7 +68,7 @@ export function BumpListingButton({ listingId, title, disabled }: { listingId: s
         }}
       >
         {pending ? <Loader2 aria-hidden="true" className="motion-safe:animate-spin" /> : <ArrowUp aria-hidden="true" />}
-        {pending ? 'Bumping...' : 'Bump'}
+        {pending ? 'Bumping...' : 'Bump listing'}
       </Button>
       {error && (
         <p role="alert" className="text-destructive max-w-xs text-xs">

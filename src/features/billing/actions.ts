@@ -90,7 +90,7 @@ export async function manageSubscription(): Promise<ActionResult<{ url: string }
       return { success: false, message: 'There is no Stripe subscription to manage.' }
     }
     const configuration = await getPortalConfiguration()
-    if (!configuration) return { success: false, message: 'Subscription management is not available yet.' }
+    if (!configuration) return { success: false, message: 'Subscription management is temporarily unavailable. Please try again later.' }
     const portal = await stripe.billingPortal.sessions.create({
       customer: subscription.stripeCustomerId,
       configuration: configuration.id,

@@ -8,6 +8,7 @@ import { getSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import { PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
+import { getBumpCooldownRemainingMs } from './bump-cooldown'
 
 class BumpError extends Error {}
 
@@ -27,8 +28,13 @@ export async function bumpListing(id: unknown): Promise<ActionMessageResult> {
       const limit = PLAN_LIMITS[getListingPlan(subscription, now)].monthlyBumps
       if (!subscription || limit === 0) throw new BumpError('An eligible Pro plan is required to bump listings.')
       if (subscription.bumpUsed >= limit) throw new BumpError('You have used all bumps for this paid billing period.')
-      const listing = await tx.listing.findFirst({ where: { id: parsed.data, userId, status: 'ACTIVE' }, select: { categoryId: true } })
+      const listing = await tx.listing.findFirst({
+        where: { id: parsed.data, userId, status: 'ACTIVE' },
+        select: { categoryId: true, bumpedAt: true }
+      })
       if (!listing) throw new BumpError('Only your own active listings can be bumped.')
+      if (getBumpCooldownRemainingMs(listing.bumpedAt, now) > 0)
+        throw new BumpError('You can bump the same listing once every 24 hours. Please try again later.')
       // Repeat the ownership/status condition at the write boundary, including concurrent moderation/deletion.
       const updated = await tx.listing.updateMany({
         where: { id: parsed.data, userId, status: 'ACTIVE' },

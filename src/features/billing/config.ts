@@ -39,17 +39,23 @@ export async function getProPrice() {
 }
 
 export async function getPortalConfiguration() {
-  // Only inspect the Dashboard-managed default. Never create or update account settings.
+  // Inspect an explicitly configured portal or the Dashboard default; never mutate settings here.
+  const configurationId = process.env.STRIPE_PORTAL_CONFIGURATION_ID
+  if (configurationId) {
+    const configuration = await stripe.billingPortal.configurations.retrieve(configurationId)
+    return configuration.livemode === getStripeLiveMode() && isSafePortalConfiguration(configuration) ? configuration : null
+  }
   for await (const configuration of stripe.billingPortal.configurations.list({ is_default: true, limit: 1 })) {
     if (configuration.livemode === getStripeLiveMode() && isSafePortalConfiguration(configuration)) return configuration
   }
   return null
 }
 
-export async function getBillingAvailability(hasStripeSubscription: boolean) {
-  const [price, portal] = await Promise.allSettled([getProPrice(), hasStripeSubscription ? getPortalConfiguration() : Promise.resolve(null)])
-  return {
-    price: price.status === 'fulfilled' ? { amount: price.value.unit_amount, currency: price.value.currency } : null,
-    portalAvailable: portal.status === 'fulfilled' && portal.value !== null
+export async function getBillingAvailability() {
+  try {
+    const price = await getProPrice()
+    return { price: { amount: price.unit_amount, currency: price.currency } }
+  } catch {
+    return { price: null }
   }
 }

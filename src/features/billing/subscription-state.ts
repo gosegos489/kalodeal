@@ -62,9 +62,7 @@ export function isSafePortalConfiguration(configuration: Stripe.BillingPortal.Co
   const features = configuration.features
   return (
     configuration.active &&
-    configuration.is_default &&
     features.payment_method_update.enabled &&
-    features.invoice_history.enabled &&
     features.customer_update.enabled &&
     features.customer_update.allowed_updates.includes('address') &&
     features.subscription_cancel.enabled &&

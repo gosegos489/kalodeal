@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { getAccount } from '@/features/account/data'
-import { BillingButton, RefreshPlanButton } from '@/features/billing/billing-button'
+import { BillingButton } from '@/features/billing/billing-button'
+import { CheckoutPending } from '@/features/billing/checkout-pending'
 import { getBillingAvailability } from '@/features/billing/config'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
 import AccountLoading from '../loading'
@@ -14,7 +15,7 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 async function AccountSubscription({ searchParams }: Props) {
   const account = await getAccount()
   const params = await searchParams
-  const billing = await getBillingAvailability(account.subscription?.hasStripeSubscription ?? false)
+  const billing = await getBillingAvailability()
   const pro = PLAN_LIMITS.PRO
   const price = billing.price
     ? new Intl.NumberFormat('en', { style: 'currency', currency: billing.price.currency }).format(billing.price.amount / 100)
@@ -25,12 +26,7 @@ async function AccountSubscription({ searchParams }: Props) {
       {params.checkout === 'success' && (
         <Card>
           <CardContent className="flex flex-col items-start gap-3" role="status">
-            <p>
-              {account.plan === 'PRO'
-                ? 'Your Pro plan is active.'
-                : 'Payment confirmation is being processed. Your plan activates after Stripe confirms the subscription.'}
-            </p>
-            {account.plan !== 'PRO' && <RefreshPlanButton />}
+            {account.plan === 'PRO' ? <p>Your Pro plan is active.</p> : <CheckoutPending />}
           </CardContent>
         </Card>
       )}
@@ -47,7 +43,7 @@ async function AccountSubscription({ searchParams }: Props) {
           <CardDescription>Your current publishing allowances.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-start gap-6">
-          <Badge>{account.plan === 'PRO' ? 'Pro' : 'Free'}</Badge>
+          <Badge>{account.plan === 'PRO' ? 'Pro plan' : 'Free plan'}</Badge>
           <dl className="grid w-full gap-4 sm:grid-cols-2">
             <div>
               <dt className="text-muted-foreground text-sm">Used listing slots</dt>
@@ -66,27 +62,41 @@ async function AccountSubscription({ searchParams }: Props) {
             <div>
               <dt className="text-muted-foreground text-sm">Bumps per paid monthly period</dt>
               <dd className="mt-1 text-lg font-semibold">
-                {account.limits.monthlyBumps} <span className="text-muted-foreground text-sm">({account.bumpsRemaining} remaining)</span>
+                {account.plan === 'PRO' ? (
+                  <>
+                    {account.limits.monthlyBumps} total <span className="text-muted-foreground text-sm">· {account.bumpsRemaining} remaining</span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground text-sm font-normal">Available with an active paid Pro period</span>
+                )}
               </dd>
             </div>
           </dl>
           {account.subscription && (account.plan === 'PRO' || account.subscription.hasStripeSubscription) && (
             <dl className="grid w-full gap-4 sm:grid-cols-2">
               <div>
-                <dt className="text-muted-foreground text-sm">Subscription status</dt>
+                <dt className="text-muted-foreground text-sm">Status</dt>
                 <dd className="mt-1 font-medium">
-                  {account.subscription.status === 'CANCELED'
-                    ? 'Cancellation scheduled'
+                  {account.plan === 'PRO'
+                    ? account.subscription.status === 'CANCELED'
+                      ? 'Canceling'
+                      : 'Active'
                     : account.subscription.status === 'PAST_DUE'
                       ? 'Payment past due'
-                      : account.subscription.status === 'EXPIRED'
-                        ? 'Ended or awaiting payment'
-                        : 'Active'}
+                      : account.subscription.currentPeriodEnd.getTime() > 0
+                        ? 'Expired'
+                        : 'Awaiting payment'}
                 </dd>
               </div>
               {account.subscription.currentPeriodEnd.getTime() > 0 && (
                 <div>
-                  <dt className="text-muted-foreground text-sm">Paid period ends</dt>
+                  <dt className="text-muted-foreground text-sm">
+                    {account.plan === 'PRO'
+                      ? account.subscription.status === 'CANCELED'
+                        ? 'Access remains active until'
+                        : 'Renews on'
+                      : 'Paid period ends'}
+                  </dt>
                   <dd className="mt-1 font-medium">
                     <time dateTime={account.subscription.currentPeriodEnd.toISOString()}>
                       {new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(
@@ -102,12 +112,7 @@ async function AccountSubscription({ searchParams }: Props) {
           {account.plan === 'PRO' && account.subscription?.status === 'CANCELED' && (
             <p className="text-muted-foreground text-sm">Pro remains available until the paid period ends. Your subscription will not renew.</p>
           )}
-          {account.subscription?.hasStripeSubscription &&
-            (billing.portalAvailable ? (
-              <BillingButton intent="manage" />
-            ) : (
-              <p className="text-muted-foreground text-sm">Subscription management is not available yet.</p>
-            ))}
+          {account.subscription?.hasStripeSubscription && <BillingButton intent="manage" />}
           {account.limits.advancedStats && (
             <Button nativeButton={false} variant="outline" render={<Link href="/account/analytics" />}>
               Analytics

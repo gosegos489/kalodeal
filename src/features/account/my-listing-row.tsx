@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button'
 import type { ListingSummary } from '@/entities/listing/types'
 import type { ListingStatus } from '@/generated/prisma/enums'
 import { dayjs } from '@/lib/dayjs'
+import { getBumpCooldownRemainingMs } from './bump-cooldown'
 import { BumpListingButton } from './bump-listing-button'
 import { DeleteListingButton } from './delete-listing-button'
 import { ListingStatusBadge } from './listing-status-badge'
 
-type MyListingRowProps = { listing: ListingSummary & { status: ListingStatus }; bumpsRemaining: number; canBump: boolean }
+type MyListingRowProps = { listing: ListingSummary & { status: ListingStatus; bumpedAt: Date | null }; bumpsRemaining: number; canBump: boolean }
 
 export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowProps) {
   const href = `/listings/${listing.id}`
@@ -45,6 +46,11 @@ export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowP
           </span>
           <time dateTime={listing.createdAt.toISOString()}>{dayjs.utc(listing.createdAt).format('D MMM YYYY')}</time>
         </div>
+        {listing.bumpedAt && (
+          <p className="text-muted-foreground text-xs">
+            Last bumped: <time dateTime={listing.bumpedAt.toISOString()}>{dayjs.utc(listing.bumpedAt).format('D MMM YYYY, HH:mm [UTC]')}</time>
+          </p>
+        )}
       </div>
       <div className="col-span-2 xl:col-span-1">
         <ListingStatusBadge status={listing.status} />
@@ -54,7 +60,15 @@ export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowP
           <Eye aria-hidden="true" /> View
         </Button>
         <DeleteListingButton listingId={listing.id} title={listing.title} />
-        {canBump && listing.status === 'ACTIVE' && <BumpListingButton listingId={listing.id} title={listing.title} disabled={bumpsRemaining === 0} />}
+        {canBump && listing.status === 'ACTIVE' && bumpsRemaining > 0 && (
+          <BumpListingButton
+            key={listing.bumpedAt?.getTime() ?? 'never'}
+            listingId={listing.id}
+            title={listing.title}
+            bumpedAt={listing.bumpedAt?.toISOString() ?? null}
+            initialCooldownRemainingMs={getBumpCooldownRemainingMs(listing.bumpedAt)}
+          />
+        )}
       </div>
     </article>
   )

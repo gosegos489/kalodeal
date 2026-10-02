@@ -1,7 +1,6 @@
 'use client'
 
 import { Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
@@ -43,16 +42,5 @@ export function BillingButton({ intent }: { intent: 'upgrade' | 'manage' }) {
         </p>
       )}
     </div>
-  )
-}
-
-export function RefreshPlanButton() {
-  const router = useRouter()
-  const [pending, startTransition] = useTransition()
-  return (
-    <Button variant="outline" disabled={pending} onClick={() => startTransition(() => router.refresh())}>
-      {pending && <Loader2 aria-hidden="true" className="motion-safe:animate-spin" />}
-      {pending ? 'Checking...' : 'Check plan status'}
-    </Button>
   )
 }
