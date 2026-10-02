@@ -1,11 +1,13 @@
 model User {
-  id            String   @id
-  name          String
-  email         String
-  emailVerified Boolean  @default(false)
-  image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id               String   @id
+  name             String
+  email            String
+  emailVerified    Boolean  @default(false)
+  image            String?
+  pendingAvatarKey String?
+  avatarCleanupKey String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   role       String?
   banned     Boolean?  @default(false)

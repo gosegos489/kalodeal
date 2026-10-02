@@ -1,5 +1,7 @@
 import 'server-only'
 import { cache } from 'react'
+import { getSellerName } from '@/entities/user/public-profile'
+import { getApprovedAvatarUrl } from '@/features/account/settings/avatar-reference'
 import { getSession } from '@/lib/auth-utils'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
@@ -47,8 +49,8 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
     status,
     maskedPhone: phone ? `${phone.trim().startsWith('+') ? '+' : ''}${phone.replace(/\D/g, '').slice(0, 3)} ••••••` : null,
     seller: {
-      name: user.name.includes('@') ? 'Seller' : user.name,
-      image: getPublicSellerImageUrl(user.image)
+      name: getSellerName(user.name),
+      image: getApprovedAvatarUrl(userId, user.image)
     },
     isOwner,
     isAuthenticated: !!session,
@@ -58,18 +60,5 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
       const url = getListingImageUrl(image.key)
       return url ? [{ id: image.id, url }] : []
     })
-  }
-}
-
-function getPublicSellerImageUrl(image: string | null) {
-  const publicUrl = process.env.R2_PUBLIC_URL
-  if (!image || !publicUrl) return null
-
-  try {
-    const url = new URL(image)
-    const storageUrl = new URL(publicUrl)
-    return url.protocol === 'https:' && url.origin === storageUrl.origin && !url.username && !url.password ? url.href : null
-  } catch {
-    return null
   }
 }

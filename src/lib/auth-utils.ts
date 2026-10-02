@@ -1,13 +1,22 @@
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import 'server-only'
 import { auth } from './auth'
 
 type Role = 'user' | 'moderator' | 'admin'
 
-export async function getSession() {
+export async function getAuthHeaders() {
+  const requestHeaders = new Headers(await headers())
+  // Server Actions can rotate auth cookies. RSC reads after the action must use
+  // the current cookie store, rather than the request's now revoked token.
+  requestHeaders.set('cookie', (await cookies()).toString())
+  return requestHeaders
+}
+
+export async function getSession(disableCookieCache = false) {
   return auth.api.getSession({
-    headers: await headers()
+    headers: await getAuthHeaders(),
+    query: { disableCookieCache }
   })
 }
 

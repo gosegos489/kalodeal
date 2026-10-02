@@ -54,7 +54,7 @@ export default function RegisterForm() {
           control={registerForm.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+              <FieldLabel htmlFor={field.name}>Display name (optional)</FieldLabel>
 
               <Input
                 {...field}

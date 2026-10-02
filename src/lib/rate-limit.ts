@@ -17,6 +17,20 @@ const contactUsLimiter = new Ratelimit({
   timeout: 3000
 })
 
+const avatarUploadLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '10 m'),
+  prefix: 'ratelimit:avatar:upload',
+  timeout: 3000
+})
+
+const passwordChangeLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '1 m'),
+  prefix: 'ratelimit:account:password',
+  timeout: 3000
+})
+
 const listingSearchLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(60, '1 m'),
@@ -68,6 +82,14 @@ export function getRateLimitIp(headers: Pick<Headers, 'get'>): string | null {
 
 export function checkCreateListingRateLimit(userId: string) {
   return checkRateLimit(createListingLimiter, `user:${userId}`)
+}
+
+export function checkAvatarUploadRateLimit(userId: string) {
+  return checkRateLimit(avatarUploadLimiter, `user:${userId}`)
+}
+
+export function checkPasswordChangeRateLimit(userId: string) {
+  return checkRateLimit(passwordChangeLimiter, `user:${userId}`)
 }
 
 export function checkContactUsRateLimit(ip: string | null) {

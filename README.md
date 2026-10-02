@@ -190,12 +190,33 @@ DATABASE_URL="postgresql://..."
 BETTER_AUTH_SECRET="..."
 BETTER_AUTH_URL="http://localhost:3000"
 
+# Required server-only avatar storage key; supply your own secret value.
+AVATAR_ENCRYPTION_SECRET=""
+
 DOMAIN_URL="http://localhost:3000"
 PROJECT_NAME="Kalodeal"
 
 UPSTASH_REDIS_REST_URL="https://...upstash.io"
 UPSTASH_REDIS_REST_TOKEN="..."
 ```
+
+`AVATAR_ENCRYPTION_SECRET` is required when reading or uploading avatars. Supply a
+separate, securely generated secret (at least 32 random bytes); do not reuse
+`BETTER_AUTH_SECRET` for new storage. Validation rejects missing, empty and
+whitespace-only values. This variable is read only by the `server-only` avatar
+storage module. Never prefix it with `NEXT_PUBLIC_` or commit its value.
+
+Avatar encryption keeps the existing HKDF and `KDA1` AES-256-GCM envelope. Configure
+the variable in Vercel **Production**, **Preview** and **Development**, and redeploy
+affected deployments. Environments accessing the same avatar objects must use the
+same storage key; environments with isolated storage can use separate keys.
+
+Before switching an existing deployment, inspect its bucket and DB avatar
+references. Old objects encrypted with `BETTER_AUTH_SECRET` require the old key:
+either initialize `AVATAR_ENCRYPTION_SECRET` to that exact previous value for a
+compatible transition, or explicitly decrypt/re-encrypt the objects while preserving
+their keys, references and envelope. Verify the migrated objects before removing the
+old key. The application does not fall back to the authentication secret.
 
 Additional environment variables may be required depending on the enabled services.
 

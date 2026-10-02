@@ -1,0 +1,183 @@
+'use client'
+
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Clock3, Loader2, UserRound } from 'lucide-react'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { Controller, useForm } from 'react-hook-form'
+import z from 'zod'
+import { useRef, useState } from 'react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { toast } from '@/components/ui/toast'
+import type { ActionMessageResult } from '@/lib/action-result'
+import { removeAvatar, retryAvatarCleanup, saveProfile } from './actions'
+import { avatarFileSchema, profileSchema } from './schema'
+
+type Props = { userId: string; name: string; image: string | null; pending: boolean; cleanupPending: boolean }
+
+export function ProfileForm({ userId, name, image, pending, cleanupPending }: Props) {
+  const router = useRouter()
+  const fileInput = useRef<HTMLInputElement>(null)
+  const [avatarBusy, setAvatarBusy] = useState(false)
+  const form = useForm<z.infer<typeof profileSchema>>({ resolver: zodResolver(profileSchema), defaultValues: { name } })
+  const busy = avatarBusy || form.formState.isSubmitting
+
+  async function upload(file: File | undefined) {
+    if (!file) return
+    const parsed = avatarFileSchema.safeParse(file)
+    if (!parsed.success) {
+      toast.add({ title: 'Could not upload your photo', description: parsed.error.issues[0].message, type: 'error' })
+      return
+    }
+    setAvatarBusy(true)
+    try {
+      const payload = new FormData()
+      payload.set('avatar', file)
+      const response = await fetch('/api/account/avatar', { method: 'POST', body: payload })
+      const uploaded: ActionMessageResult = await response.json()
+      if (response.ok && uploaded.success) {
+        toast.add({
+          title: 'Photo sent for moderation',
+          description: 'Your profile photo will appear publicly once it is approved.',
+          type: 'success'
+        })
+      } else {
+        toast.add({ title: 'Could not upload your photo', description: uploaded.message, type: 'error' })
+      }
+    } catch {
+      toast.add({ title: 'Could not upload your photo', description: 'Please try again.', type: 'error' })
+    } finally {
+      setAvatarBusy(false)
+      router.refresh()
+    }
+  }
+
+  async function manageAvatar(cleanup = false) {
+    setAvatarBusy(true)
+    try {
+      const updated = await (cleanup ? retryAvatarCleanup(userId) : removeAvatar())
+      toast.add({
+        title: updated.success ? (cleanup ? 'Photo cleanup completed' : 'Profile photo removed') : 'Could not update your photo',
+        description: updated.message,
+        type: updated.success ? 'success' : 'error'
+      })
+    } catch {
+      toast.add({ title: 'Could not update your photo', description: 'Please try again.', type: 'error' })
+    } finally {
+      setAvatarBusy(false)
+      router.refresh()
+    }
+  }
+
+  return (
+    <form
+      className="flex min-w-0 flex-1 flex-col gap-6"
+      onSubmit={form.handleSubmit(async (data) => {
+        try {
+          const saved = await saveProfile(data)
+          toast.add({
+            title: saved.success ? 'Display name updated' : 'Could not save your profile',
+            description: saved.success ? 'Your display name has been saved successfully.' : saved.message,
+            type: saved.success ? 'success' : 'error'
+          })
+          if (saved.success) {
+            form.reset({ name: data.name })
+            router.refresh()
+          }
+        } catch {
+          toast.add({ title: 'Could not save your profile', description: 'Please try again.', type: 'error' })
+        }
+      })}
+    >
+      <FieldGroup className="gap-6">
+        <Field>
+          <div className="flex flex-wrap items-center gap-2">
+            <FieldLabel htmlFor="avatar-upload">Profile photo</FieldLabel>
+            {pending && (
+              <Badge variant="secondary" role="status">
+                <Clock3 aria-hidden="true" />
+                Awaiting moderation
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <Avatar className="ring-border size-16 shrink-0 ring-1">
+              {image && (
+                <AvatarImage
+                  src={image}
+                  alt="Current approved avatar"
+                  render={<Image src={image} alt="Current approved avatar" width={64} height={64} unoptimized />}
+                />
+              )}
+              <AvatarFallback>
+                <UserRound aria-hidden="true" className="size-7" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-wrap gap-2">
+              <Input
+                ref={fileInput}
+                id="avatar-upload"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                tabIndex={-1}
+                disabled={busy || cleanupPending}
+                aria-label="Choose an avatar image"
+                onChange={(event) => {
+                  void upload(event.target.files?.[0])
+                  event.target.value = ''
+                }}
+              />
+              <Button type="button" variant="outline" disabled={busy || cleanupPending} onClick={() => fileInput.current?.click()}>
+                {avatarBusy && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}Change photo
+              </Button>
+              <Button type="button" variant="outline" disabled={busy || (!image && !pending)} onClick={() => void manageAvatar()}>
+                Remove photo
+              </Button>
+            </div>
+          </div>
+          <FieldDescription>JPEG, PNG or WebP, up to 5 MB. Removing your photo also cancels a pending replacement.</FieldDescription>
+          {cleanupPending && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-muted-foreground text-sm">Storage cleanup is pending. Complete it before uploading another avatar.</p>
+              <Button type="button" variant="outline" disabled={busy} onClick={() => void manageAvatar(true)}>
+                Retry cleanup
+              </Button>
+            </div>
+          )}
+        </Field>
+        <Controller
+          name="name"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="display-name">Display name</FieldLabel>
+              <Input
+                {...field}
+                id="display-name"
+                autoComplete="name"
+                maxLength={64}
+                disabled={busy}
+                aria-invalid={fieldState.invalid}
+                aria-describedby="display-name-help"
+              />
+              <FieldDescription id="display-name-help">
+                Optional. Leave empty to appear as Seller. Your email is never shown publicly.
+              </FieldDescription>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+      </FieldGroup>
+      <div className="mt-auto border-t pt-5">
+        <Button type="submit" disabled={busy} className="w-full sm:w-auto">
+          {form.formState.isSubmitting && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}Save profile
+        </Button>
+      </div>
+    </form>
+  )
+}

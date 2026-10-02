@@ -1,15 +1,9 @@
 import z from 'zod'
+import { displayNameSchema } from '@/features/account/settings/schema'
 
 export const registerSchema = z
   .object({
-    name: z
-      .string()
-      .min(3, {
-        message: 'Name must be at least 3 characters long'
-      })
-      .max(64, {
-        message: 'Name must be at most 64 characters long'
-      }),
+    name: displayNameSchema,
     email: z.email().max(64, {
       message: 'Email must be at most 64 characters long'
     }),

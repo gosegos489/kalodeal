@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getListing } from '@/entities/listing/get-listing'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
+import { getSellerInitials } from '@/entities/user/public-profile'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
 import { ListingViewTracker } from '@/features/listing-views/listing-view-tracker'
 import { RevealListingPhoneButton } from '@/features/reveal-listing-phone/reveal-listing-phone-button'
@@ -55,13 +56,8 @@ async function ListingDetails({ params }: Props) {
   const listing = await getListing(id)
   if (!listing) notFound()
 
-  const sellerName = listing.seller.name.trim() || 'Seller'
-  const initials = sellerName
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0))
-    .join('')
-    .toUpperCase()
+  const sellerName = listing.seller.name
+  const initials = getSellerInitials(sellerName)
   const publishedAt = dayjs.utc(listing.createdAt).format('D MMM YYYY')
 
   return (
@@ -155,7 +151,7 @@ async function ListingDetails({ params }: Props) {
                     <AvatarImage
                       src={listing.seller.image}
                       alt=""
-                      render={<Image src={listing.seller.image} alt="" width={56} height={56} sizes="56px" />}
+                      render={<Image src={listing.seller.image} alt="" width={56} height={56} sizes="56px" unoptimized />}
                     />
                   )}
                   <AvatarFallback>{initials}</AvatarFallback>

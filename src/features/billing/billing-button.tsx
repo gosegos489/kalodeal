@@ -12,6 +12,7 @@ export function BillingButton({ intent }: { intent: 'upgrade' | 'manage' }) {
   return (
     <div className="flex flex-col items-start gap-2">
       <Button
+        className="cursor-pointer"
         disabled={pending}
         variant={intent === 'upgrade' ? 'default' : 'outline'}
         onClick={() => {

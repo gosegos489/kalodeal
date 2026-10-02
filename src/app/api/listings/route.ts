@@ -5,6 +5,7 @@ import { MAX_IMAGE_BYTES, createListingSchema } from '@/features/create-listing/
 import type { CreateListingResult } from '@/features/create-listing/types'
 import { getSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
+import { matchesImageType } from '@/lib/image-validation'
 import { LISTING_SLOT_STATUSES, PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { checkCreateListingRateLimit } from '@/lib/rate-limit'
@@ -13,12 +14,6 @@ class ListingLimitError extends Error {}
 
 function failure(message: string, status: number, fieldErrors?: Extract<CreateListingResult, { success: false }>['fieldErrors']) {
   return Response.json({ success: false, message, ...(fieldErrors ? { fieldErrors } : {}) } satisfies CreateListingResult, { status })
-}
-
-function matchesImageType(bytes: Buffer, type: string) {
-  if (type === 'image/jpeg') return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
-  if (type === 'image/png') return bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
-  return type === 'image/webp' && bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP'
 }
 
 export async function POST(request: Request) {
