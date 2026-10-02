@@ -18,4 +18,6 @@ export type ListingDetails = Omit<ListingSummary, 'category'> & {
   maskedPhone: string | null
   isOwner: boolean
   isAuthenticated: boolean
+  isFavorited: boolean
+  favoritesCount: number
 }

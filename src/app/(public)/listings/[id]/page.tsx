@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getListing } from '@/entities/listing/get-listing'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
+import { FavoriteButton } from '@/features/favorites/favorite-button'
 import { RevealListingPhoneButton } from '@/features/reveal-listing-phone/reveal-listing-phone-button'
 import { dayjs } from '@/lib/dayjs'
 import { buildMetadata } from '@/lib/metadata'
@@ -121,6 +122,19 @@ async function ListingDetails({ params }: Props) {
               </div>
               <p className="text-primary text-3xl font-semibold">{listing.price === null ? 'Price on request' : `$${listing.price}`}</p>
               <h1 className="text-2xl font-semibold wrap-break-word">{listing.title}</h1>
+              <div className="flex items-center gap-3">
+                {listing.status === 'ACTIVE' && (
+                  <FavoriteButton
+                    listingId={listing.id}
+                    title={listing.title}
+                    isFavorited={listing.isFavorited}
+                    isAuthenticated={listing.isAuthenticated}
+                  />
+                )}
+                <p role="status" className="text-muted-foreground text-sm">
+                  {listing.favoritesCount} {listing.favoritesCount === 1 ? 'favorite' : 'favorites'}
+                </p>
+              </div>
               <p className="text-muted-foreground text-xs">
                 Published <time dateTime={listing.createdAt.toISOString()}>{publishedAt}</time>
               </p>

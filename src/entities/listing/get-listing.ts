@@ -7,7 +7,8 @@ import { getListingImageUrl, listingSummarySelect, toListingSummary } from './li
 import { listingIdSchema } from './schema'
 import type { ListingDetails } from './types'
 
-const getListingRow = cache(async (id: string) => {
+// React cache only deduplicates within a request; personalized data never enters a shared cache.
+const getListingRow = cache(async (id: string, userId: string | null) => {
   return prisma.listing.findUnique({
     where: { id },
     select: {
@@ -15,6 +16,8 @@ const getListingRow = cache(async (id: string) => {
       status: true,
       userId: true,
       phone: true,
+      _count: { select: { favorites: true } },
+      favorites: { where: { userId: userId ?? '' }, select: { id: true }, take: 1 },
       user: { select: { name: true, image: true } },
       category: { select: { name: true, slug: true } },
       images: {
@@ -30,11 +33,11 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
   const result = listingIdSchema.safeParse(id)
   if (!result.success) return null
 
-  const listing = await getListingRow(result.data)
+  const session = await getSession()
+  const listing = await getListingRow(result.data, session?.user.id ?? null)
   if (!listing) return null
 
-  const { userId, user, phone, status, ...summary } = listing
-  const session = await getSession()
+  const { userId, user, phone, status, favorites, _count, ...summary } = listing
   const isOwner = session?.user.id === userId
   if (status !== 'ACTIVE' && !isOwner) return null
 
@@ -49,6 +52,8 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
     },
     isOwner,
     isAuthenticated: !!session,
+    isFavorited: !!session && favorites.length > 0,
+    favoritesCount: _count.favorites,
     images: listing.images.flatMap((image) => {
       const url = getListingImageUrl(image.key)
       return url ? [{ id: image.id, url }] : []

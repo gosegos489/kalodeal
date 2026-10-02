@@ -9,6 +9,7 @@ import { getMainCategoryFeeds } from '@/entities/listing/get-main-category-feeds
 import { listingFiltersSchema } from '@/entities/listing/schema'
 import { ListingCard } from '@/entities/listing/ui/listing-card'
 import { ListingCarousel } from '@/entities/listing/ui/listing-carousel'
+import { getFavoriteState } from '@/features/favorites/data'
 import { ListingSearch } from '@/features/listing-search/ui/listing-search'
 import HeroSection from './_ui/HeroSection'
 
@@ -61,14 +62,25 @@ async function HomeContent({ searchParams }: Props) {
           <p className="text-muted-foreground rounded-xl border border-dashed p-6 text-sm">Categories are currently unavailable.</p>
         )}
       </section>
-      {feeds.map((feed) => (
-        <CategoryFeed key={feed.category.id} feed={feed} />
-      ))}
+      <Suspense fallback={<ListingsLoading />}>
+        <CategoryFeeds feeds={feeds} />
+      </Suspense>
     </div>
   )
 }
 
-function CategoryFeed({ feed }: { feed: Awaited<ReturnType<typeof getMainCategoryFeeds>>[number] }) {
+async function CategoryFeeds({ feeds }: { feeds: Awaited<ReturnType<typeof getMainCategoryFeeds>> }) {
+  const favoriteState = await getFavoriteState(feeds.flatMap(({ listings }) => listings.map(({ id }) => id)))
+  return feeds.map((feed) => <CategoryFeed key={feed.category.id} feed={feed} favoriteState={favoriteState} />)
+}
+
+function CategoryFeed({
+  feed,
+  favoriteState
+}: {
+  feed: Awaited<ReturnType<typeof getMainCategoryFeeds>>[number]
+  favoriteState: Awaited<ReturnType<typeof getFavoriteState>>
+}) {
   const { category, listings } = feed
   const headingId = `feed-${category.slug}`
   return (
@@ -92,6 +104,8 @@ function CategoryFeed({ feed }: { feed: Awaited<ReturnType<typeof getMainCategor
             content: (
               <ListingCard
                 listing={listing}
+                isFavorited={favoriteState.favoritedIds.has(listing.id)}
+                isAuthenticated={favoriteState.isAuthenticated}
                 imageSizes="(max-width: 639px) calc((100vw - 32px) * 0.85), (max-width: 767px) calc((100vw - 48px) / 2), (max-width: 1279px) calc((100vw - 64px) / 3), calc((100vw - 80px) / 4)"
               />
             )
@@ -140,6 +154,7 @@ async function ListingResults({ searchParams }: Props) {
   const result = listingFiltersSchema.safeParse({ query: q, category })
   const filters = result.success ? result.data : {}
   const listings = await getListings(filters)
+  const favoriteState = await getFavoriteState(listings.map(({ id }) => id))
   const filtered = Boolean(filters.query || filters.category)
   const title = filters.query
     ? `Results for “${filters.query}”`
@@ -169,7 +184,13 @@ async function ListingResults({ searchParams }: Props) {
       {listings.length ? (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
           {listings.map((listing, index) => (
-            <ListingCard key={listing.id} listing={listing} eager={index < 4} />
+            <ListingCard
+              key={listing.id}
+              listing={listing}
+              eager={index < 4}
+              isFavorited={favoriteState.favoritedIds.has(listing.id)}
+              isAuthenticated={favoriteState.isAuthenticated}
+            />
           ))}
         </div>
       ) : (

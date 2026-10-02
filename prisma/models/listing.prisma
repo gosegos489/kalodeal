@@ -69,6 +69,7 @@ model Favorite {
   createdAt DateTime @default(now())
 
   @@unique([userId, listingId])
+  @@index([userId, createdAt, id])
   @@index([listingId])
   @@map("favorite")
 }
