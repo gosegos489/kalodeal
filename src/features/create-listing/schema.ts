@@ -51,5 +51,3 @@ export function createListingSchema(plan: ListingPlan = 'FREE') {
       }, 'Enter an HTTPS YouTube link.')
   })
 }
-
-export const listingDetailsSchema = createListingSchema()

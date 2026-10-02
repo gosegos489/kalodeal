@@ -1,6 +1,6 @@
 'use client'
 
-import { Menu, Plus } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -91,15 +91,6 @@ export default function MobileMenu({ isAuth, currentYear }: Props) {
                 </Link>
               )}
             </div>
-
-            <Link
-              href={isAuth ? '/sell' : '/login'}
-              onClick={closeMenu}
-              className="bg-primary text-primary-foreground hover:bg-primary/80 inline-flex h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors"
-            >
-              <Plus className="size-4" />
-              Post a listing
-            </Link>
           </div>
         </ScrollArea>
 

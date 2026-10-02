@@ -1,21 +1,11 @@
 import { cacheLife, cacheTag } from 'next/cache'
-import { z } from 'zod'
+import 'server-only'
+import type { Prisma } from '@/generated/prisma/client'
 import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'
-
-export const listingFiltersSchema = z
-  .object({
-    query: z.string().trim().max(100).optional(),
-    category: z
-      .string()
-      .trim()
-      .max(100)
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-      .optional()
-  })
-  .strict()
-
-type ListingFilters = z.input<typeof listingFiltersSchema>
+import { SEARCH_RESULTS_LIMIT } from './constants'
+import { listingSummarySelect, toListingSummary } from './listing-summary'
+import { type ListingFilters, listingFiltersSchema } from './schema'
 
 export async function getListings(filters: ListingFilters = {}) {
   'use cache'
@@ -24,57 +14,28 @@ export async function getListings(filters: ListingFilters = {}) {
   cacheLife('hours')
 
   const result = listingFiltersSchema.safeParse(filters)
-
-  if (!result.success) {
-    return []
-  }
-
-  const { query, category } = result.data
-  const search = query?.trim()
-  const categorySlug = category?.trim()
+  if (!result.success) return []
 
   const listings = await prisma.listing.findMany({
-    where: {
-      status: 'ACTIVE',
-      ...(search
-        ? {
-            OR: [{ title: { contains: search, mode: 'insensitive' } }, { description: { contains: search, mode: 'insensitive' } }]
-          }
-        : {}),
-      ...(categorySlug
-        ? {
-            category: {
-              OR: [{ slug: categorySlug }, { parent: { is: { slug: categorySlug } } }, { parent: { is: { parent: { is: { slug: categorySlug } } } } }]
-            }
-          }
-        : {})
-    },
-    include: {
-      images: {
-        select: { key: true },
-        orderBy: { sortOrder: 'asc' },
-        take: 1
-      },
-      category: {
-        select: {
-          name: true
-        }
-      }
-    },
-    orderBy: {
-      sortDate: 'desc'
-    },
-    take: 50
+    where: getListingWhere(result.data),
+    select: listingSummarySelect,
+    orderBy: [{ sortDate: 'desc' }, { id: 'desc' }],
+    take: SEARCH_RESULTS_LIMIT
   })
 
-  return listings.map((listing) => ({
-    ...listing,
-    coverUrl:
-      listing.images[0] && process.env.R2_PUBLIC_URL
-        ? `${process.env.R2_PUBLIC_URL.replace(/\/$/, '')}/${listing.images[0].key.split('/').map(encodeURIComponent).join('/')}`
-        : null,
-    price: listing.price?.toNumber() ?? null
-  }))
+  return listings.map(toListingSummary)
 }
 
-export type ListingSummary = Awaited<ReturnType<typeof getListings>>[number]
+function getListingWhere({ query, category }: ListingFilters): Prisma.ListingWhereInput {
+  return {
+    status: 'ACTIVE',
+    ...(query && {
+      OR: [{ title: { contains: query, mode: 'insensitive' } }, { description: { contains: query, mode: 'insensitive' } }]
+    }),
+    ...(category && {
+      category: {
+        OR: [{ slug: category }, { parent: { is: { slug: category } } }, { parent: { is: { parent: { is: { slug: category } } } } }]
+      }
+    })
+  }
+}

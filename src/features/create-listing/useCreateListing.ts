@@ -11,8 +11,9 @@ import type { CreateListingInput, CreateListingValues } from './types'
 
 export function useCreateListing(plan: ListingPlan) {
   const router = useRouter()
+  const schema = createListingSchema(plan)
   const form = useForm<CreateListingInput, unknown, CreateListingValues>({
-    resolver: zodResolver(createListingSchema(plan)),
+    resolver: zodResolver(schema),
     defaultValues: { title: '', categoryId: '', description: '', price: '', phone: '', youtube: '', images: [] }
   })
   const { isSubmitting } = form.formState
@@ -20,8 +21,7 @@ export function useCreateListing(plan: ListingPlan) {
     try {
       const result = await createListing(values)
       if (!result.success) {
-        const names = ['title', 'categoryId', 'description', 'price', 'phone', 'youtube', 'images'] as const
-        for (const name of names) {
+        for (const name of schema.keyof().options) {
           const messages = result.fieldErrors?.[name]
           if (messages?.length) form.setError(name, { type: 'server', message: messages.join(' ') })
         }

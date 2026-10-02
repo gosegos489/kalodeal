@@ -1,0 +1,3 @@
+export const LISTING_QUERY_MAX_LENGTH = 100
+export const SEARCH_RESULTS_LIMIT = 50
+export const CATEGORY_FEED_LIMIT = 10

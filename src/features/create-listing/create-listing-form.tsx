@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
-import { CreateListingSidebar } from './create-listing-sidebar'
+import { ListingAllowanceCard } from './listing-allowance-card'
 import { ListingAttachments } from './listing-attachments'
+import { ListingTipsCard } from './listing-tips-card'
+import { PublishListingCard } from './publish-listing-card'
 import type { ListingCategoryOption } from './types'
 import { useCreateListing } from './useCreateListing'
 
@@ -186,13 +188,11 @@ export default function CreateListingForm({ categories, plan, activeListingCount
         </section>
       </div>
 
-      <CreateListingSidebar
-        plan={plan}
-        activeListingCount={activeListingCount}
-        categoriesAvailable={categories.length > 0}
-        isSubmitting={isSubmitting}
-        disabled={disabled}
-      />
+      <aside className="flex min-w-0 flex-col gap-5 lg:sticky lg:top-24">
+        <ListingAllowanceCard plan={plan} activeListingCount={activeListingCount} categoriesAvailable={categories.length > 0} />
+        <PublishListingCard isSubmitting={isSubmitting} disabled={disabled} />
+        <ListingTipsCard />
+      </aside>
     </form>
   )
 }

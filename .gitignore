@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/
+
+# Agents
+AGENTS.md
+DESIGN.md

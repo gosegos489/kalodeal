@@ -1,5 +1,5 @@
-import { ChatProvider } from '@/app/chat-provider'
+import { AccountShell } from '@/features/account/account-shell'
 
 export default function MessagesLayout({ children }: { children: React.ReactNode }) {
-  return <ChatProvider>{children}</ChatProvider>
+  return <AccountShell>{children}</AccountShell>
 }

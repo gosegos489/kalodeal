@@ -199,7 +199,7 @@ UPSTASH_REDIS_REST_TOKEN="..."
 
 Additional environment variables may be required depending on the enabled services.
 
-Upstash Redis protects listing creation (5 attempts per user per 10 minutes) and Contact Us (3 attempts per IP per 10 minutes). Both environment variables are required locally and in the deployment environment. Submissions are temporarily rejected if Redis is unavailable. On Vercel, the client IP comes from platform headers; a self-hosted reverse proxy must overwrite `x-real-ip` or provide a single trusted IP in `x-forwarded-for`.
+Upstash Redis protects listing creation (5 attempts per user per 10 minutes), Contact Us (3 attempts per IP per 10 minutes), and listing search (60 requests per IP per minute). Search requests to `/` with a `q` or `category` parameter are checked in `src/proxy.ts` before rendering, including direct requests and Next.js RSC/prefetch requests. Exceeding the search limit returns HTTP 429 with `Retry-After`; missing trusted IP information, Redis failures, and Redis timeouts return HTTP 503. These responses use `Cache-Control: no-store`. Both environment variables are required locally and in the deployment environment. Submissions and search requests are temporarily rejected if Redis is unavailable. On Vercel, the client IP comes from platform headers; a self-hosted reverse proxy must overwrite `x-real-ip` or provide a single trusted IP in `x-forwarded-for`. This application limit does not replace hosting/CDN protection against distributed DDoS attacks.
 
 > Never commit production secrets or your `.env` file to Git.
 
