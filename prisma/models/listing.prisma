@@ -28,6 +28,7 @@ model Listing {
 
   stats     ListingStats?
   favorites Favorite[]
+  views     ListingDailyView[]
 
   bumpedAt DateTime?
 
@@ -40,6 +41,19 @@ model Listing {
   @@index([categoryId])
   @@index([status, sortDate])
   @@map("listing")
+}
+
+// Only a per-listing, per-day hash of a random browser cookie is persisted.
+model ListingDailyView {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  visitorHash String
+  day         DateTime @db.Date
+
+  @@unique([listingId, visitorHash, day])
+  @@index([listingId, day])
+  @@map("listing_daily_view")
 }
 
 model ListingStats {

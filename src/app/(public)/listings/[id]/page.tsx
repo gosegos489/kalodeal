@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getListing } from '@/entities/listing/get-listing'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
+import { ListingViewTracker } from '@/features/listing-views/listing-view-tracker'
 import { RevealListingPhoneButton } from '@/features/reveal-listing-phone/reveal-listing-phone-button'
 import { dayjs } from '@/lib/dayjs'
 import { buildMetadata } from '@/lib/metadata'
@@ -65,6 +66,7 @@ async function ListingDetails({ params }: Props) {
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      {listing.status === 'ACTIVE' && !listing.isOwner && <ListingViewTracker listingId={listing.id} />}
       <BreadCrumbs
         items={[
           { label: 'Home', href: '/' },

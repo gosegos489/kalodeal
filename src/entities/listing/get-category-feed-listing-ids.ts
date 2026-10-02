@@ -19,13 +19,13 @@ export async function getCategoryFeedListingIds(categories: CategorySummary[]) {
     SELECT category_groups."rootId", recent.id AS "listingId"
     FROM category_groups
     CROSS JOIN LATERAL (
-      SELECT id, "createdAt"
+      SELECT id, "sortDate"
       FROM listing
       WHERE "categoryId" = ANY(category_groups."categoryIds") AND status = 'ACTIVE'
-      ORDER BY "createdAt" DESC, id DESC
+      ORDER BY "sortDate" DESC, id DESC
       LIMIT ${CATEGORY_FEED_LIMIT}
     ) recent
-    ORDER BY category_groups."rootId", recent."createdAt" DESC, recent.id DESC
+    ORDER BY category_groups."rootId", recent."sortDate" DESC, recent.id DESC
   `)
 }
 

@@ -24,12 +24,22 @@ model Subscription {
 
   bumpUsed Int @default(0)
 
-  stripeCustomerId     String?
+  stripeCustomerId     String? @unique
   stripeSubscriptionId String? @unique
+  checkoutSessionId    String? @unique
+  checkoutAttempt      Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([stripeCustomerId])
   @@map("subscription")
+}
+
+model StripeWebhookEvent {
+  id              String   @id
+  type            String
+  stripeCreatedAt DateTime
+  processedAt     DateTime @default(now())
+
+  @@map("stripe_webhook_event")
 }

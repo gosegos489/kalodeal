@@ -10,7 +10,18 @@ export async function getAccount() {
   const userId = session.user.id
 
   const [subscription, listingSlotCount] = await Promise.all([
-    prisma.subscription.findUnique({ where: { userId } }),
+    prisma.subscription.findUnique({
+      where: { userId },
+      select: {
+        plan: true,
+        status: true,
+        currentPeriodStart: true,
+        currentPeriodEnd: true,
+        bumpUsed: true,
+        stripeCustomerId: true,
+        stripeSubscriptionId: true
+      }
+    }),
     prisma.listing.count({ where: { userId, status: { in: LISTING_SLOT_STATUSES } } })
   ])
 
@@ -20,7 +31,17 @@ export async function getAccount() {
     user: session.user,
     plan,
     limits: PLAN_LIMITS[plan],
-    listingSlotCount
+    listingSlotCount,
+    subscription: subscription
+      ? {
+          status: subscription.status,
+          currentPeriodStart: subscription.currentPeriodStart,
+          currentPeriodEnd: subscription.currentPeriodEnd,
+          bumpUsed: subscription.bumpUsed,
+          hasStripeSubscription: !!subscription.stripeCustomerId && !!subscription.stripeSubscriptionId
+        }
+      : null,
+    bumpsRemaining: Math.max(0, PLAN_LIMITS[plan].monthlyBumps - (subscription?.bumpUsed ?? 0))
   }
 }
 

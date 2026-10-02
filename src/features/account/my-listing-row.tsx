@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button'
 import type { ListingSummary } from '@/entities/listing/types'
 import type { ListingStatus } from '@/generated/prisma/enums'
 import { dayjs } from '@/lib/dayjs'
+import { BumpListingButton } from './bump-listing-button'
 import { DeleteListingButton } from './delete-listing-button'
 import { ListingStatusBadge } from './listing-status-badge'
 
-type MyListingRowProps = { listing: ListingSummary & { status: ListingStatus } }
+type MyListingRowProps = { listing: ListingSummary & { status: ListingStatus }; bumpsRemaining: number; canBump: boolean }
 
-export function MyListingRow({ listing }: MyListingRowProps) {
+export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowProps) {
   const href = `/listings/${listing.id}`
 
   return (
@@ -53,6 +54,7 @@ export function MyListingRow({ listing }: MyListingRowProps) {
           <Eye aria-hidden="true" /> View
         </Button>
         <DeleteListingButton listingId={listing.id} title={listing.title} />
+        {canBump && listing.status === 'ACTIVE' && <BumpListingButton listingId={listing.id} title={listing.title} disabled={bumpsRemaining === 0} />}
       </div>
     </article>
   )

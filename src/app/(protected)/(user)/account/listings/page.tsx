@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getMyListings } from '@/features/account/data'
+import { getAccount, getMyListings } from '@/features/account/data'
 import { MyListingRow } from '@/features/account/my-listing-row'
 import { serializePagination } from '@/lib/pagination'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
@@ -15,7 +15,7 @@ const listingsRowsClassName = 'flex min-w-0 flex-col gap-4'
 
 async function MyListings({ searchParams }: Props) {
   const params = await searchParams
-  const { listings, page, pageSize, totalItems, totalPages } = await getMyListings(params.page)
+  const [{ listings, page, pageSize, totalItems, totalPages }, account] = await Promise.all([getMyListings(params.page), getAccount()])
 
   // Keep the URL aligned with the rendered page, also after the last row is deleted.
   if (params.page !== undefined && params.page !== String(page)) {
@@ -44,12 +44,17 @@ async function MyListings({ searchParams }: Props) {
 
   return (
     <>
+      {account.limits.monthlyBumps > 0 && (
+        <p className="text-muted-foreground text-sm">
+          {account.bumpsRemaining} of {account.limits.monthlyBumps} bumps remaining in this paid billing period.
+        </p>
+      )}
       <p className="text-muted-foreground text-sm" role="status">
         Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalItems)} of {totalItems} listings
       </p>
       <div className={listingsRowsClassName}>
         {listings.map((listing) => (
-          <MyListingRow key={listing.id} listing={listing} />
+          <MyListingRow key={listing.id} listing={listing} bumpsRemaining={account.bumpsRemaining} canBump={account.limits.monthlyBumps > 0} />
         ))}
       </div>
       <NuqsPagination totalPages={totalPages} ariaLabel="My listings pages" />
