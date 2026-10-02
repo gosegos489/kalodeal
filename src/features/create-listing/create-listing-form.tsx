@@ -16,13 +16,13 @@ import { useCreateListing } from './useCreateListing'
 type CreateListingFormProps = {
   categories: ListingCategoryOption[]
   plan: ListingPlan
-  activeListingCount: number
+  listingSlotCount: number
 }
 
-export default function CreateListingForm({ categories, plan, activeListingCount }: CreateListingFormProps) {
+export default function CreateListingForm({ categories, plan, listingSlotCount }: CreateListingFormProps) {
   const { form, isSubmitting, onSubmit } = useCreateListing(plan)
   const limits = PLAN_LIMITS[plan]
-  const limitReached = activeListingCount >= limits.activeListings
+  const limitReached = listingSlotCount >= limits.activeListings
   const disabled = isSubmitting || limitReached || categories.length === 0
 
   return (
@@ -189,7 +189,7 @@ export default function CreateListingForm({ categories, plan, activeListingCount
       </div>
 
       <aside className="flex min-w-0 flex-col gap-5 lg:sticky lg:top-24">
-        <ListingAllowanceCard plan={plan} activeListingCount={activeListingCount} categoriesAvailable={categories.length > 0} />
+        <ListingAllowanceCard plan={plan} listingSlotCount={listingSlotCount} categoriesAvailable={categories.length > 0} />
         <PublishListingCard isSubmitting={isSubmitting} disabled={disabled} />
         <ListingTipsCard />
       </aside>

@@ -1,18 +1,22 @@
 enum ListingStatus {
+  PENDING
   ACTIVE
+  HIDDEN
+  REJECTED
   INACTIVE
   SOLD
 }
 
 model Listing {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  price       Decimal?
-  phone       String
-  youtube     String?
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  price        Decimal?
+  phone        String
+  phoneReveals Int      @default(0)
+  youtube      String?
 
-  status ListingStatus @default(ACTIVE)
+  status ListingStatus @default(PENDING)
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

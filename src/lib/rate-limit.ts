@@ -24,6 +24,13 @@ const listingSearchLimiter = new Ratelimit({
   timeout: 3000
 })
 
+const listingPhoneRevealLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(30, '1 m'),
+  prefix: 'ratelimit:listing:phone-reveal',
+  timeout: 3000
+})
+
 type RateLimitResult = { success: true } | { success: false; status: 429 | 503; message: string; retryAfter: number }
 
 function unavailable(): RateLimitResult {
@@ -64,4 +71,8 @@ export function checkContactUsRateLimit(ip: string | null) {
 export function checkListingSearchRateLimit(ip: string | null) {
   if (!ip) return Promise.resolve(unavailable())
   return checkRateLimit(listingSearchLimiter, `ip:${ip}`)
+}
+
+export function checkListingPhoneRevealRateLimit(userId: string) {
+  return checkRateLimit(listingPhoneRevealLimiter, `user:${userId}`)
 }

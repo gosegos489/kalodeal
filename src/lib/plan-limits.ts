@@ -1,3 +1,8 @@
+import type { ListingStatus } from '@/generated/prisma/enums'
+
+// Pending moderation reserves a slot before the listing becomes public.
+export const LISTING_SLOT_STATUSES: ListingStatus[] = ['PENDING', 'ACTIVE']
+
 export const PLAN_LIMITS = {
   FREE: {
     activeListings: 1,

@@ -14,8 +14,6 @@ export async function getCategoryFeedListingIds(categories: CategorySummary[]) {
     return Prisma.sql`(${category.id}::text, ARRAY[${Prisma.join(ids)}]::text[])`
   })
 
-  // Prisma cannot apply a single take across a root and its descendants for every root.
-  // LATERAL limits each feed in the database; only IDs are read here, in one query.
   return prisma.$queryRaw<CategoryFeedListingId[]>(Prisma.sql`
     WITH category_groups("rootId", "categoryIds") AS (VALUES ${Prisma.join(groups)})
     SELECT category_groups."rootId", recent.id AS "listingId"

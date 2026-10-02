@@ -4,14 +4,14 @@ import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
 
 type ListingAllowanceCardProps = {
   plan: ListingPlan
-  activeListingCount: number
+  listingSlotCount: number
   categoriesAvailable: boolean
 }
 
-export function ListingAllowanceCard({ plan, activeListingCount, categoriesAvailable }: ListingAllowanceCardProps) {
+export function ListingAllowanceCard({ plan, listingSlotCount, categoriesAvailable }: ListingAllowanceCardProps) {
   const limits = PLAN_LIMITS[plan]
-  const limitReached = activeListingCount >= limits.activeListings
-  const availableListingCount = limits.activeListings - activeListingCount
+  const limitReached = listingSlotCount >= limits.activeListings
+  const availableListingCount = limits.activeListings - listingSlotCount
 
   return (
     <section className="bg-card flex flex-col gap-4 rounded-2xl border p-6 shadow-xs">
@@ -23,10 +23,10 @@ export function ListingAllowanceCard({ plan, activeListingCount, categoriesAvail
       <div className="grid grid-cols-2 divide-x rounded-xl border py-4">
         <div className="flex flex-col gap-1 px-4">
           <p className="text-2xl font-semibold tabular-nums">
-            {activeListingCount}
+            {listingSlotCount}
             <span className="text-muted-foreground text-base font-normal"> / {limits.activeListings}</span>
           </p>
-          <p className="text-muted-foreground text-xs">Active listings</p>
+          <p className="text-muted-foreground text-xs">Used listing slots</p>
         </div>
         <div className="flex flex-col gap-1 px-4">
           <p className="text-2xl font-semibold tabular-nums">{limits.imagesPerListing}</p>
@@ -34,15 +34,17 @@ export function ListingAllowanceCard({ plan, activeListingCount, categoriesAvail
         </div>
       </div>
 
+      <p className="text-muted-foreground text-xs">Active listings and listings awaiting moderation count toward your limit.</p>
+
       <div className="flex flex-col gap-3 text-sm">
         {limitReached ? (
           <p className="text-destructive leading-relaxed">
-            You have reached your active listing limit.{' '}
-            <Link href="/listings" className="font-medium">
+            You have reached your listing limit, including listings awaiting moderation.{' '}
+            <Link href="/account/listings" className="font-medium">
               Manage your listings
             </Link>{' '}
             or{' '}
-            <Link href="/payments" className="font-medium">
+            <Link href="/account/subscription" className="font-medium">
               view your plan
             </Link>
             .
@@ -56,7 +58,7 @@ export function ListingAllowanceCard({ plan, activeListingCount, categoriesAvail
         {!categoriesAvailable && <p className="text-destructive">Categories are currently unavailable. Please try again later.</p>}
       </div>
 
-      <Link href="/payments" className="text-primary inline-flex items-center gap-1.5 text-sm font-medium">
+      <Link href="/account/subscription" className="text-primary inline-flex items-center gap-1.5 text-sm font-medium">
         {plan === 'PRO' ? 'Manage your plan' : 'Explore Pro'} <ArrowRight className="size-3.5" />
       </Link>
     </section>

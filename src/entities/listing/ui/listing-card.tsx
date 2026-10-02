@@ -1,41 +1,68 @@
 import { ImageIcon } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
+import { Badge } from '@/components/ui/badge'
+import type { ListingStatus } from '@/generated/prisma/enums'
 import { dayjs } from '@/lib/dayjs'
 import type { ListingSummary } from '../types'
 
 type ListingCardProps = {
-  listing: Pick<ListingSummary, 'title' | 'description' | 'category' | 'price' | 'coverUrl' | 'createdAt'>
+  listing: ListingSummary
   eager?: boolean
+  status?: ListingStatus
+  imageSizes?: string
 }
 
-export function ListingCard({ listing, eager = false }: ListingCardProps) {
+export function ListingCard({
+  listing,
+  eager = false,
+  status,
+  imageSizes = '(max-width: 639px) calc(100vw - 32px), (max-width: 767px) calc((100vw - 48px) / 2), (max-width: 1279px) calc((100vw - 64px) / 3), calc((100vw - 80px) / 4)'
+}: ListingCardProps) {
+  const href = `/listings/${listing.id}`
+
   return (
     <article className="bg-card flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border shadow-xs">
-      <div className="bg-muted relative aspect-4/3 overflow-hidden">
+      <Link
+        href={href}
+        aria-label={`View listing: ${listing.title}`}
+        className="bg-muted focus-visible:ring-ring relative block aspect-4/3 shrink-0 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset"
+      >
         {listing.coverUrl ? (
-          <Image
-            src={listing.coverUrl}
-            alt={listing.title}
-            fill
-            sizes="(max-width: 639px) 100vw, (max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
-            loading={eager ? 'eager' : 'lazy'}
-            className="object-cover"
-          />
+          <Image src={listing.coverUrl} alt={listing.title} fill sizes={imageSizes} loading={eager ? 'eager' : 'lazy'} className="object-cover" />
         ) : (
           <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2">
             <ImageIcon aria-hidden="true" className="size-8" strokeWidth={1.5} />
             <span className="text-xs">No photo</span>
           </div>
         )}
-      </div>
+      </Link>
       <div className="flex flex-1 flex-col gap-2 p-4 sm:p-5">
-        <p className="text-muted-foreground truncate text-xs">{listing.category.name}</p>
-        <h3 className="line-clamp-2 leading-snug font-semibold">{listing.title}</h3>
-        <p className="text-primary text-lg font-semibold">{listing.price === null ? 'Price on request' : `$${listing.price}`}</p>
-        <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{listing.description}</p>
-        <time dateTime={listing.createdAt.toISOString()} className="text-muted-foreground mt-auto border-t pt-3 text-xs">
-          {dayjs.utc(listing.createdAt).format('D MMM YYYY')}
-        </time>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-muted-foreground truncate text-xs">{listing.category.name}</p>
+          {status && (
+            <Badge variant={status === 'ACTIVE' ? 'default' : 'secondary'} className="capitalize">
+              {status.toLowerCase()}
+            </Badge>
+          )}
+        </div>
+        <Link href={href} className="group focus-visible:ring-ring flex flex-col gap-2 rounded-sm outline-none focus-visible:ring-2">
+          <h3 className="group-hover:text-primary line-clamp-2 leading-snug font-semibold">{listing.title}</h3>
+          <p className="text-primary text-lg font-semibold">{listing.price === null ? 'Price on request' : `$${listing.price}`}</p>
+          <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{listing.description}</p>
+        </Link>
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs">
+          <time dateTime={listing.createdAt.toISOString()} className="text-muted-foreground">
+            {dayjs.utc(listing.createdAt).format('D MMM YYYY')}
+          </time>
+          <Link
+            href={href}
+            aria-label={`View listing: ${listing.title}`}
+            className="text-primary focus-visible:ring-ring rounded-sm font-medium underline underline-offset-4 outline-none focus-visible:ring-2"
+          >
+            View listing
+          </Link>
+        </div>
       </div>
     </article>
   )

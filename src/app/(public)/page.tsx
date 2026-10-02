@@ -85,7 +85,18 @@ function CategoryFeed({ feed }: { feed: Awaited<ReturnType<typeof getMainCategor
         </Button>
       </div>
       {listings.length ? (
-        <ListingCarousel label={category.name} slides={listings.map((listing) => ({ id: listing.id, content: <ListingCard listing={listing} /> }))} />
+        <ListingCarousel
+          label={category.name}
+          slides={listings.map((listing) => ({
+            id: listing.id,
+            content: (
+              <ListingCard
+                listing={listing}
+                imageSizes="(max-width: 639px) calc((100vw - 32px) * 0.85), (max-width: 767px) calc((100vw - 48px) / 2), (max-width: 1279px) calc((100vw - 64px) / 3), calc((100vw - 80px) / 4)"
+              />
+            )
+          }))}
+        />
       ) : (
         <div className="bg-card text-muted-foreground mt-5 rounded-xl border border-dashed p-6 text-sm">No listings in this category yet.</div>
       )}

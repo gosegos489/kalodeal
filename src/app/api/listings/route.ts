@@ -5,7 +5,7 @@ import { MAX_IMAGE_BYTES, createListingSchema } from '@/features/create-listing/
 import type { CreateListingResult } from '@/features/create-listing/types'
 import { getSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
-import { PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
+import { LISTING_SLOT_STATUSES, PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { checkCreateListingRateLimit } from '@/lib/rate-limit'
 
@@ -52,13 +52,13 @@ export async function POST(request: Request) {
     return failure('Invalid listing data.', 400)
   }
 
-  const [subscription, activeCount] = await Promise.all([
+  const [subscription, listingSlotCount] = await Promise.all([
     prisma.subscription.findUnique({ where: { userId } }),
-    prisma.listing.count({ where: { userId, status: 'ACTIVE' } })
+    prisma.listing.count({ where: { userId, status: { in: LISTING_SLOT_STATUSES } } })
   ])
   const plan = getListingPlan(subscription)
   const limits = PLAN_LIMITS[plan]
-  if (activeCount >= limits.activeListings) return failure('You have reached your active listing limit.', 409)
+  if (listingSlotCount >= limits.activeListings) return failure('You have reached your listing limit, including listings awaiting moderation.', 409)
 
   const parsed = createListingSchema(plan).safeParse({
     title: payload.get('title'),
@@ -98,8 +98,9 @@ export async function POST(request: Request) {
       await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
       const currentSubscription = await tx.subscription.findUnique({ where: { userId } })
       const currentLimits = PLAN_LIMITS[getListingPlan(currentSubscription)]
-      const currentCount = await tx.listing.count({ where: { userId, status: 'ACTIVE' } })
-      if (currentCount >= currentLimits.activeListings) throw new ListingLimitError('You have reached your active listing limit.')
+      const currentCount = await tx.listing.count({ where: { userId, status: { in: LISTING_SLOT_STATUSES } } })
+      if (currentCount >= currentLimits.activeListings)
+        throw new ListingLimitError('You have reached your listing limit, including listings awaiting moderation.')
       if (images.length > currentLimits.imagesPerListing)
         throw new ListingLimitError('Your plan has changed. Reduce the number of photos and try again.')
 
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
           ...details,
           id: listingId,
           userId,
+          status: 'PENDING',
           price: details.price || null,
           youtube: details.youtube || null,
           images: { create: attemptedKeys.map((key, sortOrder) => ({ key, sortOrder })) },

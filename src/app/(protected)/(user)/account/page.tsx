@@ -14,7 +14,7 @@ async function AccountOverview() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
-          <h2 className="text-2xl font-semibold break-words">Welcome, {account.user.name}</h2>
+          <h2 className="text-2xl font-semibold wrap-break-word">Welcome, {account.user.name}</h2>
           <p className="text-muted-foreground mt-1 text-sm">Here is an overview of your account.</p>
         </div>
         <Button nativeButton={false} render={<Link href="/sell" />}>
@@ -24,12 +24,12 @@ async function AccountOverview() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Active listings</CardTitle>
-            <CardDescription>Your current listing allowance.</CardDescription>
+            <CardTitle>Used listing slots</CardTitle>
+            <CardDescription>Active listings and listings awaiting moderation.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-start gap-4">
             <p className="text-3xl font-semibold tabular-nums">
-              {account.activeCount}
+              {account.listingSlotCount}
               <span className="text-muted-foreground text-lg"> / {account.limits.activeListings}</span>
             </p>
             <Button nativeButton={false} variant="outline" render={<Link href="/account/listings" />}>
@@ -51,18 +51,6 @@ async function AccountOverview() {
           </CardContent>
         </Card>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Account details</CardTitle>
-          <CardDescription>Your sign-in email.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center justify-between gap-4">
-          <p className="min-w-0 break-all">{account.user.email}</p>
-          <Button nativeButton={false} variant="outline" render={<Link href="/account/settings" />}>
-            Settings
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   )
 }

@@ -30,7 +30,7 @@ export function useCreateListing(plan: ListingPlan) {
         return
       }
       form.reset()
-      toast.add({ title: 'Listing published', description: 'Your listing is now available to buyers.', type: 'success' })
+      toast.add({ title: 'Listing submitted', description: 'Your listing is awaiting moderation. You can view it in My listings.', type: 'success' })
       router.refresh()
     } catch {
       toast.add({ title: 'Could not publish listing', description: 'Check your connection and try again.', type: 'error' })

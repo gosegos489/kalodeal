@@ -22,11 +22,11 @@ export function toListingSummary({ images, price, ...listing }: ListingSummaryRo
   return {
     ...listing,
     price: price?.toNumber() ?? null,
-    coverUrl: getListingCoverUrl(images[0]?.key)
+    coverUrl: getListingImageUrl(images[0]?.key)
   }
 }
 
-function getListingCoverUrl(key: string | undefined) {
+export function getListingImageUrl(key: string | undefined) {
   const publicUrl = process.env.R2_PUBLIC_URL
 
   return key && publicUrl ? `${publicUrl.replace(/\/$/, '')}/${key.split('/').map(encodeURIComponent).join('/')}` : null

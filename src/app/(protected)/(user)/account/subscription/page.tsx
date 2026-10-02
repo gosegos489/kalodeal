@@ -21,9 +21,9 @@ async function AccountSubscription() {
         <Badge>{account.plan === 'PRO' ? 'Pro' : 'Free'}</Badge>
         <dl className="grid w-full gap-4 sm:grid-cols-3">
           <div>
-            <dt className="text-muted-foreground text-sm">Active listings</dt>
+            <dt className="text-muted-foreground text-sm">Used listing slots</dt>
             <dd className="mt-1 text-lg font-semibold">
-              {account.activeCount} / {account.limits.activeListings}
+              {account.listingSlotCount} / {account.limits.activeListings}
             </dd>
           </div>
           <div>

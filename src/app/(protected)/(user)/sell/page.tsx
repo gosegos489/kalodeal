@@ -9,7 +9,7 @@ import { getListingCategoryOptions } from '@/features/create-listing/get-categor
 async function SellForm() {
   const [categories, account] = await Promise.all([getListingCategoryOptions(), getAccount()])
 
-  return <CreateListingForm categories={categories} plan={account.plan} activeListingCount={account.activeCount} />
+  return <CreateListingForm categories={categories} plan={account.plan} listingSlotCount={account.listingSlotCount} />
 }
 
 export default function SellPage() {
