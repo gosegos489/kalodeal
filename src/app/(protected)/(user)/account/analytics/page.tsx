@@ -23,11 +23,11 @@ async function AccountAnalytics({ searchParams }: Props) {
           <CardTitle>
             <h2>Analytics is a Pro feature</h2>
           </CardTitle>
-          <CardDescription>You need an eligible Pro plan to access listing analytics.</CardDescription>
+          <CardDescription>Track views, favorites and phone reveals to understand buyer interest with Pro.</CardDescription>
         </CardHeader>
         <CardContent>
           <Button nativeButton={false} render={<Link href="/account/subscription" />}>
-            View my plan
+            Explore Pro
           </Button>
         </CardContent>
       </Card>

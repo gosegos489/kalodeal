@@ -228,15 +228,26 @@ Upstash Redis protects listing creation (5 attempts per user per 10 minutes), Co
 
 ## Stripe subscriptions
 
+Plan limits are defined only in `src/lib/plan-limits.ts` and used by server validation and plan UI:
+
+| Feature            | Free | Pro |
+| ------------------ | ---- | --- |
+| Active listings    | 1    | 10  |
+| Photos per listing | 3    | 10  |
+| Monthly bumps      | 0    | 4   |
+| Advanced analytics | No   | Yes |
+
+Listings awaiting moderation reserve a slot too. Free suits occasional sellers; Pro suits active sellers with more listings, richer photos, listing promotion, and analytics for views, favorites, and phone reveals. The configured Pro price remains €9.99/month; price display and Checkout read the existing Stripe Price rather than a separate UI price constant.
+
 Billing requires `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRO_PRICE_ID`, and `DOMAIN_URL` in the deployment environment. The PRO price must be an active, positive, monthly recurring price in the same Stripe mode as the secret key.
 
 Configure Stripe Customer Portal to allow payment method updates, billing address updates, and subscription cancellation **at the end of the period**. Keep subscription plan/quantity changes disabled. Invoice history is optional; disabling it does not prevent subscription management. Set `STRIPE_PORTAL_CONFIGURATION_ID` to use a specific active configuration, or leave it unset to use the Dashboard default. The application reads these settings and does not create or change portal configurations during requests. Test and live environments need their own configuration.
 
-Subscribe the webhook at `/api/webhook/stripe` to `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, and `invoice.payment_failed`. Only webhook reconciliation updates subscription entitlements; the Checkout return URL does not grant PRO. Each confirmed paid monthly period grants `PRO_BUMPS_PER_PERIOD` bumps, with no carryover. Scheduled cancellation preserves access until the paid period ends.
+Subscribe the webhook at `/api/webhook/stripe` to `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, and `invoice.payment_failed`. Only webhook reconciliation updates subscription entitlements; the Checkout return URL does not grant PRO. Each confirmed paid monthly period grants `PLAN_LIMITS.PRO.monthlyBumps` bumps, with no carryover. This policy in `src/lib/plan-limits.ts` is the single source of truth for the action, account counter, and subscription UI. Scheduled cancellation preserves access until the paid period ends.
 
-The same listing can be bumped once every 24 hours, using its persisted `bumpedAt` timestamp. Cooldown is enforced in the server transaction and does not block bumps on other listings or reset with a billing renewal. My listings shows cooldown availability and the last bump time.
+My listings always shows a Bump control for each owned listing. Only active listings with an eligible Pro plan and remaining allowance can be bumped. Free plans show disabled `Bump (Pro)` and an Upgrade link; exhausted allowance shows disabled `No bumps remaining`; other listing statuses show a disabled Bump control with a reason. A request disables the button and refreshes the server allowance afterward. There is no per-listing cooldown. Bumping changes only `bumpedAt` and `sortDate`, preserving creation time, the content-edit version, and moderation status.
 
-Run billing regression checks with `pnpm test:billing`, type checking with `pnpm exec tsc --noEmit`, and lint with `pnpm lint`.
+Run plan, Bump concurrency, and paid-period regression checks with `pnpm exec node --test tests/plan-limits.test.mjs`, type checking with `pnpm exec tsc --noEmit --incremental false`, and lint with `pnpm lint`. These tests use isolated adapters and do not verify live Stripe, PostgreSQL, or Redis integrations.
 
 ---
 

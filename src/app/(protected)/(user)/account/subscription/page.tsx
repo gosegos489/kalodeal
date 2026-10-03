@@ -7,7 +7,7 @@ import { getAccount } from '@/features/account/data'
 import { BillingButton } from '@/features/billing/billing-button'
 import { CheckoutPending } from '@/features/billing/checkout-pending'
 import { getBillingAvailability } from '@/features/billing/config'
-import { PLAN_LIMITS } from '@/lib/plan-limits'
+import { PlanComparison } from '@/features/billing/plan-comparison'
 import AccountLoading from '../loading'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
@@ -16,7 +16,6 @@ async function AccountSubscription({ searchParams }: Props) {
   const account = await getAccount()
   const params = await searchParams
   const billing = await getBillingAvailability()
-  const pro = PLAN_LIMITS.PRO
   const price = billing.price
     ? new Intl.NumberFormat('en', { style: 'currency', currency: billing.price.currency }).format(billing.price.amount / 100)
     : null
@@ -40,7 +39,11 @@ async function AccountSubscription({ searchParams }: Props) {
           <CardTitle>
             <h2>My plan</h2>
           </CardTitle>
-          <CardDescription>Your current publishing allowances.</CardDescription>
+          <CardDescription>
+            {account.plan === 'PRO'
+              ? 'For active sellers. List more items and track buyer interest.'
+              : 'For occasional sellers. Start with the essentials.'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-start gap-6">
           <Badge>{account.plan === 'PRO' ? 'Pro plan' : 'Free plan'}</Badge>
@@ -56,11 +59,11 @@ async function AccountSubscription({ searchParams }: Props) {
               <dd className="mt-1 text-lg font-semibold">{account.limits.imagesPerListing}</dd>
             </div>
             <div>
-              <dt className="text-muted-foreground text-sm">Analytics access</dt>
+              <dt className="text-muted-foreground text-sm">Advanced analytics</dt>
               <dd className="mt-1 text-lg font-semibold">{account.limits.advancedStats ? 'Included' : 'Pro only'}</dd>
             </div>
             <div>
-              <dt className="text-muted-foreground text-sm">Bumps per paid monthly period</dt>
+              <dt className="text-muted-foreground text-sm">Monthly listing bumps</dt>
               <dd className="mt-1 text-lg font-semibold">
                 {account.plan === 'PRO' ? (
                   <>
@@ -120,29 +123,7 @@ async function AccountSubscription({ searchParams }: Props) {
           )}
         </CardContent>
       </Card>
-      {account.plan === 'FREE' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h2>Publish more with Pro</h2>
-            </CardTitle>
-            <CardDescription>{price ? `${price} per month` : 'Monthly Pro membership'}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-start gap-5">
-            <ul className="list-inside list-disc space-y-2 text-sm">
-              <li>{pro.activeListings} listing slots</li>
-              <li>Up to {pro.imagesPerListing} photos per listing</li>
-              <li>{pro.monthlyBumps} bumps per paid monthly period</li>
-              {pro.advancedStats && <li>Listing analytics: views, favorites and phone reveals</li>}
-            </ul>
-            {billing.price ? (
-              <BillingButton intent="upgrade" />
-            ) : (
-              <p className="text-muted-foreground text-sm">Upgrades are temporarily unavailable. Please try again later.</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <PlanComparison currentPlan={account.plan} price={price} />
     </div>
   )
 }

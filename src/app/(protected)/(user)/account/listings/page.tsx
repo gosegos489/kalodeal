@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getAccount, getMyListings } from '@/features/account/data'
 import { MyListingRow } from '@/features/account/my-listing-row'
 import { serializePagination } from '@/lib/pagination'
+import { PLAN_LIMITS } from '@/lib/plan-limits'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
@@ -44,9 +45,16 @@ async function MyListings({ searchParams }: Props) {
 
   return (
     <>
-      {account.limits.monthlyBumps > 0 && (
+      {account.limits.monthlyBumps > 0 ? (
+        <p className="text-muted-foreground text-sm" role="status">
+          Bumps remaining this period: {account.bumpsRemaining} / {account.limits.monthlyBumps}
+        </p>
+      ) : (
         <p className="text-muted-foreground text-sm">
-          {account.bumpsRemaining} of {account.limits.monthlyBumps} bumps remaining in this paid billing period.
+          Pro includes {PLAN_LIMITS.PRO.monthlyBumps} listing bumps each month to move your active listings toward the top of search results.{' '}
+          <Link href="/account/subscription" className="text-primary hover:underline">
+            Upgrade to Pro
+          </Link>
         </p>
       )}
       <p className="text-muted-foreground text-sm" role="status">

@@ -1,8 +1,9 @@
 import 'server-only'
-import { listingSummarySelect, toListingSummary } from '@/entities/listing/listing-summary'
+import { getListingImageUrl, listingSummarySelect } from '@/entities/listing/listing-summary'
 import { getSession, requireUser } from '@/lib/auth-utils'
 import { getPagination } from '@/lib/pagination'
 import prisma from '@/lib/prisma'
+import type { FavoriteListing } from './types'
 
 export async function getFavoriteState(listingIds: string[]) {
   const session = await getSession()
@@ -19,7 +20,7 @@ export async function getFavoriteState(listingIds: string[]) {
 
 export async function getMyFavorites(pageParam?: string | string[]) {
   const session = await requireUser()
-  const where = { userId: session.user.id, listing: { status: 'ACTIVE' as const } }
+  const where = { userId: session.user.id }
 
   // Count, page clamping and rows share a snapshot, including during concurrent removals.
   return prisma.$transaction(
@@ -28,13 +29,20 @@ export async function getMyFavorites(pageParam?: string | string[]) {
       const pagination = getPagination({ pageParam, totalItems })
       const favorites = await tx.favorite.findMany({
         where,
-        select: { listing: { select: listingSummarySelect } },
+        // Show the current related listing, including unavailable statuses, without contacts or private owner data.
+        select: { listing: { select: { ...listingSummarySelect, description: false, createdAt: false, status: true } } },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: pagination.skip,
         take: pagination.take
       })
 
-      return { listings: favorites.map(({ listing }) => toListingSummary(listing)), ...pagination }
+      const listings: FavoriteListing[] = favorites.map(({ listing: { images, price, ...listing } }) => ({
+        ...listing,
+        price: price?.toNumber() ?? null,
+        coverUrl: getListingImageUrl(images[0]?.key)
+      }))
+
+      return { listings, ...pagination }
     },
     { isolationLevel: 'RepeatableRead' }
   )

@@ -6,7 +6,7 @@ const statuses = {
   PENDING: { label: 'PENDING', icon: Clock, className: 'border-chart-4/40 bg-chart-4/15 text-foreground' },
   ACTIVE: { label: 'ACTIVE', icon: CircleCheck, className: 'bg-primary text-primary-foreground' },
   HIDDEN: { label: 'HIDDEN', icon: EyeOff, className: 'border-dashed border-border bg-muted text-muted-foreground' },
-  INACTIVE: { label: 'HIDDEN', icon: EyeOff, className: 'border-dashed border-border bg-muted text-muted-foreground' },
+  INACTIVE: { label: 'INACTIVE', icon: EyeOff, className: 'border-dashed border-border bg-muted text-muted-foreground' },
   REJECTED: { label: 'REJECTED', icon: CircleX, className: 'border-destructive/20 bg-destructive/10 text-destructive' },
   SOLD: { label: 'SOLD', icon: CheckCheck, className: 'border-accent/40 bg-accent text-accent-foreground' }
 } satisfies Record<ListingStatus, { label: string; icon: typeof Clock; className: string }>

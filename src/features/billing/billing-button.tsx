@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 import { manageSubscription, upgradeToPro } from './actions'
 
-export function BillingButton({ intent }: { intent: 'upgrade' | 'manage' }) {
+export function BillingButton({ intent, upgradeLabel }: { intent: 'upgrade' | 'manage'; upgradeLabel?: string }) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   return (
     <div className="flex flex-col items-start gap-2">
       <Button
-        className="cursor-pointer"
+        className="h-auto min-h-8 cursor-pointer py-1.5 whitespace-normal"
         disabled={pending}
         variant={intent === 'upgrade' ? 'default' : 'outline'}
         onClick={() => {
@@ -35,7 +35,7 @@ export function BillingButton({ intent }: { intent: 'upgrade' | 'manage' }) {
         }}
       >
         {pending && <Loader2 aria-hidden="true" className="motion-safe:animate-spin" />}
-        {pending ? 'Opening...' : intent === 'upgrade' ? 'Upgrade to Pro' : 'Manage subscription'}
+        {pending ? 'Opening...' : intent === 'upgrade' ? (upgradeLabel ?? 'Upgrade to Pro') : 'Manage subscription'}
       </Button>
       {error && (
         <p role="alert" className="text-destructive text-sm">

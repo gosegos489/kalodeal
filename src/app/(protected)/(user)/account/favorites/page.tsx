@@ -4,14 +4,16 @@ import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ListingCard } from '@/entities/listing/ui/listing-card'
+import { ListingRow } from '@/entities/listing/ui/listing-row'
+import { ListingStatusBadge } from '@/features/account/listing-status-badge'
 import { getMyFavorites } from '@/features/favorites/data'
+import { FavoriteButton } from '@/features/favorites/favorite-button'
 import { serializePagination } from '@/lib/pagination'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 
-const favoritesGridClassName = 'grid gap-4 sm:grid-cols-2 xl:grid-cols-3'
+const favoritesRowsClassName = 'flex min-w-0 flex-col gap-4'
 
 async function FavoriteListings({ searchParams }: Props) {
   const params = await searchParams
@@ -45,14 +47,23 @@ async function FavoriteListings({ searchParams }: Props) {
       <p role="status" className="text-muted-foreground text-sm">
         Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalItems)} of {totalItems} favorites
       </p>
-      <div className={favoritesGridClassName}>
+      <div className={favoritesRowsClassName}>
         {listings.map((listing) => (
-          <ListingCard
+          <ListingRow
             key={listing.id}
             listing={listing}
-            isFavorited
-            isAuthenticated
-            imageSizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1279px) calc((100vw - 64px) / 2), calc((100vw - 336px) / 3)"
+            href={listing.status === 'ACTIVE' ? `/listings/${listing.id}` : null}
+            metadata={
+              <span className="max-w-full truncate" title={listing.category.name}>
+                {listing.category.name}
+              </span>
+            }
+            status={<ListingStatusBadge status={listing.status} />}
+            actions={
+              <div className="flex flex-wrap justify-end">
+                <FavoriteButton listingId={listing.id} title={listing.title} isFavorited isAuthenticated removalOnly />
+              </div>
+            }
           />
         ))}
       </div>
@@ -63,9 +74,9 @@ async function FavoriteListings({ searchParams }: Props) {
 
 function FavoritesLoading() {
   return (
-    <div role="status" aria-label="Loading your favorites" className={favoritesGridClassName}>
+    <div role="status" aria-label="Loading your favorites" className={favoritesRowsClassName}>
       {Array.from({ length: 3 }, (_, index) => (
-        <Skeleton key={index} className="h-80 rounded-2xl" />
+        <Skeleton key={index} className="h-36 rounded-xl xl:h-24" />
       ))}
       <span className="sr-only">Loading your favorites...</span>
     </div>
@@ -80,7 +91,7 @@ export default function FavoritesPage({ searchParams }: Props) {
           Favorites
         </h2>
         <p className="text-muted-foreground mt-1 text-sm">
-          Your saved listings, with the most recently added first. Only available listings are shown.
+          Your saved listings, with the most recently added first. Unavailable listings stay here until you remove them.
         </p>
       </div>
       <Suspense fallback={<FavoritesLoading />}>

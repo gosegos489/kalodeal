@@ -16,19 +16,21 @@ export async function setListingFavorite(listingId: unknown, isFavorited: unknow
     const session = await getSession()
     if (!session) return { success: false, message: 'Sign in to save listings.', requiresLogin: true }
 
-    available = await prisma.$transaction(async (tx) => {
-      const listing = await tx.listing.findFirst({ where: { id: parsed.data.listingId, status: 'ACTIVE' }, select: { id: true } })
-      if (!listing) return false
+    const favorite = { userId: session.user.id, listingId: parsed.data.listingId }
+    if (parsed.data.isFavorited) {
+      available = await prisma.$transaction(async (tx) => {
+        const listing = await tx.listing.findFirst({ where: { id: parsed.data.listingId, status: 'ACTIVE' }, select: { id: true } })
+        if (!listing) return false
 
-      const favorite = { userId: session.user.id, listingId: listing.id }
-      if (parsed.data.isFavorited) {
         // An explicit desired state plus the unique constraint makes retries idempotent.
         await tx.favorite.createMany({ data: [favorite], skipDuplicates: true })
-      } else {
-        await tx.favorite.deleteMany({ where: favorite })
-      }
-      return true
-    })
+        return true
+      })
+    } else {
+      // Removal only touches this user's favorite, even if the listing is unavailable or already cascade-deleted.
+      await prisma.favorite.deleteMany({ where: favorite })
+      available = true
+    }
   } catch {
     console.error('Could not update favorite.')
     return { success: false, message: 'Could not update your favorites. Please try again.' }

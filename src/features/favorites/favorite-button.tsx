@@ -13,10 +13,11 @@ type FavoriteButtonProps = {
   title: string
   isFavorited: boolean
   isAuthenticated: boolean
+  removalOnly?: boolean
   className?: string
 }
 
-export function FavoriteButton({ listingId, title, isFavorited, isAuthenticated, className }: FavoriteButtonProps) {
+export function FavoriteButton({ listingId, title, isFavorited, isAuthenticated, removalOnly = false, className }: FavoriteButtonProps) {
   const router = useRouter()
 
   const [favorite, setFavorite] = useState(isFavorited)
@@ -29,7 +30,7 @@ export function FavoriteButton({ listingId, title, isFavorited, isAuthenticated,
     }
 
     const previousFavorite = favorite
-    const nextFavorite = !favorite
+    const nextFavorite = removalOnly ? false : !favorite
 
     setFavorite(nextFavorite)
 
@@ -67,12 +68,12 @@ export function FavoriteButton({ listingId, title, isFavorited, isAuthenticated,
     <Button
       type="button"
       variant="outline"
-      size="icon-lg"
-      className={cn('bg-background/95 rounded-full shadow-xs', favorite && 'text-primary', className)}
-      aria-label={`${isAuthenticated ? (favorite ? 'Remove from favorites' : 'Add to favorites') : 'Sign in to save listing'}: ${title}`}
-      aria-pressed={favorite}
+      size={removalOnly ? 'sm' : 'icon-lg'}
+      className={cn(!removalOnly && 'bg-background/95 rounded-full shadow-xs', favorite && 'text-primary', className)}
+      aria-label={`${isAuthenticated ? (removalOnly || favorite ? 'Remove from favorites' : 'Add to favorites') : 'Sign in to save listing'}: ${title}`}
+      aria-pressed={removalOnly ? undefined : favorite}
       aria-busy={isPending}
-      disabled={isPending}
+      disabled={isPending || (removalOnly && !favorite)}
       onClick={(event) => {
         event.preventDefault()
         event.stopPropagation()
@@ -84,6 +85,7 @@ export function FavoriteButton({ listingId, title, isFavorited, isAuthenticated,
       ) : (
         <Heart aria-hidden="true" className={cn(favorite && 'fill-current')} />
       )}
+      {removalOnly && (isPending ? 'Removing...' : 'Remove favorite')}
     </Button>
   )
 }
