@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { buildMetadata } from '@/lib/metadata'
 import { buyerSteps, features, sellerSteps } from './mocks/mocks'
@@ -19,7 +19,7 @@ export default function HowItWorksPage() {
           How <span className="text-primary">Kalodeal</span> Works
         </h1>
         <p className="text-muted-foreground max-w-2xl">
-          Kalodeal connects buyers and sellers in your area. Post an ad, find a deal, and get things done — no fees, no hassle.
+          Kalodeal connects buyers and sellers in your area. Browse local listings, post an ad, and contact sellers directly.
         </p>
       </section>
 
@@ -38,7 +38,9 @@ export default function HowItWorksPage() {
                   </div>
                   <span className="text-muted-foreground text-sm font-medium">Step {index + 1}</span>
                 </div>
-                <CardTitle>{step.title}</CardTitle>
+                <CardTitle>
+                  <h3>{step.title}</h3>
+                </CardTitle>
                 <CardDescription>{step.description}</CardDescription>
               </CardHeader>
             </Card>
@@ -63,7 +65,9 @@ export default function HowItWorksPage() {
                   </div>
                   <span className="text-muted-foreground text-sm font-medium">Step {index + 1}</span>
                 </div>
-                <CardTitle>{step.title}</CardTitle>
+                <CardTitle>
+                  <h3>{step.title}</h3>
+                </CardTitle>
                 <CardDescription>{step.description}</CardDescription>
               </CardHeader>
             </Card>

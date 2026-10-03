@@ -1,7 +1,10 @@
 import { CheckCircle2 } from 'lucide-react'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { ResetPasswordForm, ResetPasswordSkeleton } from '@/features/auth'
+
+export const metadata: Metadata = { title: 'Reset Password', description: 'Choose a new password for your Kalodeal account.' }
 
 const benefits = ['Create a new secure password for your account', 'Restore access to your KaloDeal account', 'Sign in again with your new password']
 
@@ -19,9 +22,9 @@ export default function ResetPasswordPage({ searchParams }: Props) {
 
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Create a new password</h1>
 
-            <h2 className="text-muted-foreground text-lg leading-8">
+            <p className="text-muted-foreground text-lg leading-8">
               Choose a new secure password for your KaloDeal account to restore access and continue where you left off.
-            </h2>
+            </p>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -37,7 +40,7 @@ export default function ResetPasswordPage({ searchParams }: Props) {
 
         <div className="bg-card mx-auto flex w-full flex-col gap-6 rounded-xl border p-6 shadow-sm sm:p-8">
           <div className="flex flex-col gap-2">
-            <p className="text-2xl font-semibold">Set a new password</p>
+            <h2 className="text-2xl font-semibold">Set a new password</h2>
 
             <p className="text-muted-foreground text-sm">Enter and confirm your new password below to secure your account.</p>
           </div>

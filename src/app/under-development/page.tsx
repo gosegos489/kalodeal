@@ -1,4 +1,8 @@
 import { Construction, Sparkles } from 'lucide-react'
+import type { Metadata } from 'next'
+import { privateMetadata } from '@/lib/metadata'
+
+export const metadata: Metadata = { ...privateMetadata, title: 'Under development' }
 
 export default function UnderDevelopmentPage() {
   return (

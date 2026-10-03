@@ -1,6 +1,9 @@
 import { CheckCircle2 } from 'lucide-react'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { RegisterForm } from '@/features/auth'
+
+export const metadata: Metadata = { title: 'Create an Account', description: 'Create a Kalodeal account to publish listings and contact sellers.' }
 
 const benefits = ['Post listings in a few minutes', 'Manage your listings from one place', 'Save and compare interesting offers']
 
@@ -14,7 +17,7 @@ export default function RegisterPage() {
 
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Create your account</h1>
 
-            <h2 className="text-muted-foreground text-lg leading-8">Buy, sell and discover local deals all in one place.</h2>
+            <p className="text-muted-foreground text-lg leading-8">Buy, sell and discover local deals all in one place.</p>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -30,7 +33,7 @@ export default function RegisterPage() {
 
         <div className="bg-card mx-auto flex w-full flex-col gap-6 rounded-xl border p-6 shadow-sm sm:p-8">
           <div className="flex flex-col gap-2">
-            <p className="text-2xl font-semibold">Sign up</p>
+            <h2 className="text-2xl font-semibold">Sign up</h2>
 
             <p className="text-muted-foreground text-sm">Enter your details to create a KaloDeal account.</p>
           </div>

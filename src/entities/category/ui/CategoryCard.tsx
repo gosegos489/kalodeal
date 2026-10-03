@@ -3,11 +3,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { CategorySummary } from '../get-category-tree'
 
-export function CategoryCard(category: CategorySummary) {
+export function CategoryCard({ headingLevel = 3, ...category }: CategorySummary & { headingLevel?: 2 | 3 }) {
+  const Heading = headingLevel === 2 ? 'h2' : 'h3'
   return (
     <Link
       href={`/?category=${category.slug}`}
-      className="focus-visible:ring-ring/50 flex h-36 flex-col gap-3 bg-muted/20 p-4 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-3"
+      className="focus-visible:ring-ring/50 bg-muted/20 hover:bg-muted/50 flex h-36 flex-col gap-3 p-4 transition-colors outline-none focus-visible:ring-3"
     >
       <span className="flex items-center justify-between">
         <span className="bg-muted text-muted-foreground flex size-9.5 items-center justify-center rounded-lg">
@@ -20,13 +21,13 @@ export function CategoryCard(category: CategorySummary) {
         <ArrowUpRight className="text-muted-foreground/60 size-4" aria-hidden="true" />
       </span>
 
-      <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate text-[15px] font-semibold">{category.name}</span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <Heading className="truncate text-[15px] font-semibold">{category.name}</Heading>
         <span className="text-muted-foreground truncate text-xs">{category.description || 'Explore local listings'}</span>
         <span className="text-muted-foreground text-[11px] font-medium">
           {`${category.listingCount} ${category.slug === 'jobs' ? 'openings' : 'listings'}`}
         </span>
-      </span>
+      </div>
     </Link>
   )
 }

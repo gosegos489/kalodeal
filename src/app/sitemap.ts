@@ -1,24 +1,17 @@
 import type { MetadataRoute } from 'next'
+import { getPublicCategories } from '@/entities/category/get-category-tree'
+import { getLegal } from '@/entities/legal/get-legal'
+import { getCanonicalUrl, getCategoryPath, seoConfig } from '@/lib/metadata'
 
-const DOMAIN_URL = process.env.DOMAIN_URL
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (seoConfig.isUnderDevelopment) return []
 
-if (!DOMAIN_URL) {
-  throw new Error('DOMAIN_URL is not defined')
-}
+  const [categories, privacy, terms] = await Promise.all([getPublicCategories(), getLegal('PRIVACY_POLICY'), getLegal('TERMS_OF_USE')])
 
-const routes = [
-  {
-    path: '/',
-    changeFrequency: 'daily',
-    priority: 1
-  }
-] as const
-
-export default function sitemap(): MetadataRoute.Sitemap {
-  return routes.map((route) => ({
-    url: `${DOMAIN_URL}${route.path}`,
-    lastModified: new Date(),
-    changeFrequency: route.changeFrequency,
-    priority: route.priority
-  }))
+  return [
+    ...['/', '/categories', '/how-it-works', '/safety', '/contact-us'].map((path) => ({ url: getCanonicalUrl(path) })),
+    ...categories.map(({ category }) => ({ url: getCanonicalUrl(getCategoryPath(category.slug)) })),
+    ...(privacy ? [{ url: getCanonicalUrl('/legal/privacy-policy'), lastModified: privacy.updatedAt }] : []),
+    ...(terms ? [{ url: getCanonicalUrl('/legal/terms-of-use'), lastModified: terms.updatedAt }] : [])
+  ]
 }

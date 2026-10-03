@@ -1,8 +1,10 @@
 import { ArrowRight, Search } from 'lucide-react'
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Suspense } from 'react'
+import { Suspense, cache } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getPublicCategory } from '@/entities/category/get-category-tree'
 import { CategoryCard } from '@/entities/category/ui/CategoryCard'
 import { getListings } from '@/entities/listing/get-listings'
 import { getMainCategoryFeeds } from '@/entities/listing/get-main-category-feeds'
@@ -11,9 +13,52 @@ import { ListingCard } from '@/entities/listing/ui/listing-card'
 import { ListingCarousel } from '@/entities/listing/ui/listing-carousel'
 import { getFavoriteState } from '@/features/favorites/data'
 import { ListingSearch } from '@/features/listing-search/ui/listing-search'
+import { buildCollectionJsonLd, buildWebsiteJsonLd, getCategoryBreadcrumbs } from '@/lib/json-ld'
+import { buildMetadata, getCategoryPath, seoConfig } from '@/lib/metadata'
+import { BreadCrumbs } from '@/shared/ui/BreadCrumbs'
+import { JsonLd } from '@/shared/ui/json-ld'
 import HeroSection from './_ui/HeroSection'
 
-type Props = { searchParams: Promise<{ q?: string; category?: string }> }
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
+
+const getBrowseContext = cache(async (searchParams: Props['searchParams']) => {
+  const raw = await searchParams
+  const result = listingFiltersSchema.safeParse({ query: raw.q, category: raw.category })
+  const filters = result.success ? result.data : {}
+  const category = filters.category ? await getPublicCategory(filters.category) : null
+  const isSearch = 'q' in raw || Object.keys(raw).some((key) => key !== 'category') || !result.success || ('category' in raw && !category)
+  const title = filters.query ? `Search results for “${filters.query}”` : category ? `${category.category.name} listings` : 'Buy and Sell Locally'
+  const description = filters.query
+    ? 'Search local listings on Kalodeal. Explore available offers and contact sellers directly.'
+    : category
+      ? `Browse ${category.category.name} listings on Kalodeal. ${category.category.description || 'Explore local offers and contact sellers directly.'}`
+      : seoConfig.description
+
+  return { filters, category, isSearch, title, description, path: category ? getCategoryPath(category.category.slug) : '/' }
+})
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const { title, description, path, isSearch } = await getBrowseContext(searchParams)
+  return buildMetadata({ title, description, path, ...(isSearch && { robots: { index: false, follow: true } }) })
+}
+
+async function BrowseIntro({ searchParams, children }: Props & { children: React.ReactNode }) {
+  const { category, filters, title, description, path, isSearch } = await getBrowseContext(searchParams)
+  const breadcrumbs = category ? getCategoryBreadcrumbs(category.category, category.ancestors) : []
+
+  return (
+    <>
+      {!isSearch && <JsonLd data={buildWebsiteJsonLd()} />}
+      {category && !isSearch && <JsonLd data={buildCollectionJsonLd({ title, description, path, breadcrumbs })} />}
+      {category && (
+        <BreadCrumbs items={breadcrumbs.map((item, index) => ({ ...item, ...(index === breadcrumbs.length - 1 && { href: undefined }) }))} />
+      )}
+      <HeroSection title={filters.query || category ? title : undefined} description={category || filters.query ? description : undefined}>
+        {children}
+      </HeroSection>
+    </>
+  )
+}
 
 async function HomeContent({ searchParams }: Props) {
   const feeds = await getMainCategoryFeeds()
@@ -28,11 +73,13 @@ async function HomeContent({ searchParams }: Props) {
 
   return (
     <div className="flex min-w-0 flex-col gap-12 sm:gap-16">
-      <HeroSection>
-        <Suspense fallback={<Skeleton className="h-48 w-full rounded-2xl sm:h-20" />}>
-          <ListingSearch variant="hero" placeholder="What are you looking for?" categories={searchCategories} />
-        </Suspense>
-      </HeroSection>
+      <Suspense fallback={<HeroLoading />}>
+        <BrowseIntro searchParams={searchParams}>
+          <Suspense fallback={<Skeleton className="h-48 w-full rounded-2xl sm:h-20" />}>
+            <ListingSearch variant="hero" placeholder="What are you looking for?" categories={searchCategories} />
+          </Suspense>
+        </BrowseIntro>
+      </Suspense>
       <section id="listings" aria-labelledby="listings-heading" className="scroll-mt-6">
         <Suspense fallback={<ListingsLoading />}>
           <ListingResults searchParams={searchParams} />
@@ -119,12 +166,20 @@ function CategoryFeed({
   )
 }
 
+function HeroLoading() {
+  return (
+    <div role="status" aria-label="Loading search" className="max-w-5xl">
+      <Skeleton className="h-12 w-full max-w-xl" />
+      <Skeleton className="mt-3 h-6 w-full max-w-2xl" />
+      <Skeleton className="mt-6 h-48 w-full rounded-2xl sm:mt-8 sm:h-20" />
+    </div>
+  )
+}
+
 function CategoriesLoading() {
   return (
     <div role="status" aria-label="Loading search, listings and categories">
-      <HeroSection>
-        <Skeleton className="h-48 w-full rounded-2xl sm:h-20" />
-      </HeroSection>
+      <HeroLoading />
       <div className="mt-12 sm:mt-16">
         <ListingsLoading />
       </div>
@@ -151,16 +206,14 @@ function ListingsLoading() {
 }
 
 async function ListingResults({ searchParams }: Props) {
-  const { q, category } = await searchParams
-  const result = listingFiltersSchema.safeParse({ query: q, category })
-  const filters = result.success ? result.data : {}
+  const { filters, category } = await getBrowseContext(searchParams)
   const listings = await getListings(filters)
   const favoriteState = await getFavoriteState(listings.map(({ id }) => id))
   const filtered = Boolean(filters.query || filters.category)
   const title = filters.query
     ? `Results for “${filters.query}”`
     : filters.category
-      ? `Listings in ${filters.category.replaceAll('-', ' ')}`
+      ? `Listings in ${category?.category.name || filters.category.replaceAll('-', ' ')}`
       : 'Fresh on Kalodeal'
 
   return (

@@ -1,10 +1,10 @@
-import type { Metadata } from 'next'
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
-import { buildMetadata } from '@/lib/metadata'
 import { Flag, ShieldAlert, Wallet } from 'lucide-react'
+import type { Metadata } from 'next'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { buildMetadata } from '@/lib/metadata'
 import { buyerTips, generalTips, sellerTips } from './mocks/mocks'
 
 export const metadata: Metadata = {
@@ -36,7 +36,9 @@ export default function SafetyPage() {
                 <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
                   <tip.icon className="size-5" />
                 </div>
-                <CardTitle>{tip.title}</CardTitle>
+                <CardTitle>
+                  <h2>{tip.title}</h2>
+                </CardTitle>
                 <CardDescription>{tip.description}</CardDescription>
               </CardHeader>
             </Card>
@@ -79,11 +81,11 @@ export default function SafetyPage() {
       <Alert className="flex flex-col gap-2 p-4">
         <div className="flex items-center gap-2">
           <Flag className="size-4" />
-          <AlertTitle>See something suspicious?</AlertTitle>
+          <AlertTitle>
+            <h2>See something suspicious?</h2>
+          </AlertTitle>
         </div>
-        <AlertDescription>
-          Report the listing or user directly from the profile page, or contact our support team. Every report is reviewed by our team.
-        </AlertDescription>
+        <AlertDescription>If you encounter a suspicious listing or message, contact our support team through the contact form.</AlertDescription>
       </Alert>
     </div>
   )

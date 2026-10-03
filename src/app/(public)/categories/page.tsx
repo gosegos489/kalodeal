@@ -1,15 +1,19 @@
-import { CategoryCard } from '@/entities/category/ui/CategoryCard'
-import { getCategorySummaries } from '@/entities/category/get-category-tree'
-import { BreadCrumbs } from '@/shared/ui/BreadCrumbs'
+import { ChevronRight, MoveRight, Tag } from 'lucide-react'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ChevronRight, MoveRight, Tag } from 'lucide-react'
+import { getCategorySummaries } from '@/entities/category/get-category-tree'
+import { CategoryCard } from '@/entities/category/ui/CategoryCard'
+import { buildCollectionJsonLd } from '@/lib/json-ld'
+import { buildMetadata } from '@/lib/metadata'
+import { BreadCrumbs } from '@/shared/ui/BreadCrumbs'
+import { JsonLd } from '@/shared/ui/json-ld'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: 'Categories',
-  description: 'Browse categories and find local listings on Kalodeal.'
-}
+  description: 'Browse Kalodeal categories for local goods and services. Explore available listings and find your next deal.',
+  path: '/categories'
+})
 
 export default async function CategoriesPage() {
   const categories = await getCategorySummaries()
@@ -17,9 +21,20 @@ export default async function CategoriesPage() {
 
   return (
     <div className="container flex flex-col gap-4 py-10">
+      <JsonLd
+        data={buildCollectionJsonLd({
+          title: 'Categories',
+          description: 'Browse categories and find local goods and services on Kalodeal.',
+          path: '/categories',
+          breadcrumbs: [
+            { label: 'Home', href: '/' },
+            { label: 'Categories', href: '/categories' }
+          ]
+        })}
+      />
       <div className="flex flex-col gap-4">
         <BreadCrumbs items={[{ label: 'Home', href: '/' }, { label: 'Categories' }]} />
-        <h1 className="text-xl font-bold md:text-3xl">Find what you’re looking for across Kalodeal</h1>
+        <h1 className="text-xl font-bold md:text-3xl">Browse categories on Kalodeal</h1>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -40,7 +55,7 @@ export default async function CategoriesPage() {
             {categories.map((category) => (
               <section key={category.id} className="border-border bg-card overflow-hidden rounded-xl border">
                 <div className="grid grid-cols-1 sm:grid-cols-[minmax(11rem,0.8fr)_minmax(0,1.2fr)]">
-                  <CategoryCard {...category} />
+                  <CategoryCard {...category} headingLevel={2} />
 
                   <div className="border-border flex min-w-0 flex-col gap-3 border-t p-4 sm:border-t-0 sm:border-l">
                     <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Subcategories</p>
@@ -60,7 +75,7 @@ export default async function CategoriesPage() {
                                   <Tag className="size-3" aria-hidden="true" />
                                 )}
                               </span>
-                              <span className="truncate">{child.name}</span>
+                              <h3 className="truncate">{child.name}</h3>
                               <ChevronRight className="text-muted-foreground size-3.5 shrink-0" aria-hidden="true" />
                             </Link>
 

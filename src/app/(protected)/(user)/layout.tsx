@@ -1,12 +1,5 @@
-import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { requireMarketplaceUser } from '@/lib/auth-utils'
-
-export const metadata: Metadata = {
-  robots: {
-    index: false
-  }
-}
 
 async function MarketplaceGuard({ children }: { children: React.ReactNode }) {
   await requireMarketplaceUser()

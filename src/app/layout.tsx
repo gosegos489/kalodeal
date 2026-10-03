@@ -5,6 +5,7 @@ import { Geist } from 'next/font/google'
 import { Suspense } from 'react'
 import { Toaster } from '@/components/ui/toast'
 import { rootMetadata } from '@/lib/metadata'
+import { RouteContent } from '@/shared/ui/route-content'
 import { CookieConsentGate } from '@/widgets/cookie-modal/cookie-consent-gate'
 import { PublicFooter } from '@/widgets/public-footer/public-footer'
 import { PublicHeader } from '@/widgets/public-header/public-header'
@@ -34,7 +35,9 @@ export default function RootLayout({
           ) : (
             <div className="flex min-h-dvh flex-col">
               <PublicHeader />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1">
+                <RouteContent>{children}</RouteContent>
+              </main>
               <PublicFooter />
             </div>
           )}

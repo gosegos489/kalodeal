@@ -1,6 +1,9 @@
 import { CheckCircle2 } from 'lucide-react'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LoginForm } from '@/features/auth'
+
+export const metadata: Metadata = { title: 'Sign In', description: 'Sign in to your Kalodeal account to manage listings, favorites, and messages.' }
 
 const benefits = ['Access your saved listings and favorites', 'Manage your active listings', 'Continue browsing deals from where you left off']
 
@@ -14,9 +17,9 @@ export default function LoginPage() {
 
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Sign in to KaloDeal</h1>
 
-            <h2 className="text-muted-foreground text-lg leading-8">
+            <p className="text-muted-foreground text-lg leading-8">
               Access your account and continue buying, selling and discovering great local deals.
-            </h2>
+            </p>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -32,7 +35,7 @@ export default function LoginPage() {
 
         <div className="bg-card mx-auto flex w-full flex-col gap-6 rounded-xl border p-6 shadow-sm sm:p-8">
           <div className="flex flex-col gap-2">
-            <p className="text-2xl font-semibold">Sign in</p>
+            <h2 className="text-2xl font-semibold">Sign in</h2>
 
             <p className="text-muted-foreground text-sm">Enter your email and password to access your KaloDeal account.</p>
           </div>

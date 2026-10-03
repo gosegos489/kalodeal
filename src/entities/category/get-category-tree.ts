@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from 'next/cache'
+import { cache } from 'react'
 import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'
 
@@ -77,13 +78,30 @@ function countListings(category: CategoryTreeItem) {
   )
 }
 
-export async function getCategorySummaries() {
+export const getCategorySummaries = cache(async () => {
   const categories = await getCategoryTree()
 
   return categories.map(toCategorySummary)
-}
+})
 
 export type CategorySummary = Awaited<ReturnType<typeof getCategorySummaries>>[number]
+
+export type PublicCategory = { category: CategorySummary; ancestors: CategorySummary[] }
+
+export const getPublicCategories = cache(async (): Promise<PublicCategory[]> => {
+  const categories = await getCategorySummaries()
+  return categories.flatMap((category) => [
+    { category, ancestors: [] },
+    ...category.children.flatMap((child) => [
+      { category: child, ancestors: [category] },
+      ...child.children.map((grandchild) => ({ category: grandchild, ancestors: [category, child] }))
+    ])
+  ])
+})
+
+export async function getPublicCategory(slug: string) {
+  return (await getPublicCategories()).find(({ category }) => category.slug === slug) ?? null
+}
 
 function toCategorySummary(category: CategoryTreeItem) {
   return {

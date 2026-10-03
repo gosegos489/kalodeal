@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getPublicCategory } from '@/entities/category/get-category-tree'
 import { formatListingPrice } from '@/entities/listing/format-price'
 import { getListing } from '@/entities/listing/get-listing'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
@@ -18,8 +19,10 @@ import { ListingViewTracker } from '@/features/listing-views/listing-view-tracke
 import { MessageSellerButton } from '@/features/messages/message-seller-button'
 import { RevealListingPhoneButton } from '@/features/reveal-listing-phone/reveal-listing-phone-button'
 import { dayjs } from '@/lib/dayjs'
-import { buildMetadata } from '@/lib/metadata'
+import { buildListingJsonLd, getCategoryBreadcrumbs } from '@/lib/json-ld'
+import { buildListingMetadata, getCategoryPath } from '@/lib/metadata'
 import { BreadCrumbs } from '@/shared/ui/BreadCrumbs'
+import { JsonLd } from '@/shared/ui/json-ld'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -27,30 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const listing = await getListing(id)
   if (!listing) notFound()
-
-  if (listing.status !== 'ACTIVE') {
-    return {
-      title: 'Private listing',
-      description: 'This listing is available to its owner only.',
-      robots: { index: false, follow: false },
-      openGraph: null,
-      twitter: null
-    }
-  }
-
-  const metadata = buildMetadata({
-    title: listing.title,
-    description: listing.description.replace(/\s+/g, ' ').trim().slice(0, 160),
-    path: `/listings/${listing.id}`,
-    image: listing.coverUrl ?? '/og_image.png'
-  })
-
-  return {
-    ...metadata,
-    ...(listing.coverUrl && {
-      openGraph: { ...metadata.openGraph, images: [{ url: listing.coverUrl, alt: listing.title }] }
-    })
-  }
+  return buildListingMetadata(listing)
 }
 
 async function ListingDetails({ params }: Props) {
@@ -58,60 +38,33 @@ async function ListingDetails({ params }: Props) {
   const listing = await getListing(id)
   if (!listing) notFound()
 
+  const category = listing.status === 'ACTIVE' ? await getPublicCategory(listing.category.slug) : null
+  const breadcrumbs = [
+    ...(category ? getCategoryBreadcrumbs(category.category, category.ancestors) : [{ label: 'Home', href: '/' }]),
+    { label: listing.title, href: `/listings/${listing.id}` }
+  ]
+  const isJobListing = category && [...category.ancestors, category.category].some(({ slug }) => slug === 'jobs')
+
   const sellerName = listing.seller.name
   const initials = getSellerInitials(sellerName)
   const publishedAt = dayjs.utc(listing.createdAt).format('D MMM YYYY')
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      <JsonLd data={buildListingJsonLd(listing, breadcrumbs, { includeOffer: Boolean(category) && !isJobListing })} />
       {listing.status === 'ACTIVE' && !listing.isOwner && <ListingViewTracker listingId={listing.id} />}
       <BreadCrumbs
         items={[
           { label: 'Home', href: '/' },
-          { label: listing.category.name, href: `/?category=${encodeURIComponent(listing.category.slug)}#listings` },
+          { label: listing.category.name, href: `${getCategoryPath(listing.category.slug)}#listings` },
           { label: listing.title }
         ]}
       />
       <article className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
-        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
-          <ListingGallery key={listing.id} title={listing.title} images={listing.images} />
-          <Card className="order-3 lg:order-0">
-            <CardHeader>
-              <CardTitle>
-                <h2>Description</h2>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm leading-relaxed wrap-break-word whitespace-pre-wrap">{listing.description}</p>
-            </CardContent>
-          </Card>
-          <Card className="order-4 lg:order-0">
-            <CardHeader>
-              <CardTitle>
-                <h2>Listing details</h2>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <dl className="grid gap-4 text-sm sm:grid-cols-2">
-                <div className="space-y-1">
-                  <dt className="text-muted-foreground">Category</dt>
-                  <dd>{listing.category.name}</dd>
-                </div>
-                <div className="space-y-1">
-                  <dt className="text-muted-foreground">Status</dt>
-                  <dd className="capitalize">{listing.status.toLowerCase()}</dd>
-                </div>
-                <div className="space-y-1">
-                  <dt className="text-muted-foreground">Published</dt>
-                  <dd>
-                    <time dateTime={listing.createdAt.toISOString()}>{publishedAt}</time>
-                  </dd>
-                </div>
-              </dl>
-            </CardContent>
-          </Card>
-        </div>
-        <aside aria-label="Listing and seller information" className="order-2 flex min-w-0 flex-col gap-5 lg:sticky lg:top-24 lg:order-0">
+        <aside
+          aria-label="Listing and seller information"
+          className="order-2 flex min-w-0 flex-col gap-5 lg:sticky lg:top-24 lg:order-0 lg:col-start-2 lg:row-start-1"
+        >
           <Card>
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -217,6 +170,44 @@ async function ListingDetails({ params }: Props) {
             </p>
           </div>
         </aside>
+        <div className="contents lg:col-start-1 lg:row-start-1 lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
+          <ListingGallery key={listing.id} title={listing.title} images={listing.images} />
+          <Card className="order-3 lg:order-0">
+            <CardHeader>
+              <CardTitle>
+                <h2>Description</h2>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-sm leading-relaxed wrap-break-word whitespace-pre-wrap">{listing.description}</p>
+            </CardContent>
+          </Card>
+          <Card className="order-4 lg:order-0">
+            <CardHeader>
+              <CardTitle>
+                <h2>Listing details</h2>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-4 text-sm sm:grid-cols-2">
+                <div className="space-y-1">
+                  <dt className="text-muted-foreground">Category</dt>
+                  <dd>{listing.category.name}</dd>
+                </div>
+                <div className="space-y-1">
+                  <dt className="text-muted-foreground">Status</dt>
+                  <dd className="capitalize">{listing.status.toLowerCase()}</dd>
+                </div>
+                <div className="space-y-1">
+                  <dt className="text-muted-foreground">Published</dt>
+                  <dd>
+                    <time dateTime={listing.createdAt.toISOString()}>{publishedAt}</time>
+                  </dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+        </div>
       </article>
     </div>
   )

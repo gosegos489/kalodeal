@@ -9,7 +9,7 @@ export default function NotFound() {
           <div className="flex flex-col gap-3">
             <p className="text-primary text-sm font-semibold tracking-wide uppercase">404</p>
 
-            <p className="text-4xl font-bold text-balance md:text-5xl">This page is not available anymore</p>
+            <h1 className="text-4xl font-bold text-balance md:text-5xl">This page is not available anymore</h1>
 
             <p className="text-muted-foreground max-w-xl text-base leading-7">
               The listing may have been removed, sold, or moved to another address. You can go back home and continue browsing fresh deals.

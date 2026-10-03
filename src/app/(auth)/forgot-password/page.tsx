@@ -1,6 +1,9 @@
 import { CheckCircle2 } from 'lucide-react'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ForgotPasswordForm } from '@/features/auth'
+
+export const metadata: Metadata = { title: 'Forgot Password', description: 'Request a password reset link for your Kalodeal account.' }
 
 const benefits = [
   'Receive a secure password reset link by email',
@@ -18,9 +21,9 @@ export default function ForgotPasswordPage() {
 
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Reset your password</h1>
 
-            <h2 className="text-muted-foreground text-lg leading-8">
+            <p className="text-muted-foreground text-lg leading-8">
               Enter the email address linked to your KaloDeal account and we&apos;ll send you a secure password reset link.
-            </h2>
+            </p>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -36,7 +39,7 @@ export default function ForgotPasswordPage() {
 
         <div className="bg-card mx-auto flex w-full flex-col gap-6 rounded-xl border p-6 shadow-sm sm:p-8">
           <div className="flex flex-col gap-2">
-            <p className="text-2xl font-semibold">Forgot your password?</p>
+            <h2 className="text-2xl font-semibold">Forgot your password?</h2>
 
             <p className="text-muted-foreground text-sm">Enter your email address and we&apos;ll send you a link to create a new password.</p>
           </div>

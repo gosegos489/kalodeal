@@ -1,4 +1,12 @@
 import { ContactUsForm } from '@/features/contact-us'
+import { buildMetadata } from '@/lib/metadata'
+
+export const metadata = buildMetadata({
+  title: 'Contact Us',
+  description:
+    'Contact the Kalodeal team with questions about listings, your account, or the marketplace. Send us a message through our contact form.',
+  path: '/contact-us'
+})
 
 export default function ContactUsPage() {
   return (
@@ -10,15 +18,15 @@ export default function ContactUsPage() {
 
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">How can we help?</h1>
 
-            <h2 className="text-muted-foreground text-lg leading-8">
+            <p className="text-muted-foreground text-lg leading-8">
               Have a question about KaloDeal? Send us a message and our team will get back to you as soon as possible.
-            </h2>
+            </p>
           </div>
         </div>
 
         <div className="bg-card mx-auto flex w-full flex-col gap-6 rounded-xl border p-6 shadow-sm sm:p-8">
           <div className="flex flex-col gap-2">
-            <p className="text-2xl font-semibold">Send us a message</p>
+            <h2 className="text-2xl font-semibold">Send us a message</h2>
 
             <p className="text-muted-foreground text-sm">Fill out the form below and we&apos;ll be happy to help.</p>
           </div>

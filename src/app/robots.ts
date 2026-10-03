@@ -1,18 +1,20 @@
 import type { MetadataRoute } from 'next'
+import { getListingSitemapIds } from '@/entities/listing/get-listing-sitemap'
+import { getCanonicalUrl, seoConfig } from '@/lib/metadata'
 
-const DOMAIN_URL = process.env.DOMAIN_URL
-
-if (!DOMAIN_URL) {
-  throw new Error('DOMAIN_URL is not defined')
-}
-
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const listingSitemaps = seoConfig.isUnderDevelopment ? [] : await getListingSitemapIds()
   return {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/', '/admin/', '/account/', '/dashboard/']
+      // HTML pages must remain crawlable so their noindex directives can be read.
+      disallow: ['/api/']
     },
-    sitemap: `${DOMAIN_URL}/sitemap.xml`
+    ...(seoConfig.isUnderDevelopment
+      ? {}
+      : {
+          sitemap: [getCanonicalUrl('/sitemap.xml'), ...listingSitemaps.map(({ id }) => getCanonicalUrl(`/listings/sitemap/${id}.xml`))]
+        })
   }
 }

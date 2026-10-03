@@ -1,13 +1,9 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { requireGuest } from '@/lib/auth-utils'
+import { privateMetadata } from '@/lib/metadata'
 
-export const metadata: Metadata = {
-  robots: {
-    index: false,
-    follow: false
-  }
-}
+export const metadata: Metadata = privateMetadata
 
 async function GuestGuard({ children }: { children: React.ReactNode }) {
   await requireGuest()
