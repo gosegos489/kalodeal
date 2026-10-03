@@ -22,7 +22,7 @@ async function EditListing({ params }: Props) {
     ? categories
     : [{ id: listing.values.categoryId, name: `${categoryName} (current category)` }, ...categories]
 
-  return <ListingForm mode="edit" key={`${listing.id}:${listing.updatedAt}`} categories={options} listing={editableListing} />
+  return <ListingForm mode="edit" key={listing.id} categories={options} listing={editableListing} />
 }
 
 export default function EditListingPage({ params }: Props) {

@@ -1,12 +1,10 @@
 import type { CreateListingResult, ListingDetailsValues } from '@/features/create-listing/types'
 import type { ListingStatus } from '@/generated/prisma/enums'
+import type { ListingPhotoState } from './photo-schema'
 
-export type EditableListing = {
+export type EditableListing = ListingPhotoState & {
   id: string
-  updatedAt: string
-  status: ListingStatus
   values: ListingDetailsValues
-  images: { id: string; url: string }[]
 }
 
 export type UpdateListingResult =

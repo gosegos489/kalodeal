@@ -1,12 +1,12 @@
 'use server'
 
-import { DeleteObjectsCommand } from '@aws-sdk/client-s3'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import 'server-only'
 import { listingIdSchema } from '@/entities/listing/schema'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { getSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
+import { deleteListingPhotoObjects } from '@/lib/listing-photo-storage'
 import prisma from '@/lib/prisma'
 
 export async function deleteListing(id: unknown): Promise<ActionMessageResult> {
@@ -20,6 +20,9 @@ export async function deleteListing(id: unknown): Promise<ActionMessageResult> {
 
     const where = { id: parsed.data, userId: session.user.id }
     deletedListing = await prisma.$transaction(async (tx) => {
+      // Read keys after acquiring the same listing lock as photo management.
+      // Otherwise a concurrent upload could commit between this read and cascade deletion.
+      await tx.$queryRaw`SELECT id FROM listing WHERE id = ${parsed.data} AND "userId" = ${session.user.id} FOR UPDATE`
       const listing = await tx.listing.findFirst({
         where,
         select: { categoryId: true, images: { select: { key: true } } }
@@ -36,17 +39,7 @@ export async function deleteListing(id: unknown): Promise<ActionMessageResult> {
 
   if (!deletedListing) return { success: false, message: 'This listing is unavailable or does not belong to you.' }
 
-  if (deletedListing.images.length) {
-    try {
-      const { r2, R2_BUCKET_NAME } = await import('@/lib/r2')
-      const result = await r2.send(
-        new DeleteObjectsCommand({ Bucket: R2_BUCKET_NAME, Delete: { Objects: deletedListing.images.map(({ key }) => ({ Key: key })) } })
-      )
-      if (result.Errors?.length) console.error('Some listing photos could not be removed from storage after deletion.')
-    } catch {
-      console.error('Could not clean up listing photos after deletion.')
-    }
-  }
+  await deleteListingPhotoObjects(deletedListing.images.map(({ key }) => key))
 
   revalidateTag(cacheTags.listings, { expire: 0 })
   revalidateTag(cacheTags.categories, { expire: 0 })

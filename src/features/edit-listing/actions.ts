@@ -44,7 +44,7 @@ export async function updateListing(id: unknown, input: unknown, expectedUpdated
       return { success: false, message: 'This listing has changed. Reload the page before editing it again.' }
     }
 
-    // Reject server-only fields and image operations; edit currently preserves all photos.
+    // Text edits reject server-only fields; photo operations have their own boundary.
     const parsed = listingDetailsSchema.strict().safeParse(input)
     if (!parsed.success) return { success: false, message: 'Please check your listing details.', fieldErrors: parsed.error.flatten().fieldErrors }
 

@@ -1,11 +1,13 @@
 'use client'
 
-import Image from 'next/image'
 import { Controller } from 'react-hook-form'
+import { useRef, useState } from 'react'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { ListingPhotos } from '@/features/edit-listing/listing-photos'
+import type { ListingPhotoState } from '@/features/edit-listing/photo-schema'
 import type { EditableListing } from '@/features/edit-listing/types'
 import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
 import { ListingAllowanceCard } from './listing-allowance-card'
@@ -21,15 +23,29 @@ type ListingFormProps = {
 
 export function ListingForm(props: ListingFormProps) {
   const { categories } = props
-  const listing = props.mode === 'edit' ? props.listing : undefined
-  const plan = props.mode === 'create' ? props.plan : 'FREE'
-  const { form, isSubmitting, onSubmit } = useListingForm(plan, listing)
-  const limits = PLAN_LIMITS[plan]
+  const [photoState, setPhotoState] = useState<ListingPhotoState | undefined>(() => {
+    if (props.mode !== 'edit') return undefined
+    const { updatedAt, status, plan, images } = props.listing
+    return { updatedAt, status, plan, images }
+  })
+  const [photosPending, setPhotosPending] = useState(false)
+  const photosLocked = useRef(false)
+  const listing = props.mode === 'edit' ? { ...props.listing, ...photoState } : undefined
+  const plan = props.mode === 'create' ? props.plan : props.listing.plan
+  const currentPlan = photoState?.plan ?? plan
+  const { form, isSubmitting, onSubmit } = useListingForm(currentPlan, listing)
+  const limits = PLAN_LIMITS[currentPlan]
   const limitReached = props.mode === 'create' && props.listingSlotCount >= limits.activeListings
-  const disabled = isSubmitting || limitReached || categories.length === 0
+  const disabled = isSubmitting || photosPending || limitReached || categories.length === 0
 
   return (
-    <form className="grid w-full items-start gap-6 lg:grid-cols-3 lg:gap-8" onSubmit={onSubmit}>
+    <form
+      className="grid w-full items-start gap-6 lg:grid-cols-3 lg:gap-8"
+      onSubmit={(event) => {
+        if (photosLocked.current) event.preventDefault()
+        else void onSubmit(event)
+      }}
+    >
       <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
         <section className="bg-card flex min-w-0 flex-col gap-6 rounded-2xl border p-5 shadow-xs sm:p-7">
           <div className="flex items-start gap-3 border-b pb-5">
@@ -113,27 +129,16 @@ export function ListingForm(props: ListingFormProps) {
           </div>
           <FieldGroup>
             {listing ? (
-              <Field>
-                <FieldLabel>Current photos</FieldLabel>
-                {listing.images.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                    {listing.images.map((image, index) => (
-                      <div key={image.id} className="bg-muted relative aspect-square overflow-hidden rounded-lg border">
-                        <Image
-                          src={image.url}
-                          alt={`Current listing photo ${index + 1}`}
-                          fill
-                          sizes="(max-width: 640px) 28vw, 150px"
-                          className="object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">No photo previews available.</p>
-                )}
-                <FieldDescription>Existing photos are kept when you save. Photo management is not available here yet.</FieldDescription>
-              </Field>
+              <ListingPhotos
+                listingId={listing.id}
+                state={listing}
+                disabled={isSubmitting}
+                onSaved={setPhotoState}
+                onPendingChange={(pending) => {
+                  photosLocked.current = pending
+                  setPhotosPending(pending)
+                }}
+              />
             ) : (
               <Controller
                 name="images"

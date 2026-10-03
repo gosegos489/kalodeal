@@ -1,14 +1,14 @@
-import { DeleteObjectsCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { revalidateTag } from 'next/cache'
 import { randomUUID } from 'node:crypto'
 import { MAX_IMAGE_BYTES, createListingSchema } from '@/features/create-listing/schema'
 import type { CreateListingResult } from '@/features/create-listing/types'
 import { getSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
-import { matchesImageType } from '@/lib/image-validation'
+import { ListingPhotoValidationError, deleteListingPhotoObjects, prepareListingPhotos, uploadListingPhotos } from '@/lib/listing-photo-storage'
 import { LISTING_SLOT_STATUSES, PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { checkCreateListingRateLimit } from '@/lib/rate-limit'
+import { MultipartBodyError, readMultipartFormData } from '@/lib/read-multipart-form-data'
 
 class ListingLimitError extends Error {}
 
@@ -37,13 +37,11 @@ export async function POST(request: Request) {
   }
 
   const maxBodyBytes = PLAN_LIMITS.PRO.imagesPerListing * MAX_IMAGE_BYTES + 1024 * 1024
-  if (Number(request.headers.get('content-length')) > maxBodyBytes) return failure('The selected photos are too large.', 413)
-  if (!request.headers.get('content-type')?.startsWith('multipart/form-data')) return failure('Invalid listing data.', 400)
-
   let payload: FormData
   try {
-    payload = await request.formData()
-  } catch {
+    payload = await readMultipartFormData(request, maxBodyBytes, 'Invalid listing data.', 'The selected photos are too large.')
+  } catch (error) {
+    if (error instanceof MultipartBodyError) return failure(error.message, error.status)
     return failure('Invalid listing data.', 400)
   }
 
@@ -73,23 +71,12 @@ export async function POST(request: Request) {
   if (!category) return failure('Choose an available category.', 400, { categoryId: ['This category is no longer available.'] })
 
   const attemptedKeys: string[] = []
-  let storage: typeof import('@/lib/r2') | undefined
   let savedListing: { id: string }
 
   try {
-    const imageData = await Promise.all(images.map(async (image) => ({ image, bytes: Buffer.from(await image.arrayBuffer()) })))
-    if (imageData.some(({ image, bytes }) => !matchesImageType(bytes, image.type))) {
-      return failure('Choose valid JPEG, PNG or WebP photos.', 400, { images: ['One of the files is not a valid image.'] })
-    }
-
-    if (images.length) storage = await import('@/lib/r2')
+    const photos = await prepareListingPhotos(images)
     const listingId = randomUUID()
-    for (const { image, bytes } of imageData) {
-      const extension = image.type === 'image/jpeg' ? 'jpg' : image.type === 'image/png' ? 'png' : 'webp'
-      const key = `listings/${userId}/${listingId}/${randomUUID()}.${extension}`
-      attemptedKeys.push(key)
-      await storage!.r2.send(new PutObjectCommand({ Bucket: storage!.R2_BUCKET_NAME, Key: key, Body: bytes, ContentType: image.type }))
-    }
+    await uploadListingPhotos(userId, listingId, photos, attemptedKeys)
 
     savedListing = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
@@ -118,15 +105,8 @@ export async function POST(request: Request) {
       })
     })
   } catch (error) {
-    if (storage && attemptedKeys.length) {
-      try {
-        await storage.r2.send(
-          new DeleteObjectsCommand({ Bucket: storage.R2_BUCKET_NAME, Delete: { Objects: attemptedKeys.map((Key) => ({ Key })) } })
-        )
-      } catch {
-        console.error('Failed to clean up photos after listing creation failed.')
-      }
-    }
+    await deleteListingPhotoObjects(attemptedKeys)
+    if (error instanceof ListingPhotoValidationError) return failure(error.message, 400, { images: [error.message] })
     if (error instanceof ListingLimitError) return failure(error.message, 409)
     console.error('Listing creation failed.', error instanceof Error ? error.name : 'Unknown error')
     return failure('Could not publish your listing. Please try again.', 500)

@@ -17,6 +17,13 @@ const updateListingLimiter = new Ratelimit({
   timeout: 3000
 })
 
+const listingPhotoLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(20, '10 m'),
+  prefix: 'ratelimit:listing:photos',
+  timeout: 3000
+})
+
 const contactUsLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(3, '10 m'),
@@ -93,6 +100,10 @@ export function checkCreateListingRateLimit(userId: string) {
 
 export function checkUpdateListingRateLimit(userId: string) {
   return checkRateLimit(updateListingLimiter, `user:${userId}`)
+}
+
+export function checkListingPhotoRateLimit(userId: string) {
+  return checkRateLimit(listingPhotoLimiter, `user:${userId}`)
 }
 
 export function checkAvatarUploadRateLimit(userId: string) {
