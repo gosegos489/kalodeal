@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getApprovedAvatarUrl } from '@/features/account/settings/avatar-reference'
+import { getApprovedAvatarUrl, pendingAvatarUrl } from '@/features/account/settings/avatar-reference'
 import { ProfileForm } from '@/features/account/settings/profile-form'
 import { SecurityForm } from '@/features/account/settings/security-form'
 import { getSettingsPageActor } from '@/features/account/settings/server'
@@ -27,7 +27,7 @@ async function SettingsForms() {
           <ProfileForm
             userId={actor.id}
             name={user.name.includes('@') ? '' : user.name}
-            image={getApprovedAvatarUrl(actor.id, user.image)}
+            image={user.pendingAvatarKey ? pendingAvatarUrl(actor.id, user.pendingAvatarKey) : getApprovedAvatarUrl(actor.id, user.image)}
             pending={!!user.pendingAvatarKey}
             cleanupPending={!!user.avatarCleanupKey}
           />

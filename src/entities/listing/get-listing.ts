@@ -18,9 +18,11 @@ const getListingRow = cache(async (id: string, userId: string | null) => {
       status: true,
       userId: true,
       phone: true,
+      facebookUrl: true,
+      messengerUrl: true,
       _count: { select: { favorites: true } },
       favorites: { where: { userId: userId ?? '' }, select: { id: true }, take: 1 },
-      user: { select: { name: true, image: true } },
+      user: { select: { name: true, image: true, pendingAvatarKey: true } },
       category: { select: { name: true, slug: true } },
       images: {
         select: { id: true, key: true },
@@ -39,7 +41,7 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
   const listing = await getListingRow(result.data, session?.user.id ?? null)
   if (!listing) return null
 
-  const { userId, user, phone, status, favorites, _count, ...summary } = listing
+  const { userId, user, phone, facebookUrl, messengerUrl, status, favorites, _count, ...summary } = listing
   const isOwner = session?.user.id === userId
   if (status !== 'ACTIVE' && !isOwner) return null
 
@@ -47,10 +49,12 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
     ...toListingSummary(summary),
     category: listing.category,
     status,
+    facebookUrl,
+    messengerUrl,
     maskedPhone: phone ? `${phone.trim().startsWith('+') ? '+' : ''}${phone.replace(/\D/g, '').slice(0, 3)} ••••••` : null,
     seller: {
       name: getSellerName(user.name),
-      image: getApprovedAvatarUrl(userId, user.image)
+      image: user.pendingAvatarKey ? null : getApprovedAvatarUrl(userId, user.image)
     },
     isOwner,
     isAuthenticated: !!session,

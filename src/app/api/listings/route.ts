@@ -62,6 +62,8 @@ export async function POST(request: Request) {
     price: payload.get('price') ?? '',
     phone: payload.get('phone'),
     youtube: payload.get('youtube') ?? '',
+    facebookUrl: payload.get('facebookUrl') ?? '',
+    messengerUrl: payload.get('messengerUrl') ?? '',
     images: payload.getAll('images')
   })
   if (!parsed.success) return failure('Please check your listing details.', 400, parsed.error.flatten().fieldErrors)
@@ -107,6 +109,8 @@ export async function POST(request: Request) {
           status: 'PENDING',
           price: details.price || null,
           youtube: details.youtube || null,
+          facebookUrl: details.facebookUrl || null,
+          messengerUrl: details.messengerUrl || null,
           images: { create: attemptedKeys.map((key, sortOrder) => ({ key, sortOrder })) },
           stats: { create: {} }
         },

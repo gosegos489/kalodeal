@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       return Response.json({ success: false, message: 'Choose a valid JPEG, PNG or WebP image.' }, { status: 400 })
     await avatars.upload(actor.id, bytes, file.type)
     revalidatePath('/account/settings')
+    revalidatePath('/listings/[id]', 'page')
     revalidatePath('/admin')
     revalidatePath('/moderator')
     return Response.json({ success: true, message: 'New avatar awaiting moderation.' })

@@ -16,6 +16,8 @@ export type ListingDetails = Omit<ListingSummary, 'category'> & {
   images: { id: string; url: string }[]
   seller: { name: string; image: string | null }
   maskedPhone: string | null
+  facebookUrl: string | null
+  messengerUrl: string | null
   isOwner: boolean
   isAuthenticated: boolean
   isFavorited: boolean

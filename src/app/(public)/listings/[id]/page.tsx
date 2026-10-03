@@ -166,6 +166,28 @@ async function ListingDetails({ params }: Props) {
                   isAuthenticated={listing.isAuthenticated}
                 />
               )}
+              {(listing.facebookUrl || listing.messengerUrl) && (
+                <div aria-label="Seller contacts" className="flex flex-wrap gap-2">
+                  {listing.facebookUrl && (
+                    <Button
+                      nativeButton={false}
+                      variant="outline"
+                      render={<a href={listing.facebookUrl} target="_blank" rel="noopener noreferrer" />}
+                    >
+                      Facebook
+                    </Button>
+                  )}
+                  {listing.messengerUrl && (
+                    <Button
+                      nativeButton={false}
+                      variant="outline"
+                      render={<a href={listing.messengerUrl} target="_blank" rel="noopener noreferrer" />}
+                    >
+                      Messenger
+                    </Button>
+                  )}
+                </div>
+              )}
               {listing.isOwner ? (
                 <div className="flex flex-col gap-2">
                   <p className="text-muted-foreground text-xs">This is your listing.</p>

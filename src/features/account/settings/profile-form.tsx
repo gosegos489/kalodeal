@@ -22,9 +22,10 @@ type Props = { userId: string; name: string; image: string | null; pending: bool
 export function ProfileForm({ userId, name, image, pending, cleanupPending }: Props) {
   const router = useRouter()
   const fileInput = useRef<HTMLInputElement>(null)
-  const [avatarBusy, setAvatarBusy] = useState(false)
+  const [avatarAction, setAvatarAction] = useState<'upload' | 'remove' | 'cleanup' | null>(null)
   const form = useForm<z.infer<typeof profileSchema>>({ resolver: zodResolver(profileSchema), defaultValues: { name } })
-  const busy = avatarBusy || form.formState.isSubmitting
+  const busy = avatarAction !== null || form.formState.isSubmitting
+  const avatarAlt = pending ? 'Profile photo awaiting moderation' : 'Current approved avatar'
 
   async function upload(file: File | undefined) {
     if (!file) return
@@ -33,7 +34,7 @@ export function ProfileForm({ userId, name, image, pending, cleanupPending }: Pr
       toast.add({ title: 'Could not upload your photo', description: parsed.error.issues[0].message, type: 'error' })
       return
     }
-    setAvatarBusy(true)
+    setAvatarAction('upload')
     try {
       const payload = new FormData()
       payload.set('avatar', file)
@@ -51,13 +52,13 @@ export function ProfileForm({ userId, name, image, pending, cleanupPending }: Pr
     } catch {
       toast.add({ title: 'Could not upload your photo', description: 'Please try again.', type: 'error' })
     } finally {
-      setAvatarBusy(false)
+      setAvatarAction(null)
       router.refresh()
     }
   }
 
   async function manageAvatar(cleanup = false) {
-    setAvatarBusy(true)
+    setAvatarAction(cleanup ? 'cleanup' : 'remove')
     try {
       const updated = await (cleanup ? retryAvatarCleanup(userId) : removeAvatar())
       toast.add({
@@ -68,7 +69,7 @@ export function ProfileForm({ userId, name, image, pending, cleanupPending }: Pr
     } catch {
       toast.add({ title: 'Could not update your photo', description: 'Please try again.', type: 'error' })
     } finally {
-      setAvatarBusy(false)
+      setAvatarAction(null)
       router.refresh()
     }
   }
@@ -106,13 +107,7 @@ export function ProfileForm({ userId, name, image, pending, cleanupPending }: Pr
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <Avatar className="ring-border size-16 shrink-0 ring-1">
-              {image && (
-                <AvatarImage
-                  src={image}
-                  alt="Current approved avatar"
-                  render={<Image src={image} alt="Current approved avatar" width={64} height={64} unoptimized />}
-                />
-              )}
+              {image && <AvatarImage src={image} alt={avatarAlt} render={<Image src={image} alt={avatarAlt} width={64} height={64} unoptimized />} />}
               <AvatarFallback>
                 <UserRound aria-hidden="true" className="size-7" />
               </AvatarFallback>
@@ -132,11 +127,23 @@ export function ProfileForm({ userId, name, image, pending, cleanupPending }: Pr
                   event.target.value = ''
                 }}
               />
-              <Button type="button" variant="outline" disabled={busy || cleanupPending} onClick={() => fileInput.current?.click()}>
-                {avatarBusy && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}Change photo
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy || cleanupPending}
+                aria-busy={avatarAction === 'upload'}
+                onClick={() => fileInput.current?.click()}
+              >
+                {avatarAction === 'upload' && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}Change photo
               </Button>
-              <Button type="button" variant="outline" disabled={busy || (!image && !pending)} onClick={() => void manageAvatar()}>
-                Remove photo
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy || (!image && !pending)}
+                aria-busy={avatarAction === 'remove'}
+                onClick={() => void manageAvatar()}
+              >
+                {avatarAction === 'remove' && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}Remove photo
               </Button>
             </div>
           </div>
@@ -144,8 +151,8 @@ export function ProfileForm({ userId, name, image, pending, cleanupPending }: Pr
           {cleanupPending && (
             <div className="flex flex-col items-start gap-2">
               <p className="text-muted-foreground text-sm">Storage cleanup is pending. Complete it before uploading another avatar.</p>
-              <Button type="button" variant="outline" disabled={busy} onClick={() => void manageAvatar(true)}>
-                Retry cleanup
+              <Button type="button" variant="outline" disabled={busy} aria-busy={avatarAction === 'cleanup'} onClick={() => void manageAvatar(true)}>
+                {avatarAction === 'cleanup' && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}Retry cleanup
               </Button>
             </div>
           )}

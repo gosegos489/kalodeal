@@ -1,8 +1,9 @@
 import type z from 'zod'
-import type { createListingSchema } from './schema'
+import type { createListingSchema, listingDetailsSchema } from './schema'
 
 export type CreateListingInput = z.input<ReturnType<typeof createListingSchema>>
 export type CreateListingValues = z.output<ReturnType<typeof createListingSchema>>
+export type ListingDetailsValues = z.infer<typeof listingDetailsSchema>
 export type ListingCategoryOption = { id: string; name: string }
 
 export type CreateListingResult =

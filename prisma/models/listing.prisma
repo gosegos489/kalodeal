@@ -15,6 +15,8 @@ model Listing {
   phone        String
   phoneReveals Int      @default(0)
   youtube      String?
+  facebookUrl  String?
+  messengerUrl String?
 
   status ListingStatus @default(PENDING)
 

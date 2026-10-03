@@ -1,4 +1,4 @@
-import { Eye, ImageIcon } from 'lucide-react'
+import { Eye, ImageIcon, Pencil } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -58,6 +58,15 @@ export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowP
       <div className="col-span-2 flex flex-wrap items-center gap-2 border-t pt-3 xl:col-span-1 xl:justify-end xl:border-t-0 xl:border-l xl:pt-0 xl:pl-4">
         <Button nativeButton={false} variant="outline" size="sm" aria-label={`View listing: ${listing.title}`} render={<Link href={href} />}>
           <Eye aria-hidden="true" /> View
+        </Button>
+        <Button
+          nativeButton={false}
+          variant="outline"
+          size="sm"
+          aria-label={`Edit listing: ${listing.title}`}
+          render={<Link href={`/account/listings/${listing.id}/edit`} />}
+        >
+          <Pencil aria-hidden="true" /> Edit
         </Button>
         <DeleteListingButton listingId={listing.id} title={listing.title} />
         {canBump && listing.status === 'ACTIVE' && bumpsRemaining > 0 && (
