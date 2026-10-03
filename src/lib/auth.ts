@@ -5,6 +5,7 @@ import { nextCookies } from 'better-auth/next-js'
 import { admin } from 'better-auth/plugins'
 import 'server-only'
 import React from 'react'
+import { guardAuthProfileData, prepareNewProfileName } from '@/features/account/settings/auth-profile'
 import { displayNameSchema } from '@/features/account/settings/schema'
 import ResetPasswordEmail from '../../emails/ResetPasswordEmail'
 import VerifyEmail from '../../emails/VerifyEmail'
@@ -26,10 +27,8 @@ export const auth = betterAuth({
       if (data != null && (typeof data !== 'object' || Array.isArray(data))) {
         throw new APIError('BAD_REQUEST', { message: 'Invalid profile data.' })
       }
-      // The generic auth API must not bypass avatar moderation or file cleanup.
-      if (data && ['image', 'pendingAvatarKey', 'avatarCleanupKey'].some((field) => field in data)) {
-        throw new APIError('BAD_REQUEST', { message: 'Manage avatars through account settings and moderation.' })
-      }
+      // The generic auth API must not bypass profile moderation or file cleanup.
+      if (data) guardAuthProfileData(data, isProfileUpdate || ctx.path === '/admin/update-user')
       if (data && ['banned', 'banReason', 'banExpires'].some((field) => field in data)) {
         throw new APIError('BAD_REQUEST', { message: 'Manage bans through the ban/unban endpoints.' })
       }
@@ -45,14 +44,32 @@ export const auth = betterAuth({
   },
   databaseHooks: {
     user: {
+      create: {
+        before: async (data) => ({ data: { ...data, ...prepareNewProfileName(data.name) } })
+      },
       update: {
-        before: async (data, ctx) => ({ data: normalizeBanUpdate(data, ctx?.path) })
+        before: async (data, ctx) => {
+          if ('name' in data) {
+            throw new APIError('BAD_REQUEST', { message: 'Manage profile names through account settings and moderation.' })
+          }
+          return { data: normalizeBanUpdate(data, ctx?.path) }
+        }
       }
     }
   },
   database: prismaAdapter(prisma, {
     provider: 'postgresql'
   }),
+
+  user: {
+    additionalFields: {
+      // Required by the adapter for the create hook, excluded from API input,
+      // user responses and session payloads. Settings reads are owner-scoped.
+      pendingName: { type: 'string', required: false, input: false, returned: false },
+      nameModerationMessage: { type: 'string', required: false, input: false, returned: false },
+      avatarModerationMessage: { type: 'string', required: false, input: false, returned: false }
+    }
+  },
 
   session: {
     cookieCache: {

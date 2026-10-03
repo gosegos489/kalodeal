@@ -1,4 +1,4 @@
-import { ArrowRight, Flag, Images, List, RefreshCw } from 'lucide-react'
+import { ArrowRight, Flag, Images, List, RefreshCw, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,6 +23,13 @@ export async function ModerationDashboard() {
       icon: List
     },
     {
+      label: 'Pending names',
+      count: overview.pendingNames,
+      description: 'Profile names awaiting approval.',
+      href: '/moderator/avatars',
+      icon: UserRound
+    },
+    {
       label: 'Pending avatars',
       count: overview.pendingAvatars,
       description: 'Profile photos awaiting approval.',
@@ -44,9 +51,9 @@ export async function ModerationDashboard() {
         <h2 id="moderation-dashboard-heading" className="text-2xl font-semibold">
           Dashboard
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm">Current moderation queues. Avatar reviews and cleanup can overlap.</p>
+        <p className="text-muted-foreground mt-1 text-sm">Current moderation queues. Profile reviews and avatar cleanup can overlap.</p>
       </div>
-      <div className="grid min-w-0 auto-rows-fr gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid min-w-0 auto-rows-fr gap-4 md:grid-cols-2 xl:grid-cols-3">
         {metrics.map(({ label, count, description, href, icon: Icon }) => (
           <Card key={label} className="min-w-0">
             <CardHeader className="flex flex-1 flex-col">

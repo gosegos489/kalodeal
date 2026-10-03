@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { approvedAvatarObjectKey, approvedAvatarUrl, avatarKey, isOwnedAvatarObjectKey } from './avatar-reference'
+import type { ModerationDecision } from './schema'
 
 export class AvatarError extends Error {}
 
@@ -8,8 +9,9 @@ export type AvatarState = {
   image: string | null
   pendingAvatarKey: string | null
   avatarCleanupKey: string | null
+  avatarModerationMessage: string | null
 }
-type AvatarUpdate = Partial<Pick<AvatarState, 'image' | 'pendingAvatarKey' | 'avatarCleanupKey'>>
+type AvatarUpdate = Partial<Pick<AvatarState, 'image' | 'pendingAvatarKey' | 'avatarCleanupKey' | 'avatarModerationMessage'>>
 
 export interface AvatarRepository {
   locked<T>(userId: string, work: (state: AvatarState, save: (update: AvatarUpdate) => Promise<void>) => Promise<T>): Promise<T>
@@ -64,11 +66,12 @@ export function createAvatarLifecycle(repository: AvatarRepository, storage: Ava
       await save({ pendingAvatarKey: key })
     })
     try {
-      await repository.locked(userId, async (state) => {
+      await repository.locked(userId, async (state, save) => {
         if (state.pendingAvatarKey !== key) throw new AvatarError('Your avatar changed. Please try again.')
         // Hold the user row lock during PUT so a replacement/rejection cannot
         // delete this reservation and then have an old request recreate it.
         await storage.put(key, bytes, type)
+        await save({ avatarModerationMessage: null })
       })
     } catch (error) {
       await repository.locked(userId, async (state, save) => {
@@ -81,22 +84,27 @@ export function createAvatarLifecycle(repository: AvatarRepository, storage: Ava
     }
   }
 
-  async function moderate(userId: string, version: string, decision: 'approve' | 'reject') {
+  async function moderate(userId: string, version: string, review: ModerationDecision) {
     await cleanup(userId)
     await repository.locked(userId, async (state, save) => {
       if (state.avatarCleanupKey) throw new AvatarError('Previous avatar cleanup is still in progress. Try again later.')
       const pendingKey = avatarKey(userId, version)
       if (state.pendingAvatarKey !== pendingKey) throw new AvatarError('This pending avatar has changed. Refresh the moderation queue.')
-      if (decision === 'approve') {
+      if (review.decision === 'approve') {
         // A reserved/incomplete/corrupt upload must not be approved.
         await storage.read(pendingKey)
         await save({
           image: approvedAvatarUrl(userId, version),
           pendingAvatarKey: null,
+          avatarModerationMessage: null,
           avatarCleanupKey: approvedAvatarObjectKey(userId, state.image)
         })
       } else {
-        await save({ pendingAvatarKey: null, avatarCleanupKey: pendingKey })
+        await save({
+          pendingAvatarKey: null,
+          avatarCleanupKey: pendingKey,
+          avatarModerationMessage: review.decision === 'request-changes' ? review.message : null
+        })
       }
     })
     // The newly assigned avatar is committed before the old approved object is
@@ -115,7 +123,7 @@ export function createAvatarLifecycle(repository: AvatarRepository, storage: Ava
     await cleanup(userId)
     await repository.locked(userId, async (state, save) => {
       if (state.pendingAvatarKey || state.avatarCleanupKey) throw new AvatarError('Your avatar changed. Please try again.')
-      await save({ image: null, avatarCleanupKey: approvedAvatarObjectKey(userId, state.image) })
+      await save({ image: null, avatarCleanupKey: approvedAvatarObjectKey(userId, state.image), avatarModerationMessage: null })
     })
     return tryCleanup(userId)
   }

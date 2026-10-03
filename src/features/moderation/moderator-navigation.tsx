@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 export const moderatorNavigation = [
   { label: 'Dashboard', href: '/moderator', icon: LayoutDashboard },
   { label: 'Listings', href: '/moderator/listings', icon: List },
-  { label: 'Avatars', href: '/moderator/avatars', icon: Images },
+  { label: 'Profiles', href: '/moderator/avatars', icon: Images },
   { label: 'Users', href: '/moderator/users', icon: Users },
   { label: 'Chat reports', href: '/moderator/chat-reports', icon: Flag }
 ]

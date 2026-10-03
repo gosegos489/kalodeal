@@ -1,10 +1,10 @@
 import { approvedAvatarUrl, avatarKey } from '@/features/account/settings/avatar-reference'
 import { avatarStorage } from '@/features/account/settings/avatar-storage'
-import { avatarModerationSchema } from '@/features/account/settings/schema'
+import { avatarReferenceSchema } from '@/features/account/settings/schema'
 import prisma from '@/lib/prisma'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ userId: string; version: string }> }) {
-  const parsed = avatarModerationSchema.pick({ userId: true, version: true }).safeParse(await params)
+  const parsed = avatarReferenceSchema.safeParse(await params)
   if (!parsed.success) return new Response(null, { status: 404 })
   const { userId, version } = parsed.data
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { image: true } })

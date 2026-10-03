@@ -1,29 +1,39 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Clock3, Loader2, UserRound } from 'lucide-react'
+import { Loader2, UserRound } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
 import { useRef, useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { removeAvatar, retryAvatarCleanup, saveProfile } from './actions'
+import { AwaitingModeration, PendingNameNotice, ProfileModerationFeedback } from './profile-moderation-notice'
 import { avatarFileSchema, profileSchema } from './schema'
 
-type Props = { userId: string; name: string; image: string | null; pending: boolean; cleanupPending: boolean }
+type Props = {
+  userId: string
+  name: string
+  pendingName: string | null
+  nameModerationMessage: string | null
+  avatarModerationMessage: string | null
+  image: string | null
+  pending: boolean
+  cleanupPending: boolean
+}
 
-export function ProfileForm({ userId, name, image, pending, cleanupPending }: Props) {
+export function ProfileForm({ userId, name, pendingName, nameModerationMessage, avatarModerationMessage, image, pending, cleanupPending }: Props) {
   const router = useRouter()
   const fileInput = useRef<HTMLInputElement>(null)
   const [avatarAction, setAvatarAction] = useState<'upload' | 'remove' | 'cleanup' | null>(null)
-  const form = useForm<z.infer<typeof profileSchema>>({ resolver: zodResolver(profileSchema), defaultValues: { name } })
+  const currentName = pendingName ?? name
+  const form = useForm<z.infer<typeof profileSchema>>({ resolver: zodResolver(profileSchema), values: { name: currentName } })
   const busy = avatarAction !== null || form.formState.isSubmitting
   const avatarAlt = pending ? 'Profile photo awaiting moderation' : 'Current approved avatar'
 
@@ -81,8 +91,8 @@ export function ProfileForm({ userId, name, image, pending, cleanupPending }: Pr
         try {
           const saved = await saveProfile(data)
           toast.add({
-            title: saved.success ? 'Display name updated' : 'Could not save your profile',
-            description: saved.success ? 'Your display name has been saved successfully.' : saved.message,
+            title: saved.success ? 'Profile saved' : 'Could not save your profile',
+            description: saved.message,
             type: saved.success ? 'success' : 'error'
           })
           if (saved.success) {
@@ -98,12 +108,7 @@ export function ProfileForm({ userId, name, image, pending, cleanupPending }: Pr
         <Field>
           <div className="flex flex-wrap items-center gap-2">
             <FieldLabel htmlFor="avatar-upload">Profile photo</FieldLabel>
-            {pending && (
-              <Badge variant="secondary" role="status">
-                <Clock3 aria-hidden="true" />
-                Awaiting moderation
-              </Badge>
-            )}
+            {pending && <AwaitingModeration />}
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <Avatar className="ring-border size-16 shrink-0 ring-1">
@@ -148,6 +153,7 @@ export function ProfileForm({ userId, name, image, pending, cleanupPending }: Pr
             </div>
           </div>
           <FieldDescription>JPEG, PNG or WebP, up to 5 MB. Removing your photo also cancels a pending replacement.</FieldDescription>
+          <ProfileModerationFeedback kind="avatar" message={avatarModerationMessage} />
           {cleanupPending && (
             <div className="flex flex-col items-start gap-2">
               <p className="text-muted-foreground text-sm">Storage cleanup is pending. Complete it before uploading another avatar.</p>
@@ -162,7 +168,10 @@ export function ProfileForm({ userId, name, image, pending, cleanupPending }: Pr
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="display-name">Display name</FieldLabel>
+              <div className="flex flex-wrap items-center gap-2">
+                <FieldLabel htmlFor="display-name">Display name</FieldLabel>
+                {pendingName && <AwaitingModeration />}
+              </div>
               <Input
                 {...field}
                 id="display-name"
@@ -173,8 +182,10 @@ export function ProfileForm({ userId, name, image, pending, cleanupPending }: Pr
                 aria-describedby="display-name-help"
               />
               <FieldDescription id="display-name-help">
-                Optional. Leave empty to appear as Seller. Your email is never shown publicly.
+                Optional. Leave empty to appear as Seller. Name changes are reviewed before becoming public. Your email is never shown publicly.
               </FieldDescription>
+              <PendingNameNotice name={name} pendingName={pendingName} />
+              <ProfileModerationFeedback kind="name" message={nameModerationMessage} />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}

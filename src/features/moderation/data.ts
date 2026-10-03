@@ -24,8 +24,9 @@ function toModerationListing({ user, ...listing }: Prisma.ListingGetPayload<{ se
 
 export async function getModerationOverview() {
   await getSettingsPageActor(true)
-  const [pendingListings, pendingAvatars, avatarCleanup, listings, openChatReports] = await Promise.all([
+  const [pendingListings, pendingNames, pendingAvatars, avatarCleanup, listings, openChatReports] = await Promise.all([
     prisma.listing.count({ where: { status: 'PENDING' } }),
+    prisma.user.count({ where: { pendingName: { not: null } } }),
     prisma.user.count({ where: { pendingAvatarKey: { not: null } } }),
     prisma.user.count({ where: { avatarCleanupKey: { not: null } } }),
     prisma.listing.findMany({
@@ -37,7 +38,7 @@ export async function getModerationOverview() {
     prisma.chatReport.count({ where: { status: 'OPEN' } })
   ])
 
-  return { pendingListings, pendingAvatars, avatarCleanup, openChatReports, recentListings: listings.map(toModerationListing) }
+  return { pendingListings, pendingNames, pendingAvatars, avatarCleanup, openChatReports, recentListings: listings.map(toModerationListing) }
 }
 
 export async function getListingModerationQueue(params: ModerationSearchParams = {}) {

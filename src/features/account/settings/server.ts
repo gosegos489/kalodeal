@@ -39,7 +39,7 @@ export const avatars = createAvatarLifecycle(
           await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
           const user = await tx.user.findUnique({
             where: { id: userId },
-            select: { id: true, image: true, pendingAvatarKey: true, avatarCleanupKey: true }
+            select: { id: true, image: true, pendingAvatarKey: true, avatarCleanupKey: true, avatarModerationMessage: true }
           })
           if (!user) throw new AvatarError('This account is unavailable.')
           return work(user, async (data) => {

@@ -23,7 +23,7 @@ const getListingRow = cache(async (id: string, userId: string | null) => {
       messengerUrl: true,
       _count: { select: { favorites: true } },
       favorites: { where: { userId: userId ?? '' }, select: { id: true }, take: 1 },
-      user: { select: { name: true, image: true, pendingAvatarKey: true } },
+      user: { select: { name: true, image: true } },
       category: { select: { name: true, slug: true } },
       images: {
         select: { id: true, key: true },
@@ -55,7 +55,7 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
     maskedPhone: phone ? `${phone.trim().startsWith('+') ? '+' : ''}${phone.replace(/\D/g, '').slice(0, 3)} ••••••` : null,
     seller: {
       name: getSellerName(user.name),
-      image: user.pendingAvatarKey ? null : getApprovedAvatarUrl(userId, user.image)
+      image: getApprovedAvatarUrl(userId, user.image)
     },
     isOwner,
     isAuthenticated: !!session,

@@ -12,7 +12,16 @@ async function SettingsForms() {
   const [user, credentials] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: actor.id },
-      select: { name: true, email: true, image: true, pendingAvatarKey: true, avatarCleanupKey: true }
+      select: {
+        name: true,
+        pendingName: true,
+        nameModerationMessage: true,
+        avatarModerationMessage: true,
+        email: true,
+        image: true,
+        pendingAvatarKey: true,
+        avatarCleanupKey: true
+      }
     }),
     prisma.account.count({ where: { userId: actor.id, providerId: 'credential', password: { not: null } } })
   ])
@@ -27,6 +36,9 @@ async function SettingsForms() {
           <ProfileForm
             userId={actor.id}
             name={user.name.includes('@') ? '' : user.name}
+            pendingName={user.pendingName}
+            nameModerationMessage={user.nameModerationMessage}
+            avatarModerationMessage={user.avatarModerationMessage}
             image={user.pendingAvatarKey ? pendingAvatarUrl(actor.id, user.pendingAvatarKey) : getApprovedAvatarUrl(actor.id, user.image)}
             pending={!!user.pendingAvatarKey}
             cleanupPending={!!user.avatarCleanupKey}

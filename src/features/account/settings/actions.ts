@@ -7,14 +7,21 @@ import { auth } from '@/lib/auth'
 import { getAuthHeaders } from '@/lib/auth-utils'
 import { checkPasswordChangeRateLimit } from '@/lib/rate-limit'
 import { AvatarError } from './avatar-lifecycle'
-import { avatarModerationSchema, passwordChangeSchema, profileSchema } from './schema'
+import { reviewProfileName, submitProfileName } from './name-moderation'
+import { avatarModerationSchema, nameModerationSchema, passwordChangeSchema, profileSchema } from './schema'
 import { avatars, getMarketplaceSettingsActor, getSettingsActor } from './server'
 
-function refreshProfile() {
-  revalidatePath('/account', 'layout')
-  revalidatePath('/listings/[id]', 'page')
+function refreshProfile(publicChanged = false) {
+  revalidatePath('/account/settings')
   revalidatePath('/admin')
-  revalidatePath('/moderator', 'layout')
+  revalidatePath('/moderator')
+  revalidatePath('/moderator/avatars')
+  if (publicChanged) {
+    revalidatePath('/account')
+    revalidatePath('/listings/[id]', 'page')
+    revalidatePath('/account/messages', 'layout')
+    revalidatePath('/moderator/users')
+  }
 }
 
 function failure(error: unknown): ActionMessageResult {
@@ -27,10 +34,9 @@ export async function saveProfile(input: unknown): Promise<ActionMessageResult> 
   const parsed = profileSchema.safeParse(input)
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message }
   try {
-    await getMarketplaceSettingsActor()
-    await auth.api.updateUser({ headers: await getAuthHeaders(), body: { name: parsed.data.name } })
-    refreshProfile()
-    return { success: true, message: 'Profile saved.' }
+    const pending = await submitProfileName(parsed.data)
+    refreshProfile(parsed.data.name === '')
+    return { success: true, message: pending ? 'Your new name has been sent for moderation. Your public name is unchanged.' : 'Profile saved.' }
   } catch (error) {
     return failure(error)
   }
@@ -69,7 +75,7 @@ export async function removeAvatar(): Promise<ActionMessageResult> {
   try {
     const actor = await getMarketplaceSettingsActor()
     const cleaned = await avatars.remove(actor.id)
-    refreshProfile()
+    refreshProfile(true)
     return {
       success: true,
       message: cleaned
@@ -87,11 +93,29 @@ export async function moderateAvatar(input: unknown): Promise<ActionMessageResul
   try {
     await getSettingsActor(true)
     const { userId, version, decision } = parsed.data
-    const cleaned = await avatars.moderate(userId, version, decision)
-    refreshProfile()
+    const cleaned = await avatars.moderate(userId, version, parsed.data)
+    refreshProfile(decision === 'approve')
     return {
       success: true,
-      message: `Avatar ${decision === 'approve' ? 'approved' : 'rejected'}.${cleaned ? '' : ' Storage cleanup will be retried.'}`
+      message: `${decision === 'request-changes' ? 'Avatar changes requested' : `Avatar ${decision === 'approve' ? 'approved' : 'rejected'}`}.${cleaned ? '' : ' Storage cleanup will be retried.'}`
+    }
+  } catch (error) {
+    return failure(error)
+  }
+}
+
+export async function moderateName(input: unknown): Promise<ActionMessageResult> {
+  const parsed = nameModerationSchema.safeParse(input)
+  if (!parsed.success) return { success: false, message: parsed.error.issues[0].message }
+  try {
+    await reviewProfileName(parsed.data)
+    refreshProfile(parsed.data.decision === 'approve')
+    return {
+      success: true,
+      message:
+        parsed.data.decision === 'request-changes'
+          ? 'Profile name changes requested.'
+          : `Profile name ${parsed.data.decision === 'approve' ? 'approved' : 'rejected'}.`
     }
   } catch (error) {
     return failure(error)

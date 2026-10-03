@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     revalidatePath('/listings/[id]', 'page')
     revalidatePath('/admin')
     revalidatePath('/moderator')
+    revalidatePath('/moderator/avatars')
     return Response.json({ success: true, message: 'New avatar awaiting moderation.' })
   } catch (error) {
     if (error instanceof AvatarBodyError) return Response.json({ success: false, message: error.message }, { status: error.status })
