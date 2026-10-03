@@ -1,3 +1,8 @@
+enum ListingCurrency {
+  EUR
+  USD
+}
+
 enum ListingStatus {
   PENDING
   ACTIVE
@@ -8,12 +13,13 @@ enum ListingStatus {
 }
 
 model Listing {
-  id           String   @id @default(cuid())
+  id           String          @id @default(cuid())
   title        String
   description  String
   price        Decimal?
+  currency     ListingCurrency @default(EUR)
   phone        String
-  phoneReveals Int      @default(0)
+  phoneReveals Int             @default(0)
   youtube      String?
   facebookUrl  String?
   messengerUrl String?

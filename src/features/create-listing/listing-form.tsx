@@ -6,6 +6,7 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/c
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { LISTING_CURRENCIES } from '@/entities/listing/currency'
 import { ListingPhotos } from '@/features/edit-listing/listing-photos'
 import type { ListingPhotoState } from '@/features/edit-listing/photo-schema'
 import type { EditableListing } from '@/features/edit-listing/types'
@@ -20,6 +21,8 @@ import { useListingForm } from './use-listing-form'
 type ListingFormProps = {
   categories: ListingCategoryOption[]
 } & ({ mode: 'create'; plan: ListingPlan; listingSlotCount: number } | { mode: 'edit'; listing: EditableListing })
+
+const currencyOptions = LISTING_CURRENCIES.map((currency) => ({ value: currency, label: currency }))
 
 export function ListingForm(props: ListingFormProps) {
   const { categories } = props
@@ -190,19 +193,43 @@ export function ListingForm(props: ListingFormProps) {
           </div>
           <FieldGroup>
             <div className="grid gap-6 sm:grid-cols-2">
-              <Controller
-                name="price"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      Price <span className="text-muted-foreground font-normal">(optional)</span>
-                    </FieldLabel>
-                    <Input {...field} id={field.name} type="text" inputMode="decimal" placeholder="0.00" disabled={disabled} />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_6rem] items-start gap-3">
+                <Controller
+                  name="price"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        Price <span className="text-muted-foreground font-normal">(optional)</span>
+                      </FieldLabel>
+                      <Input {...field} id={field.name} type="text" inputMode="decimal" placeholder="0.00" disabled={disabled} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="currency"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>Currency</FieldLabel>
+                      <Select value={field.value} onValueChange={(value) => field.onChange(value ?? '')} disabled={disabled} items={currencyOptions}>
+                        <SelectTrigger ref={field.ref} id={field.name} onBlur={field.onBlur} aria-invalid={fieldState.invalid} className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent alignItemWithTrigger={false}>
+                          {currencyOptions.map(({ value, label }) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              </div>
 
               <Controller
                 name="phone"

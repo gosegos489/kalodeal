@@ -17,7 +17,8 @@ model User {
   sessions Session[]
   accounts Account[]
 
-  subscription Subscription?
+  subscription         Subscription?
+  subscriptionPayments SubscriptionPayment[]
 
   favorites Favorite[]
   listings  Listing[]

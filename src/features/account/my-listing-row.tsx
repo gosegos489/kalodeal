@@ -2,6 +2,7 @@ import { Eye, ImageIcon, Pencil } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { formatListingPrice } from '@/entities/listing/format-price'
 import type { ListingSummary } from '@/entities/listing/types'
 import type { ListingStatus } from '@/generated/prisma/enums'
 import { dayjs } from '@/lib/dayjs'
@@ -40,7 +41,7 @@ export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowP
           </Link>
         </h3>
         <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs wrap-anywhere">
-          <span className="text-foreground font-medium">{listing.price === null ? 'Price on request' : `$${listing.price}`}</span>
+          <span className="text-foreground font-medium">{formatListingPrice(listing.price, listing.currency)}</span>
           <span className="max-w-full truncate" title={listing.category.name}>
             {listing.category.name}
           </span>

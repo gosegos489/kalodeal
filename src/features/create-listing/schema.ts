@@ -1,4 +1,5 @@
 import z from 'zod'
+import { LISTING_CURRENCIES } from '@/entities/listing/currency'
 import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -42,6 +43,7 @@ export const listingDetailsSchema = z.object({
     .string()
     .trim()
     .refine((value) => value === '' || /^(?:0|[1-9]\d{0,8})(?:\.\d{1,2})?$/.test(value), 'Enter a valid price with up to 2 decimal places.'),
+  currency: z.enum(LISTING_CURRENCIES, 'Choose EUR or USD.'),
   phone: z
     .string()
     .trim()

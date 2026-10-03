@@ -58,6 +58,7 @@ export async function POST(request: Request) {
     categoryId: payload.get('categoryId'),
     description: payload.get('description'),
     price: payload.get('price') ?? '',
+    currency: payload.get('currency'),
     phone: payload.get('phone'),
     youtube: payload.get('youtube') ?? '',
     facebookUrl: payload.get('facebookUrl') ?? '',

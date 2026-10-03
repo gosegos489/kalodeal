@@ -3,6 +3,7 @@ import type Stripe from 'stripe'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
 import { getProPriceId } from './config'
+import { recordSubscriptionPayment } from './subscription-payments'
 import { getSubscriptionUpdate, hasProPrice, isOpenSubscription } from './subscription-state'
 
 export const BILLING_EVENTS = new Set([
@@ -41,9 +42,17 @@ export async function reconcileBillingEvent(event: Stripe.Event) {
   return prisma.$transaction(
     async (tx) => {
       await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${owner.userId} FOR UPDATE`
-      if (await tx.stripeWebhookEvent.findUnique({ where: { id: event.id }, select: { id: true } })) return false
+      const processed = await tx.stripeWebhookEvent.findUnique({ where: { id: event.id }, select: { id: true } })
+      if (processed && event.type !== 'invoice.paid') return false
       const previous = await tx.subscription.findUnique({ where: { userId: owner.userId } })
       if (!previous || previous.stripeCustomerId !== customerId) return false
+
+      if (event.type === 'invoice.paid') {
+        // Replayed events processed before the payment ledger existed may fill its
+        // missing snapshot. The unique invoice still makes this operation idempotent.
+        await recordSubscriptionPayment(tx, event.data.object.id, owner.userId, customerId, priceId, event.livemode)
+      }
+      if (processed) return false
 
       // Retrieve AFTER acquiring the lock. Two out-of-order handlers cannot overwrite a newer snapshot.
       // Inspect the customer's current subscriptions so events for a previous subscription cannot replace its successor.

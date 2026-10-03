@@ -1,10 +1,11 @@
-import type { ListingStatus } from '@/generated/prisma/enums'
+import type { ListingCurrency, ListingStatus } from '@/generated/prisma/enums'
 
 export type ListingSummary = {
   id: string
   title: string
   description: string
   price: number | null
+  currency: ListingCurrency
   createdAt: Date
   category: { name: string }
   coverUrl: string | null

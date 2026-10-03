@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { useTransition } from 'react'
 import { toast } from '@/components/ui/toast'
+import { DEFAULT_LISTING_CURRENCY } from '@/entities/listing/currency'
 import { updateListing } from '@/features/edit-listing/actions'
 import type { EditableListing } from '@/features/edit-listing/types'
 import type { ListingPlan } from '@/lib/plan-limits'
@@ -23,6 +24,7 @@ export function useListingForm(plan: ListingPlan, listing?: EditableListing) {
       categoryId: '',
       description: '',
       price: '',
+      currency: DEFAULT_LISTING_CURRENCY,
       phone: '',
       youtube: '',
       facebookUrl: '',

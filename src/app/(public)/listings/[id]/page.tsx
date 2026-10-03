@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { formatListingPrice } from '@/entities/listing/format-price'
 import { getListing } from '@/entities/listing/get-listing'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
 import { getSellerInitials } from '@/entities/user/public-profile'
@@ -73,7 +74,7 @@ async function ListingDetails({ params }: Props) {
       <article className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
         <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
           <ListingGallery key={listing.id} title={listing.title} images={listing.images} />
-          <Card className="order-3 lg:order-none">
+          <Card className="order-3 lg:order-0">
             <CardHeader>
               <CardTitle>
                 <h2>Description</h2>
@@ -83,7 +84,7 @@ async function ListingDetails({ params }: Props) {
               <p className="text-muted-foreground text-sm leading-relaxed wrap-break-word whitespace-pre-wrap">{listing.description}</p>
             </CardContent>
           </Card>
-          <Card className="order-4 lg:order-none">
+          <Card className="order-4 lg:order-0">
             <CardHeader>
               <CardTitle>
                 <h2>Listing details</h2>
@@ -109,7 +110,7 @@ async function ListingDetails({ params }: Props) {
             </CardContent>
           </Card>
         </div>
-        <aside aria-label="Listing and seller information" className="order-2 flex min-w-0 flex-col gap-5 lg:sticky lg:top-24 lg:order-none">
+        <aside aria-label="Listing and seller information" className="order-2 flex min-w-0 flex-col gap-5 lg:sticky lg:top-24 lg:order-0">
           <Card>
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -118,7 +119,7 @@ async function ListingDetails({ params }: Props) {
                   {listing.status.toLowerCase()}
                 </Badge>
               </div>
-              <p className="text-primary text-3xl font-semibold">{listing.price === null ? 'Price on request' : `$${listing.price}`}</p>
+              <p className="text-primary text-3xl font-semibold">{formatListingPrice(listing.price, listing.currency)}</p>
               <h1 className="text-2xl font-semibold wrap-break-word">{listing.title}</h1>
               <div className="flex items-center gap-3">
                 {listing.status === 'ACTIVE' && (

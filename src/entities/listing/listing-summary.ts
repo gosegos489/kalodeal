@@ -7,6 +7,7 @@ export const listingSummarySelect = {
   title: true,
   description: true,
   price: true,
+  currency: true,
   createdAt: true,
   category: { select: { name: true } },
   images: {

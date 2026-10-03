@@ -2,6 +2,7 @@ import { ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
+import { formatListingPrice } from '@/entities/listing/format-price'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
 import type { ListingStatus } from '@/generated/prisma/enums'
 import { dayjs } from '@/lib/dayjs'
@@ -62,7 +63,7 @@ export function ListingCard({
         </div>
         <Link href={href} className="group focus-visible:ring-ring flex flex-col gap-2 rounded-sm outline-none focus-visible:ring-2">
           <h3 className="group-hover:text-primary line-clamp-2 leading-snug font-semibold">{listing.title}</h3>
-          <p className="text-primary text-lg font-semibold">{listing.price === null ? 'Price on request' : `$${listing.price}`}</p>
+          <p className="text-primary text-lg font-semibold">{formatListingPrice(listing.price, listing.currency)}</p>
           <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{listing.description}</p>
         </Link>
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs">

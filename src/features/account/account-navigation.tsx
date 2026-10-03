@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart3, CreditCard, Heart, LayoutDashboard, List, MessageCircle, Settings } from 'lucide-react'
+import { BarChart3, CreditCard, Heart, LayoutDashboard, List, MessageCircle, ReceiptText, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +12,7 @@ const navigation = [
   { label: 'Favorites', href: '/account/favorites', icon: Heart },
   { label: 'Messages', href: '/messages', icon: MessageCircle },
   { label: 'My plan', href: '/account/subscription', icon: CreditCard },
+  { label: 'Orders', href: '/account/orders', icon: ReceiptText },
   { label: 'Analytics', href: '/account/analytics', icon: BarChart3 },
   { label: 'Settings', href: '/account/settings', icon: Settings }
 ]

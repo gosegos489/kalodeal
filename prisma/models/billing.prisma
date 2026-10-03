@@ -10,6 +10,33 @@ enum SubscriptionStatus {
   PAST_DUE
 }
 
+enum SubscriptionPaymentStatus {
+  PAID
+}
+
+// An immutable receipt snapshot, written only after a verified Stripe invoice payment.
+model SubscriptionPayment {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status      SubscriptionPaymentStatus @default(PAID)
+  description String
+  // Stripe minor units, e.g. 999 = EUR 9.99; never a decimal/float amount.
+  amount      Int
+  currency    String                    @db.VarChar(3)
+
+  stripeInvoiceId      String @unique
+  stripeSubscriptionId String
+
+  paidAt    DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, paidAt, id])
+  @@map("subscription_payment")
+}
+
 model Subscription {
   id String @id @default(cuid())
 
