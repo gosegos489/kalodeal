@@ -5,6 +5,6 @@ export function login({ email, password }: LoginInput) {
   return authClient.signIn.email({
     email: email.trim().toLowerCase(),
     password,
-    callbackURL: '/'
+    callbackURL: '/account'
   })
 }

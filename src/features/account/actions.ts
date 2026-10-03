@@ -3,6 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import 'server-only'
 import { listingIdSchema } from '@/entities/listing/schema'
+import { canUseMarketplace } from '@/lib/account-role'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
@@ -17,6 +18,7 @@ export async function deleteListing(id: unknown): Promise<ActionMessageResult> {
   try {
     const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to delete your listing.' }
+    if (!canUseMarketplace(session.user.role)) return { success: false, message: 'Moderator accounts cannot use marketplace actions.' }
 
     const where = { id: parsed.data, userId: session.user.id }
     deletedListing = await prisma.$transaction(async (tx) => {

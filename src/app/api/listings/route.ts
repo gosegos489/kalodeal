@@ -2,7 +2,8 @@ import { revalidateTag } from 'next/cache'
 import { randomUUID } from 'node:crypto'
 import { MAX_IMAGE_BYTES, createListingSchema } from '@/features/create-listing/schema'
 import type { CreateListingResult } from '@/features/create-listing/types'
-import { isUnbannedUser } from '@/lib/active-user'
+import { canUseMarketplace } from '@/lib/account-role'
+import { isActiveMarketplaceUser } from '@/lib/active-user'
 import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import { ListingPhotoValidationError, deleteListingPhotoObjects, prepareListingPhotos, uploadListingPhotos } from '@/lib/listing-photo-storage'
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
   }
   const session = await getMutationSession()
   if (!session) return failure('Please sign in to publish a listing.', 401)
+  if (!canUseMarketplace(session.user.role)) return failure('Moderator accounts cannot use marketplace actions.', 403)
 
   const userId = session.user.id
   const rateLimit = await checkCreateListingRateLimit(userId)
@@ -80,7 +82,7 @@ export async function POST(request: Request) {
 
     const result = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
-      if (!(await isUnbannedUser(tx, userId))) return { message: 'This account is unavailable.' }
+      if (!(await isActiveMarketplaceUser(tx, userId))) return { message: 'This account is unavailable.' }
       const currentSubscription = await tx.subscription.findUnique({ where: { userId } })
       const currentLimits = PLAN_LIMITS[getListingPlan(currentSubscription)]
       const currentCount = await tx.listing.count({ where: { userId, status: { in: LISTING_SLOT_STATUSES } } })

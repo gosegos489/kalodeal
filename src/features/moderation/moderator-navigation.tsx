@@ -1,15 +1,17 @@
 'use client'
 
-import { Images, LayoutDashboard, List, Users } from 'lucide-react'
+import { Flag, Images, LayoutDashboard, List, Users } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { LogoutButton } from '@/features/auth/logout-button'
 import { cn } from '@/lib/utils'
 
-const navigation = [
+export const moderatorNavigation = [
   { label: 'Dashboard', href: '/moderator', icon: LayoutDashboard },
   { label: 'Listings', href: '/moderator/listings', icon: List },
   { label: 'Avatars', href: '/moderator/avatars', icon: Images },
-  { label: 'Users', href: '/moderator/users', icon: Users }
+  { label: 'Users', href: '/moderator/users', icon: Users },
+  { label: 'Chat reports', href: '/moderator/chat-reports', icon: Flag }
 ]
 
 export function ModeratorNavigation() {
@@ -17,7 +19,7 @@ export function ModeratorNavigation() {
 
   return (
     <nav aria-label="Moderator navigation" className="grid min-w-0 gap-1 p-2 sm:grid-cols-2 lg:grid-cols-1">
-      {navigation.map(({ label, href, icon: Icon }) => {
+      {moderatorNavigation.map(({ label, href, icon: Icon }) => {
         const active = pathname === href || (href !== '/moderator' && pathname.startsWith(`${href}/`))
 
         return (
@@ -35,6 +37,7 @@ export function ModeratorNavigation() {
           </Link>
         )
       })}
+      <LogoutButton />
     </nav>
   )
 }

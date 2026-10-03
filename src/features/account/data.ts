@@ -1,12 +1,12 @@
 import 'server-only'
 import { listingSummarySelect, toListingSummary } from '@/entities/listing/listing-summary'
-import { requireUser } from '@/lib/auth-utils'
+import { requireMarketplaceUser } from '@/lib/auth-utils'
 import { getPagination } from '@/lib/pagination'
 import { LISTING_SLOT_STATUSES, PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 
 export async function getAccount() {
-  const session = await requireUser()
+  const session = await requireMarketplaceUser()
   const userId = session.user.id
 
   const [subscription, listingSlotCount] = await Promise.all([
@@ -46,7 +46,7 @@ export async function getAccount() {
 }
 
 export async function getMyListings(pageParam?: string | string[]) {
-  const session = await requireUser()
+  const session = await requireMarketplaceUser()
   const where = { userId: session.user.id }
   const totalItems = await prisma.listing.count({ where })
   const pagination = getPagination({ pageParam, totalItems })

@@ -1,4 +1,5 @@
 import { Heart, MessageCircle, UserRound } from 'lucide-react'
+import { getAccountDestination } from '@/lib/account-role'
 
 export const navigation = [
   { label: 'Browse', href: '/' },
@@ -18,3 +19,7 @@ export const accountNavigation = [
   { label: 'Messages', href: '/account/messages', icon: MessageCircle },
   { label: 'My account', href: '/account', icon: UserRound }
 ]
+
+export function getHeaderAccountNavigation(role?: string | null) {
+  return role === 'moderator' ? [{ label: 'Moderator panel', href: getAccountDestination(role), icon: UserRound }] : accountNavigation
+}

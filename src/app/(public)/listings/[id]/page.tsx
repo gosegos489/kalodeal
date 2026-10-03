@@ -123,7 +123,7 @@ async function ListingDetails({ params }: Props) {
               <p className="text-primary text-3xl font-semibold">{formatListingPrice(listing.price, listing.currency)}</p>
               <h1 className="text-2xl font-semibold wrap-break-word">{listing.title}</h1>
               <div className="flex items-center gap-3">
-                {listing.status === 'ACTIVE' && (
+                {listing.canUseMarketplace && listing.status === 'ACTIVE' && (
                   <FavoriteButton
                     listingId={listing.id}
                     title={listing.title}
@@ -190,7 +190,11 @@ async function ListingDetails({ params }: Props) {
                   )}
                 </div>
               )}
-              {listing.isOwner ? (
+              {!listing.canUseMarketplace ? (
+                <Button nativeButton={false} size="lg" className="w-full" render={<Link href={`/moderator/listings/${listing.id}`} />}>
+                  Review listing
+                </Button>
+              ) : listing.isOwner ? (
                 <div className="flex flex-col gap-2">
                   <p className="text-muted-foreground text-xs">This is your listing.</p>
                   <Button nativeButton={false} size="lg" className="w-full" render={<Link href="/account/listings" />}>

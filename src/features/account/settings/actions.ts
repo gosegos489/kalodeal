@@ -8,7 +8,7 @@ import { getAuthHeaders } from '@/lib/auth-utils'
 import { checkPasswordChangeRateLimit } from '@/lib/rate-limit'
 import { AvatarError } from './avatar-lifecycle'
 import { avatarModerationSchema, passwordChangeSchema, profileSchema } from './schema'
-import { avatars, getSettingsActor } from './server'
+import { avatars, getMarketplaceSettingsActor, getSettingsActor } from './server'
 
 function refreshProfile() {
   revalidatePath('/account', 'layout')
@@ -27,7 +27,7 @@ export async function saveProfile(input: unknown): Promise<ActionMessageResult> 
   const parsed = profileSchema.safeParse(input)
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message }
   try {
-    await getSettingsActor()
+    await getMarketplaceSettingsActor()
     await auth.api.updateUser({ headers: await getAuthHeaders(), body: { name: parsed.data.name } })
     refreshProfile()
     return { success: true, message: 'Profile saved.' }
@@ -67,7 +67,7 @@ export async function changeAccountPassword(input: unknown): Promise<ActionMessa
 
 export async function removeAvatar(): Promise<ActionMessageResult> {
   try {
-    const actor = await getSettingsActor()
+    const actor = await getMarketplaceSettingsActor()
     const cleaned = await avatars.remove(actor.id)
     refreshProfile()
     return {

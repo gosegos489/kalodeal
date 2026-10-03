@@ -1,15 +1,13 @@
-import { redirect } from 'next/navigation'
 import 'server-only'
 import { getListingImageUrl } from '@/entities/listing/listing-summary'
 import { listingIdSchema } from '@/entities/listing/schema'
-import { getMutationSession } from '@/lib/auth-utils'
+import { requireMarketplaceUser } from '@/lib/auth-utils'
 import { PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import type { EditableListing } from './types'
 
 export async function getEditableListing(id: unknown): Promise<(EditableListing & { categoryName: string }) | null> {
-  const session = await getMutationSession()
-  if (!session) redirect('/login')
+  const session = await requireMarketplaceUser()
   const parsed = listingIdSchema.safeParse(id)
   if (!parsed.success) return null
 

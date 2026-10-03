@@ -7,15 +7,16 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { accountNavigation, mobileNavigation } from '../mocks/mocks'
+import { getHeaderAccountNavigation, mobileNavigation } from '../mocks/mocks'
 import { NavigationLinks } from './header-navigation'
 
 type Props = {
   isAuth: boolean
   currentYear: number
+  role?: string | null
 }
 
-export default function MobileMenu({ isAuth, currentYear }: Props) {
+export default function MobileMenu({ isAuth, currentYear, role }: Props) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const closeMenu = () => setOpen(false)
@@ -64,7 +65,7 @@ export default function MobileMenu({ isAuth, currentYear }: Props) {
             <div className="border-border border-t pt-4">
               {isAuth ? (
                 <ul className="flex flex-col gap-1">
-                  {accountNavigation.map((item) => {
+                  {getHeaderAccountNavigation(role).map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
                     return (
                       <li key={item.href}>

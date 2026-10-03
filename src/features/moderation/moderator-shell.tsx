@@ -6,7 +6,7 @@ export function ModeratorShell({ children }: { children: React.ReactNode }) {
       <header className="flex flex-col gap-2 border-b pb-6">
         <p className="text-primary text-xs font-semibold uppercase">KaloDeal moderation</p>
         <h1 className="text-3xl font-semibold sm:text-4xl">Moderator</h1>
-        <p className="text-muted-foreground text-sm">Review listings and avatars, and manage account access.</p>
+        <p className="text-muted-foreground text-sm">Review listings, avatars and chat reports, and manage account access.</p>
       </header>
       <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8">
         <aside className="bg-card min-w-0 rounded-xl border lg:sticky lg:top-24">

@@ -2,6 +2,7 @@ import { APIError, getAuthoritativeSessionFromCtx } from 'better-auth/api'
 import 'server-only'
 import { canManageUserBan } from '@/features/moderation/ban-policy'
 import { banEndpointSchema, unbanUserSchema } from '@/features/moderation/ban-schema'
+import { canUseMarketplace } from './account-role'
 import { hasActiveBan } from './ban-status'
 
 type AuthContext = Parameters<typeof getAuthoritativeSessionFromCtx>[0]
@@ -21,6 +22,9 @@ export async function authorizeAuthMutation(ctx: AuthContext) {
   if (!session) throw new APIError('UNAUTHORIZED', { message: 'Please sign in again.' })
   if (hasActiveBan({ banned: session.user.banned, banExpires: session.user.banExpires })) {
     throw new APIError('FORBIDDEN', { code: 'BANNED_USER', message: 'Your account is suspended.' })
+  }
+  if (ctx.path === '/update-user' && !canUseMarketplace(session.user.role)) {
+    throw new APIError('FORBIDDEN', { message: 'Moderator accounts cannot manage seller profiles.' })
   }
   if (ctx.path !== '/admin/ban-user' && ctx.path !== '/admin/unban-user') return
 

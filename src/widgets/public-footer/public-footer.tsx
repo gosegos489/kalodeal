@@ -1,9 +1,40 @@
 import { MapPin } from 'lucide-react'
 import Image from 'next/image'
+import { Suspense } from 'react'
+import { canUseMarketplace } from '@/lib/account-role'
+import { getSession } from '@/lib/auth-utils'
+import { getCurrentYear } from '@/lib/get-current-year'
 import { footerLinks } from './mocks/mocks'
 import FooterLink from './ui/footer-link'
-import { getCurrentYear } from '@/lib/get-current-year'
-import { Suspense } from 'react'
+
+async function FooterNavigation() {
+  const session = await getSession(true)
+  const links = footerLinks.map((group) => ({
+    ...group,
+    links: group.links.filter(([, href]) => canUseMarketplace(session?.user.role) || (href !== '/sell' && !href.startsWith('/account')))
+  }))
+  return (
+    <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+      {links.map((group) => (
+        <div className="flex flex-col gap-3" key={group.title}>
+          <h2 className="text-sm font-semibold">{group.title}</h2>
+
+          <ul className="text-muted-foreground flex flex-col gap-2 text-sm">
+            {group.links.map(([label, href]) => {
+              return (
+                <li key={label}>
+                  <Suspense fallback={null}>
+                    <FooterLink href={href} label={label} />
+                  </Suspense>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export const PublicFooter = async () => {
   const currentYear = await getCurrentYear()
@@ -25,25 +56,9 @@ export const PublicFooter = async () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
-            {footerLinks.map((group) => (
-              <div className="flex flex-col gap-3" key={group.title}>
-                <h2 className="text-sm font-semibold">{group.title}</h2>
-
-                <ul className="text-muted-foreground flex flex-col gap-2 text-sm">
-                  {group.links.map(([label, href]) => {
-                    return (
-                      <li key={label}>
-                        <Suspense fallback={null}>
-                          <FooterLink href={href} label={label} />
-                        </Suspense>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <Suspense fallback={null}>
+            <FooterNavigation />
+          </Suspense>
         </div>
 
         <div className="border-t border-t-gray-300 pt-4">

@@ -15,6 +15,7 @@ type ListingCardProps = {
   imageSizes?: string
   isFavorited: boolean
   isAuthenticated: boolean
+  showFavorite?: boolean
 }
 
 export function ListingCard({
@@ -23,6 +24,7 @@ export function ListingCard({
   status,
   isFavorited,
   isAuthenticated,
+  showFavorite = true,
   imageSizes = '(max-width: 639px) calc(100vw - 32px), (max-width: 767px) calc((100vw - 48px) / 2), (max-width: 1279px) calc((100vw - 64px) / 3), calc((100vw - 80px) / 4)'
 }: ListingCardProps) {
   const href = `/listings/${listing.id}`
@@ -44,13 +46,15 @@ export function ListingCard({
             </div>
           )}
         </Link>
-        <FavoriteButton
-          listingId={listing.id}
-          title={listing.title}
-          isFavorited={isFavorited}
-          isAuthenticated={isAuthenticated}
-          className="absolute top-3 right-3"
-        />
+        {showFavorite && (
+          <FavoriteButton
+            listingId={listing.id}
+            title={listing.title}
+            isFavorited={isFavorited}
+            isAuthenticated={isAuthenticated}
+            className="absolute top-3 right-3"
+          />
+        )}
       </div>
       <div className="flex flex-1 flex-col gap-2 p-4 sm:p-5">
         <div className="flex items-center justify-between gap-2">

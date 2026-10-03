@@ -1,6 +1,7 @@
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import 'server-only'
+import { canUseMarketplace, getAccountDestination } from './account-role'
 import { auth } from './auth'
 import { hasActiveBan } from './ban-status'
 
@@ -27,10 +28,10 @@ export async function getMutationSession() {
 }
 
 export async function requireGuest() {
-  const session = await getSession()
+  const session = await getSession(true)
 
   if (session) {
-    redirect('/account')
+    redirect(getAccountDestination(session.user.role))
   }
 }
 
@@ -41,6 +42,13 @@ export async function requireUser() {
     redirect('/login')
   }
 
+  return session
+}
+
+export async function requireMarketplaceUser() {
+  const session = await getMutationSession()
+  if (!session) redirect('/login')
+  if (!canUseMarketplace(session.user.role)) redirect('/moderator')
   return session
 }
 

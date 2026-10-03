@@ -3,8 +3,9 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import 'server-only'
 import { listingIdSchema } from '@/entities/listing/schema'
+import { canUseMarketplace } from '@/lib/account-role'
 import type { ActionMessageResult } from '@/lib/action-result'
-import { isUnbannedUser } from '@/lib/active-user'
+import { isActiveMarketplaceUser } from '@/lib/active-user'
 import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import { PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
@@ -21,6 +22,7 @@ export async function bumpListing(id: unknown): Promise<ActionMessageResult> {
   try {
     const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to bump your listing.' }
+    if (!canUseMarketplace(session.user.role)) return { success: false, message: 'Moderator accounts cannot use marketplace actions.' }
     const userId = session.user.id
     const rateLimit = await checkBumpListingRateLimit(userId)
     if (!rateLimit.success) return { success: false, message: rateLimit.message }
@@ -28,7 +30,7 @@ export async function bumpListing(id: unknown): Promise<ActionMessageResult> {
     categoryId = await prisma.$transaction(async (tx) => {
       // Serialize bumps with listing creation and paid-period resets in the billing webhook.
       await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
-      if (!(await isUnbannedUser(tx, userId))) throw new BumpError('This account is unavailable.')
+      if (!(await isActiveMarketplaceUser(tx, userId))) throw new BumpError('This account is unavailable.')
       const now = new Date()
       const subscription = await tx.subscription.findUnique({
         where: { userId },

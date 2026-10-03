@@ -2,6 +2,7 @@ import 'server-only'
 import { cache } from 'react'
 import { getSellerName } from '@/entities/user/public-profile'
 import { getApprovedAvatarUrl } from '@/features/account/settings/avatar-reference'
+import { canUseMarketplace } from '@/lib/account-role'
 import { getSession } from '@/lib/auth-utils'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
@@ -37,7 +38,7 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
   const result = listingIdSchema.safeParse(id)
   if (!result.success) return null
 
-  const session = await getSession()
+  const session = await getSession(true)
   const listing = await getListingRow(result.data, session?.user.id ?? null)
   if (!listing) return null
 
@@ -58,6 +59,7 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
     },
     isOwner,
     isAuthenticated: !!session,
+    canUseMarketplace: canUseMarketplace(session?.user.role),
     isFavorited: !!session && favorites.length > 0,
     favoritesCount: _count.favorites,
     images: listing.images.flatMap((image) => {

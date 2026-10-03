@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import 'server-only'
+import { canUseMarketplace } from '@/lib/account-role'
 import { getSession } from '@/lib/auth-utils'
 import { hasActiveBan } from '@/lib/ban-status'
 import prisma from '@/lib/prisma'
@@ -22,6 +23,12 @@ export async function getSettingsPageActor(moderator = false) {
     if (error instanceof AvatarError) redirect(moderator ? '/' : '/login')
     throw error
   }
+}
+
+export async function getMarketplaceSettingsActor() {
+  const actor = await getSettingsActor()
+  if (!canUseMarketplace(actor.role)) throw new AvatarError('Moderator accounts cannot manage seller profiles or avatars.')
+  return actor
 }
 
 export const avatars = createAvatarLifecycle(

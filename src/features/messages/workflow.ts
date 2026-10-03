@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import 'server-only'
 import type { Prisma, PrismaClient } from '@/generated/prisma/client'
+import { canUseMarketplace } from '@/lib/account-role'
 import { getPagination } from '@/lib/pagination'
 import { conversationChannel, inboxChannel } from './channels'
 import { conversationIdSchema, createConversationSchema, historySchema, readMessagesSchema, sendMessageSchema } from './schema'
@@ -63,6 +64,8 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
   async function userId() {
     const id = await currentUserId()
     if (!id) throw new MessagingError('Sign in to access messages.', 401)
+    const actor = await db.user.findUnique({ where: { id }, select: { role: true } })
+    if (!actor || !canUseMarketplace(actor.role)) throw new MessagingError('Moderator accounts use chat reports in the moderator panel.', 403)
     return id
   }
 
@@ -76,8 +79,9 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
     // Cooperates with ban updates and prevents a stale cookie cache from authorizing a send.
     // A non-key lock still serializes ban changes, while allowing participant foreign-key checks.
     await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${viewer} FOR NO KEY UPDATE`
-    const user = await tx.user.findUnique({ where: { id: viewer }, select: { banned: true, banExpires: true } })
+    const user = await tx.user.findUnique({ where: { id: viewer }, select: { role: true, banned: true, banExpires: true } })
     if (!user) throw new MessagingError('Sign in to access messages.', 401)
+    if (!canUseMarketplace(user.role)) throw new MessagingError('Moderator accounts cannot participate in marketplace chats.', 403)
     if (isMessagingBanned(user)) throw new MessagingError('Your account is banned. You cannot send messages.', 403)
   }
 

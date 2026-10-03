@@ -1,16 +1,18 @@
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
-import { accountNavigation } from '../mocks/mocks'
+import { canUseMarketplace } from '@/lib/account-role'
+import { getHeaderAccountNavigation } from '../mocks/mocks'
 
 type Props = {
   isAuth: boolean
+  role?: string | null
 }
 
-export default function ActionButtons({ isAuth }: Props) {
+export default function ActionButtons({ isAuth, role }: Props) {
   return (
     <div className="flex items-center gap-1 sm:gap-2">
       {isAuth ? (
-        accountNavigation.map((item) => (
+        getHeaderAccountNavigation(role).map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -25,14 +27,20 @@ export default function ActionButtons({ isAuth }: Props) {
           Sign in
         </Link>
       )}
-      <Link
-        href={isAuth ? '/sell' : '/login'}
-        className="bg-primary text-primary-foreground hover:bg-primary/80 inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors sm:px-4"
-      >
-        <Plus className="size-4 shrink-0" strokeWidth={2} />
-        <span className="hidden sm:inline">Post a listing</span>
-        <span className="sm:hidden">Post</span>
-      </Link>
+      {canUseMarketplace(role) ? (
+        <Link
+          href={isAuth ? '/sell' : '/login'}
+          className="bg-primary text-primary-foreground hover:bg-primary/80 inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors sm:px-4"
+        >
+          <Plus className="size-4 shrink-0" strokeWidth={2} />
+          <span className="hidden sm:inline">Post a listing</span>
+          <span className="sm:hidden">Post</span>
+        </Link>
+      ) : (
+        <Link href="/moderator" className="bg-primary text-primary-foreground inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold">
+          Moderator panel
+        </Link>
+      )}
     </div>
   )
 }

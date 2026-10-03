@@ -1,12 +1,10 @@
-import { redirect } from 'next/navigation'
 import 'server-only'
-import { getMutationSession } from '@/lib/auth-utils'
+import { requireMarketplaceUser } from '@/lib/auth-utils'
 import { getPagination } from '@/lib/pagination'
 import prisma from '@/lib/prisma'
 
 export async function getMySubscriptionPayments(pageParam?: string | string[]) {
-  const session = await getMutationSession()
-  if (!session) redirect('/login')
+  const session = await requireMarketplaceUser()
   const where = { userId: session.user.id, status: 'PAID' as const, amount: { gt: 0 } }
 
   return prisma.$transaction(

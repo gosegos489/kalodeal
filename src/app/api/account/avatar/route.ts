@@ -2,7 +2,7 @@ import { revalidatePath } from 'next/cache'
 import { AvatarError } from '@/features/account/settings/avatar-lifecycle'
 import { AvatarBodyError, readAvatarFormData } from '@/features/account/settings/avatar-upload-body'
 import { avatarFileSchema } from '@/features/account/settings/schema'
-import { avatars, getSettingsActor } from '@/features/account/settings/server'
+import { avatars, getMarketplaceSettingsActor } from '@/features/account/settings/server'
 import { matchesImageType } from '@/lib/image-validation'
 import { checkAvatarUploadRateLimit } from '@/lib/rate-limit'
 
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const actor = await getSettingsActor()
+    const actor = await getMarketplaceSettingsActor()
     const limit = await checkAvatarUploadRateLimit(actor.id)
     if (!limit.success)
       return Response.json({ success: false, message: limit.message }, { status: limit.status, headers: { 'Retry-After': String(limit.retryAfter) } })

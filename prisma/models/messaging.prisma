@@ -17,12 +17,51 @@ model Conversation {
   createdAt          DateTime  @default(now())
   lastMessageAt      DateTime  @default(now())
   messages           Message[]
+  reports            ChatReport[]
 
   @@unique([buyerId, sellerId, listingId])
   @@index([buyerId, lastMessageAt, id])
   @@index([sellerId, lastMessageAt, id])
   @@index([listingId])
   @@map("conversation")
+}
+
+enum ChatReportReason {
+  HARASSMENT
+  SPAM
+  FRAUD
+  OFFENSIVE
+  OTHER
+}
+
+enum ChatReportStatus {
+  OPEN
+  RESOLVED
+}
+
+model ChatReport {
+  id             String           @id @default(uuid())
+  conversationId String
+  // Preserve the source history for reports; listing deletion still uses SetNull.
+  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Restrict)
+  reporterId     String
+  reporter       User             @relation("ChatReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  reportedUserId String
+  reportedUser   User             @relation("ChatReportedUser", fields: [reportedUserId], references: [id], onDelete: Restrict)
+  reason         ChatReportReason
+  details        String?          @db.VarChar(500)
+  status         ChatReportStatus @default(OPEN)
+  createdAt      DateTime         @default(now())
+  reviewedAt     DateTime?
+  reviewedById   String?
+  reviewedBy     User?            @relation("ChatReportReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt, id])
+  @@index([reporterId, conversationId, reportedUserId, status])
+  @@index([conversationId])
+  @@index([reportedUserId])
+  @@index([reviewedById])
+  @@map("chat_report")
 }
 
 model Message {

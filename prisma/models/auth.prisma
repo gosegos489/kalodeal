@@ -26,6 +26,9 @@ model User {
   buyerConversations  Conversation[] @relation("ConversationBuyer")
   sellerConversations Conversation[] @relation("ConversationSeller")
   messages            Message[]
+  chatReports         ChatReport[] @relation("ChatReporter")
+  receivedChatReports ChatReport[] @relation("ChatReportedUser")
+  reviewedChatReports ChatReport[] @relation("ChatReportReviewer")
 
   @@unique([email])
   @@map("user")

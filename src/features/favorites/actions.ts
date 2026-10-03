@@ -2,6 +2,7 @@
 
 import { refresh, revalidatePath } from 'next/cache'
 import 'server-only'
+import { canUseMarketplace } from '@/lib/account-role'
 import { getMutationSession } from '@/lib/auth-utils'
 import prisma from '@/lib/prisma'
 import { favoriteMutationSchema } from './schema'
@@ -14,6 +15,7 @@ export async function setListingFavorite(listingId: unknown, isFavorited: unknow
   try {
     const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to save listings.', requiresLogin: true }
+    if (!canUseMarketplace(session.user.role)) return { success: false, message: 'Moderator accounts cannot use marketplace actions.' }
 
     const favorite = { userId: session.user.id, listingId: parsed.data.listingId }
     if (parsed.data.isFavorited) {

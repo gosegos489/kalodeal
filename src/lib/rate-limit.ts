@@ -87,6 +87,13 @@ const conversationCreateLimiter = new Ratelimit({
   timeout: 3000
 })
 
+const chatReportLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '10 m'),
+  prefix: 'ratelimit:messages:report',
+  timeout: 3000
+})
+
 type RateLimitResult = { success: true } | { success: false; status: 429 | 503; message: string; retryAfter: number }
 
 function unavailable(): RateLimitResult {
@@ -164,4 +171,8 @@ export function checkMessageSendRateLimit(userId: string) {
 
 export function checkConversationCreateRateLimit(userId: string) {
   return checkRateLimit(conversationCreateLimiter, `user:${userId}`)
+}
+
+export function checkChatReportRateLimit(userId: string) {
+  return checkRateLimit(chatReportLimiter, `user:${userId}`)
 }

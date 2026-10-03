@@ -106,6 +106,7 @@ function CategoryFeed({
                 listing={listing}
                 isFavorited={favoriteState.favoritedIds.has(listing.id)}
                 isAuthenticated={favoriteState.isAuthenticated}
+                showFavorite={favoriteState.canUseMarketplace}
                 imageSizes="(max-width: 639px) calc((100vw - 32px) * 0.85), (max-width: 767px) calc((100vw - 48px) / 2), (max-width: 1279px) calc((100vw - 64px) / 3), calc((100vw - 80px) / 4)"
               />
             )
@@ -190,6 +191,7 @@ async function ListingResults({ searchParams }: Props) {
               eager={index < 4}
               isFavorited={favoriteState.favoritedIds.has(listing.id)}
               isAuthenticated={favoriteState.isAuthenticated}
+              showFavorite={favoriteState.canUseMarketplace}
             />
           ))}
         </div>
@@ -204,9 +206,13 @@ async function ListingResults({ searchParams }: Props) {
             <Button nativeButton={false} variant="outline" render={<Link href="/" scroll={false} />}>
               Browse all listings <ArrowRight />
             </Button>
-          ) : (
+          ) : favoriteState.canUseMarketplace ? (
             <Link href="/sell" className="text-primary text-sm font-medium underline underline-offset-4">
               Post a listing
+            </Link>
+          ) : (
+            <Link href="/moderator" className="text-primary text-sm underline">
+              Open moderator panel
             </Link>
           )}
         </div>

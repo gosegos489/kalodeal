@@ -6,6 +6,7 @@ import z from 'zod'
 import { listingIdSchema } from '@/entities/listing/schema'
 import { listingDetailsSchema } from '@/features/create-listing/schema'
 import type { ListingStatus } from '@/generated/prisma/enums'
+import { canUseMarketplace } from '@/lib/account-role'
 import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'
@@ -19,6 +20,7 @@ export async function updateListing(id: unknown, input: unknown, expectedUpdated
   try {
     const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to edit your listing.' }
+    if (!canUseMarketplace(session.user.role)) return { success: false, message: 'Moderator accounts cannot use marketplace actions.' }
 
     const reference = updateReferenceSchema.safeParse({ id, updatedAt: expectedUpdatedAt })
     if (!reference.success) return { success: false, message: 'Invalid listing. Reload the page and try again.' }

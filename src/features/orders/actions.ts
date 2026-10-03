@@ -2,6 +2,7 @@
 
 import 'server-only'
 import { getStripeLiveMode } from '@/features/billing/config'
+import { canUseMarketplace } from '@/lib/account-role'
 import type { ActionResult } from '@/lib/action-result'
 import { getMutationSession } from '@/lib/auth-utils'
 import prisma from '@/lib/prisma'
@@ -12,6 +13,7 @@ export async function getPaymentInvoiceUrl(input: unknown): Promise<ActionResult
   try {
     const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to access your invoice.' }
+    if (!canUseMarketplace(session.user.role)) return { success: false, message: 'Moderator accounts cannot use marketplace actions.' }
 
     const parsed = paymentInvoiceRequestSchema.safeParse(input)
     if (!parsed.success) return { success: false, message: 'Invoice not found.' }

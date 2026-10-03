@@ -1,4 +1,4 @@
-import { ArrowRight, Images, List, RefreshCw } from 'lucide-react'
+import { ArrowRight, Flag, Images, List, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,6 +8,13 @@ import { ModerationListingRow } from './moderation-listing-row'
 export async function ModerationDashboard() {
   const overview = await getModerationOverview()
   const metrics = [
+    {
+      label: 'Open chat reports',
+      count: overview.openChatReports,
+      description: 'Reported conversations awaiting review.',
+      href: '/moderator/chat-reports',
+      icon: Flag
+    },
     {
       label: 'Pending listings',
       count: overview.pendingListings,
@@ -39,15 +46,15 @@ export async function ModerationDashboard() {
         </h2>
         <p className="text-muted-foreground mt-1 text-sm">Current moderation queues. Avatar reviews and cleanup can overlap.</p>
       </div>
-      <div className="grid min-w-0 gap-4 md:grid-cols-3">
+      <div className="grid min-w-0 auto-rows-fr gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map(({ label, count, description, href, icon: Icon }) => (
           <Card key={label} className="min-w-0">
-            <CardHeader>
+            <CardHeader className="flex flex-1 flex-col">
               <Icon aria-hidden="true" className="text-primary mb-2 size-5" />
-              <CardTitle>{label}</CardTitle>
+              <CardTitle className="min-h-11">{label}</CardTitle>
               <CardDescription>{description}</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col items-start gap-3">
+            <CardContent className="mt-auto flex flex-col items-start gap-3">
               <p className="text-3xl font-semibold tabular-nums">{count}</p>
               <Button nativeButton={false} variant="outline" size="sm" render={<Link href={href} />}>
                 Open queue <ArrowRight aria-hidden="true" />

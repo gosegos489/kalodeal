@@ -14,6 +14,7 @@ import { conversationChannel } from './channels'
 import { formatMessageTime } from './format-time'
 import { ListingThumbnail } from './listing-thumbnail'
 import { loadConversationMessages } from './load-messages'
+import { ReportUserButton } from './report-user-button'
 import { messageContentSchema } from './schema'
 import type { ChatMessage, ConversationDetails } from './types'
 
@@ -201,7 +202,7 @@ export function ChatView({ conversation }: { conversation: ConversationDetails }
 
   return (
     <section aria-label={`Conversation with ${conversation.otherName}`} className="bg-card flex min-w-0 flex-col overflow-hidden rounded-xl border">
-      <header className="flex items-center gap-3 border-b p-4">
+      <header className="flex flex-wrap items-center gap-3 border-b p-4">
         <Button
           nativeButton={false}
           variant="ghost"
@@ -226,6 +227,7 @@ export function ChatView({ conversation }: { conversation: ConversationDetails }
             <p className="text-muted-foreground text-xs">Listing unavailable. This conversation remains available.</p>
           )}
         </div>
+        <ReportUserButton conversationId={conversation.id} otherName={conversation.otherName} />
       </header>
       {syncError && (
         <div role="status" className="flex items-center justify-between gap-2 border-b px-4 py-2 text-xs">

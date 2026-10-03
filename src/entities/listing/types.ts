@@ -21,6 +21,7 @@ export type ListingDetails = Omit<ListingSummary, 'category'> & {
   messengerUrl: string | null
   isOwner: boolean
   isAuthenticated: boolean
+  canUseMarketplace: boolean
   isFavorited: boolean
   favoritesCount: number
 }
