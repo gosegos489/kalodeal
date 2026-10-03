@@ -2,6 +2,7 @@ import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import 'server-only'
 import { auth } from './auth'
+import { hasActiveBan } from './ban-status'
 
 type Role = 'user' | 'moderator' | 'admin'
 
@@ -18,6 +19,11 @@ export async function getSession(disableCookieCache = false) {
     headers: await getAuthHeaders(),
     query: { disableCookieCache }
   })
+}
+
+export async function getMutationSession() {
+  const session = await getSession(true)
+  return session && !hasActiveBan(session.user) ? session : null
 }
 
 export async function requireGuest() {
@@ -39,7 +45,8 @@ export async function requireUser() {
 }
 
 export async function requireRole(roles: Role[]) {
-  const session = await requireUser()
+  const session = await getMutationSession()
+  if (!session) redirect('/login')
 
   if (!session.user.role || !roles.includes(session.user.role as Role)) {
     redirect('/')

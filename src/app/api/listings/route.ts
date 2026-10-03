@@ -2,15 +2,14 @@ import { revalidateTag } from 'next/cache'
 import { randomUUID } from 'node:crypto'
 import { MAX_IMAGE_BYTES, createListingSchema } from '@/features/create-listing/schema'
 import type { CreateListingResult } from '@/features/create-listing/types'
-import { getSession } from '@/lib/auth-utils'
+import { isUnbannedUser } from '@/lib/active-user'
+import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import { ListingPhotoValidationError, deleteListingPhotoObjects, prepareListingPhotos, uploadListingPhotos } from '@/lib/listing-photo-storage'
 import { LISTING_SLOT_STATUSES, PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { checkCreateListingRateLimit } from '@/lib/rate-limit'
 import { MultipartBodyError, readMultipartFormData } from '@/lib/read-multipart-form-data'
-
-class ListingLimitError extends Error {}
 
 function failure(message: string, status: number, fieldErrors?: Extract<CreateListingResult, { success: false }>['fieldErrors']) {
   return Response.json({ success: false, message, ...(fieldErrors ? { fieldErrors } : {}) } satisfies CreateListingResult, { status })
@@ -24,7 +23,7 @@ export async function POST(request: Request) {
   } catch {
     return failure('Invalid request origin.', 403)
   }
-  const session = await getSession()
+  const session = await getMutationSession()
   if (!session) return failure('Please sign in to publish a listing.', 401)
 
   const userId = session.user.id
@@ -79,15 +78,18 @@ export async function POST(request: Request) {
     const listingId = randomUUID()
     await uploadListingPhotos(userId, listingId, photos, attemptedKeys)
 
-    savedListing = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
+      if (!(await isUnbannedUser(tx, userId))) return { message: 'This account is unavailable.' }
       const currentSubscription = await tx.subscription.findUnique({ where: { userId } })
       const currentLimits = PLAN_LIMITS[getListingPlan(currentSubscription)]
       const currentCount = await tx.listing.count({ where: { userId, status: { in: LISTING_SLOT_STATUSES } } })
-      if (currentCount >= currentLimits.activeListings)
-        throw new ListingLimitError('You have reached your listing limit, including listings awaiting moderation.')
-      if (images.length > currentLimits.imagesPerListing)
-        throw new ListingLimitError('Your plan has changed. Reduce the number of photos and try again.')
+      if (currentCount >= currentLimits.activeListings) {
+        return { message: 'You have reached your listing limit, including listings awaiting moderation.' }
+      }
+      if (images.length > currentLimits.imagesPerListing) {
+        return { message: 'Your plan has changed. Reduce the number of photos and try again.' }
+      }
 
       return tx.listing.create({
         data: {
@@ -105,10 +107,14 @@ export async function POST(request: Request) {
         select: { id: true }
       })
     })
+    if ('message' in result) {
+      await deleteListingPhotoObjects(attemptedKeys)
+      return failure(result.message, 409)
+    }
+    savedListing = result
   } catch (error) {
     await deleteListingPhotoObjects(attemptedKeys)
     if (error instanceof ListingPhotoValidationError) return failure(error.message, 400, { images: [error.message] })
-    if (error instanceof ListingLimitError) return failure(error.message, 409)
     console.error('Listing creation failed.', error instanceof Error ? error.name : 'Unknown error')
     return failure('Could not publish your listing. Please try again.', 500)
   }

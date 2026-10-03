@@ -3,15 +3,15 @@
 import 'server-only'
 import { getStripeLiveMode } from '@/features/billing/config'
 import type { ActionResult } from '@/lib/action-result'
-import { getSession } from '@/lib/auth-utils'
+import { getMutationSession } from '@/lib/auth-utils'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
 import { paymentInvoiceRequestSchema, stripeInvoiceUrlSchema } from './schema'
 
 export async function getPaymentInvoiceUrl(input: unknown): Promise<ActionResult<{ url: string }>> {
   try {
-    const session = await getSession(true)
-    if (!session || session.user.banned) return { success: false, message: 'Sign in to access your invoice.' }
+    const session = await getMutationSession()
+    if (!session) return { success: false, message: 'Sign in to access your invoice.' }
 
     const parsed = paymentInvoiceRequestSchema.safeParse(input)
     if (!parsed.success) return { success: false, message: 'Invoice not found.' }

@@ -1,6 +1,7 @@
 import 'server-only'
 import { getListingImageUrl } from '@/entities/listing/listing-summary'
 import type { Prisma } from '@/generated/prisma/client'
+import { isUnbannedUser } from '@/lib/active-user'
 import { deleteListingPhotoObjects, prepareListingPhotos, uploadListingPhotos } from '@/lib/listing-photo-storage'
 import { type ListingPlan, PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
@@ -81,6 +82,7 @@ export async function mutateListingPhotos(userId: string, listingId: string, mut
       // Match creation/bump's lock order. The listing lock also coordinates deletion,
       // moderation and ordinary edits, which may not acquire the user lock.
       await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
+      if (!(await isUnbannedUser(tx, userId))) throw new PhotoMutationError('This account is unavailable.', 403)
       await tx.$queryRaw`SELECT id FROM listing WHERE id = ${listingId} AND "userId" = ${userId} FOR UPDATE`
       const [currentListing, currentSubscription] = await Promise.all([
         tx.listing.findFirst({ where, select: photoListingSelect }),
@@ -93,7 +95,6 @@ export async function mutateListingPhotos(userId: string, listingId: string, mut
       }
 
       const status = listing.status === 'ACTIVE' ? 'PENDING' : listing.status
-      // This explicit allowlist intentionally excludes all bump/ranking fields.
       const updated = await tx.listing.updateMany({
         where: { ...where, updatedAt: listing.updatedAt, status: listing.status },
         data: { status, updatedAt: new Date(Math.max(Date.now(), listing.updatedAt.getTime() + 1)) }
@@ -142,7 +143,7 @@ export async function mutateListingPhotos(userId: string, listingId: string, mut
       return { data: toPhotoState(result, plan), categoryId: result.categoryId, changed: true, obsoleteKeys }
     })
   } catch (error) {
-    // No image write committed: compensate even ambiguous/partially completed PUTs.
+    // Compensate even ambiguous or partially completed PUTs.
     await deleteListingPhotoObjects(attemptedKeys)
     throw error
   }

@@ -3,7 +3,7 @@
 import 'server-only'
 import { listingIdSchema } from '@/entities/listing/schema'
 import { Prisma } from '@/generated/prisma/client'
-import { getSession } from '@/lib/auth-utils'
+import { getMutationSession } from '@/lib/auth-utils'
 import prisma from '@/lib/prisma'
 import { checkListingPhoneRevealRateLimit } from '@/lib/rate-limit'
 import type { RevealListingPhoneResult } from './types'
@@ -13,7 +13,7 @@ export async function revealListingPhone(id: unknown): Promise<RevealListingPhon
   if (!result.success) return { success: false, message: 'Invalid listing.' }
 
   try {
-    const session = await getSession()
+    const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to reveal the phone number.', requiresLogin: true }
 
     const rateLimit = await checkListingPhoneRevealRateLimit(session.user.id)

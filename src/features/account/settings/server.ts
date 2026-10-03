@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import 'server-only'
 import { getSession } from '@/lib/auth-utils'
+import { hasActiveBan } from '@/lib/ban-status'
 import prisma from '@/lib/prisma'
 import { AvatarError, createAvatarLifecycle } from './avatar-lifecycle'
 import { avatarStorage } from './avatar-storage'
@@ -8,8 +9,8 @@ import { avatarStorage } from './avatar-storage'
 export async function getSettingsActor(moderator = false) {
   const session = await getSession(true)
   if (!session) throw new AvatarError('Please sign in to manage your account.')
-  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { id: true, role: true, banned: true } })
-  if (!user || user.banned) throw new AvatarError('This account is unavailable.')
+  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { id: true, role: true, banned: true, banExpires: true } })
+  if (!user || hasActiveBan(user)) throw new AvatarError('This account is unavailable.')
   if (moderator && user.role !== 'moderator' && user.role !== 'admin') throw new AvatarError('Moderator access is required.')
   return user
 }

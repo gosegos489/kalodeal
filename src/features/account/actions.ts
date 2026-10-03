@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import 'server-only'
 import { listingIdSchema } from '@/entities/listing/schema'
 import type { ActionMessageResult } from '@/lib/action-result'
-import { getSession } from '@/lib/auth-utils'
+import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import { deleteListingPhotoObjects } from '@/lib/listing-photo-storage'
 import prisma from '@/lib/prisma'
@@ -15,7 +15,7 @@ export async function deleteListing(id: unknown): Promise<ActionMessageResult> {
 
   let deletedListing: { categoryId: string; images: { key: string }[] } | null
   try {
-    const session = await getSession()
+    const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to delete your listing.' }
 
     const where = { id: parsed.data, userId: session.user.id }

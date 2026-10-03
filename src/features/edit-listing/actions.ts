@@ -6,7 +6,7 @@ import z from 'zod'
 import { listingIdSchema } from '@/entities/listing/schema'
 import { listingDetailsSchema } from '@/features/create-listing/schema'
 import type { ListingStatus } from '@/generated/prisma/enums'
-import { getSession } from '@/lib/auth-utils'
+import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'
 import { checkUpdateListingRateLimit } from '@/lib/rate-limit'
@@ -17,8 +17,8 @@ const updateReferenceSchema = z.object({ id: listingIdSchema, updatedAt: z.iso.d
 export async function updateListing(id: unknown, input: unknown, expectedUpdatedAt: unknown): Promise<UpdateListingResult> {
   let saved: { id: string; previousCategoryId: string; categoryId: string; status: ListingStatus }
   try {
-    const session = await getSession(true)
-    if (!session || session.user.banned) return { success: false, message: 'Sign in to edit your listing.' }
+    const session = await getMutationSession()
+    if (!session) return { success: false, message: 'Sign in to edit your listing.' }
 
     const reference = updateReferenceSchema.safeParse({ id, updatedAt: expectedUpdatedAt })
     if (!reference.success) return { success: false, message: 'Invalid listing. Reload the page and try again.' }

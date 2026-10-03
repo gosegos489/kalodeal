@@ -85,7 +85,7 @@ export function CustomPagination({ page, totalPages, onPageChange, getPageHref, 
         </PaginationContent>
       </Pagination>
       <p className="text-muted-foreground text-xs" role="status">
-        {disabled ? 'Loading listings...' : `Page ${page} of ${totalPages}`}
+        {disabled ? 'Loading results...' : `Page ${page} of ${totalPages}`}
       </p>
     </div>
   )

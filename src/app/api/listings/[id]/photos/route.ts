@@ -3,7 +3,7 @@ import { listingIdSchema } from '@/entities/listing/schema'
 import { MAX_IMAGE_BYTES } from '@/features/create-listing/schema'
 import { PhotoMutationError, mutateListingPhotos } from '@/features/edit-listing/photo-mutations'
 import { type PhotoMutationResult, photoMutationSchema } from '@/features/edit-listing/photo-schema'
-import { getSession } from '@/lib/auth-utils'
+import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import { ListingPhotoValidationError } from '@/lib/listing-photo-storage'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
@@ -24,8 +24,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   try {
-    const session = await getSession(true)
-    if (!session || session.user.banned) return failure('Sign in to manage your listing photos.', 401)
+    const session = await getMutationSession()
+    if (!session) return failure('Sign in to manage your listing photos.', 401)
     const reference = listingIdSchema.safeParse((await params).id)
     if (!reference.success) return failure('Invalid listing.', 400)
     const limit = await checkListingPhotoRateLimit(session.user.id)

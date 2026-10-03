@@ -1,9 +1,13 @@
 'use client'
 
-import { BarChart3, CreditCard, Heart, LayoutDashboard, List, MessageCircle, ReceiptText, Settings } from 'lucide-react'
+import { BarChart3, CreditCard, Heart, LayoutDashboard, List, Loader2, LogOut, MessageCircle, ReceiptText, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/toast'
+import { authClient } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
 
 const navigation = [
@@ -19,6 +23,27 @@ const navigation = [
 
 export function AccountNavigation() {
   const pathname = usePathname()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  async function handleLogout() {
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+
+    try {
+      const result = await authClient.signOut()
+      if (result.error) {
+        toast.add({ title: 'Could not log out', description: 'Please try again.', type: 'error' })
+        setIsLoggingOut(false)
+        return
+      }
+
+      // Reload so cached account pages and server-rendered session UI are cleared.
+      window.location.replace('/')
+    } catch {
+      toast.add({ title: 'Could not log out', description: 'Please try again.', type: 'error' })
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <nav aria-label="Account navigation" className="flex gap-1 overflow-x-auto p-2 lg:flex-col">
@@ -48,6 +73,17 @@ export function AccountNavigation() {
           </Link>
         )
       })}
+      <Button
+        type="button"
+        variant="ghost"
+        disabled={isLoggingOut}
+        aria-busy={isLoggingOut}
+        onClick={handleLogout}
+        className="text-muted-foreground h-auto justify-start gap-3 px-3 py-3 font-normal"
+      >
+        {isLoggingOut ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <LogOut aria-hidden="true" className="size-4" />}
+        {isLoggingOut ? 'Logging out…' : 'Logout'}
+      </Button>
     </nav>
   )
 }

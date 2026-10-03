@@ -14,7 +14,7 @@ function refreshProfile() {
   revalidatePath('/account', 'layout')
   revalidatePath('/listings/[id]', 'page')
   revalidatePath('/admin')
-  revalidatePath('/moderator')
+  revalidatePath('/moderator', 'layout')
 }
 
 function failure(error: unknown): ActionMessageResult {

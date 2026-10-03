@@ -9,12 +9,15 @@ import { displayNameSchema } from '@/features/account/settings/schema'
 import ResetPasswordEmail from '../../emails/ResetPasswordEmail'
 import VerifyEmail from '../../emails/VerifyEmail'
 import { ac, adminRole, moderatorRole, userRole } from './auth-permissions'
+import { authorizeAuthMutation, normalizeBanUpdate } from './auth-security'
 import prisma from './prisma'
 import { resend, resendFrom } from './resend'
 
 export const auth = betterAuth({
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      const banBody = await authorizeAuthMutation(ctx)
+      if (banBody) return { context: { ...ctx, body: banBody } }
       const isSignUp = ctx.path === '/sign-up/email'
       const isProfileUpdate = ctx.path === '/update-user'
       const isAdminProfile = ctx.path === '/admin/update-user' || ctx.path === '/admin/create-user'
@@ -27,6 +30,9 @@ export const auth = betterAuth({
       if (data && ['image', 'pendingAvatarKey', 'avatarCleanupKey'].some((field) => field in data)) {
         throw new APIError('BAD_REQUEST', { message: 'Manage avatars through account settings and moderation.' })
       }
+      if (data && ['banned', 'banReason', 'banExpires'].some((field) => field in data)) {
+        throw new APIError('BAD_REQUEST', { message: 'Manage bans through the ban/unban endpoints.' })
+      }
       if (isSignUp || data?.name !== undefined) {
         const parsed = displayNameSchema.safeParse(data?.name ?? '')
         if (!parsed.success) throw new APIError('BAD_REQUEST', { message: parsed.error.issues[0].message })
@@ -36,6 +42,13 @@ export const auth = betterAuth({
         return { context: { ...ctx, body: { ...ctx.body, name: parsed.data } } }
       }
     })
+  },
+  databaseHooks: {
+    user: {
+      update: {
+        before: async (data, ctx) => ({ data: normalizeBanUpdate(data, ctx?.path) })
+      }
+    }
   },
   database: prismaAdapter(prisma, {
     provider: 'postgresql'

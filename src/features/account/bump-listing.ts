@@ -4,7 +4,8 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import 'server-only'
 import { listingIdSchema } from '@/entities/listing/schema'
 import type { ActionMessageResult } from '@/lib/action-result'
-import { getSession } from '@/lib/auth-utils'
+import { isUnbannedUser } from '@/lib/active-user'
+import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import { PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
@@ -18,7 +19,7 @@ export async function bumpListing(id: unknown): Promise<ActionMessageResult> {
 
   let categoryId: string
   try {
-    const session = await getSession(true)
+    const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to bump your listing.' }
     const userId = session.user.id
     const rateLimit = await checkBumpListingRateLimit(userId)
@@ -27,6 +28,7 @@ export async function bumpListing(id: unknown): Promise<ActionMessageResult> {
     categoryId = await prisma.$transaction(async (tx) => {
       // Serialize bumps with listing creation and paid-period resets in the billing webhook.
       await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
+      if (!(await isUnbannedUser(tx, userId))) throw new BumpError('This account is unavailable.')
       const now = new Date()
       const subscription = await tx.subscription.findUnique({
         where: { userId },
@@ -40,8 +42,7 @@ export async function bumpListing(id: unknown): Promise<ActionMessageResult> {
 
       const limit = PLAN_LIMITS[getListingPlan(subscription, now)].monthlyBumps
       if (!subscription || limit === 0) throw new BumpError('An eligible Pro plan is required to bump listings.')
-      // Debit conditionally in SQL as well as under the user lock: the limit and period
-      // must still match at the write boundary. A later failure rolls back this debit.
+      // A failed listing update must roll back the quota debit.
       const debited = await tx.subscription.updateMany({
         where: {
           userId,
@@ -54,8 +55,7 @@ export async function bumpListing(id: unknown): Promise<ActionMessageResult> {
         data: { bumpUsed: { increment: 1 } }
       })
       if (debited.count !== 1) throw new BumpError('You have used all bumps for this paid billing period.')
-      // Repeat the ownership/status condition at the write boundary, including concurrent moderation/deletion.
-      // Parameterized SQL also preserves @updatedAt: promotion must not advance the content-edit version.
+      // Raw SQL preserves @updatedAt: promotion must not advance the content-edit version.
       const updated = await tx.$executeRaw`
         UPDATE listing SET "bumpedAt" = ${now}, "sortDate" = ${now}
         WHERE id = ${parsed.data} AND "userId" = ${userId} AND status = 'ACTIVE'

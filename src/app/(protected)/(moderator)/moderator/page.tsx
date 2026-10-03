@@ -1,16 +1,11 @@
 import { Suspense } from 'react'
-import { Skeleton } from '@/components/ui/skeleton'
-import { AvatarModerationQueue } from '@/features/account/settings/avatar-moderation-queue'
+import { ModerationDashboard } from '@/features/moderation/moderation-dashboard'
+import { ModerationLoading } from '@/features/moderation/moderation-loading'
 
-async function Moderation({ searchParams }: { searchParams: Promise<{ page?: string | string[] }> }) {
-  const { page } = await searchParams
-  return <AvatarModerationQueue page={page} />
-}
-
-export default function ModeratorPage({ searchParams }: { searchParams: Promise<{ page?: string | string[] }> }) {
+export default function ModeratorPage() {
   return (
-    <Suspense fallback={<Skeleton className="m-8 h-64" />}>
-      <Moderation searchParams={searchParams} />
+    <Suspense fallback={<ModerationLoading />}>
+      <ModerationDashboard />
     </Suspense>
   )
 }

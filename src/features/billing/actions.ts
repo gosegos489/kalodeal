@@ -2,7 +2,8 @@
 
 import 'server-only'
 import type { ActionResult } from '@/lib/action-result'
-import { getSession } from '@/lib/auth-utils'
+import { isUnbannedUser } from '@/lib/active-user'
+import { getMutationSession } from '@/lib/auth-utils'
 import { getListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
@@ -13,7 +14,7 @@ class BillingError extends Error {}
 
 export async function upgradeToPro(): Promise<ActionResult<{ url: string }>> {
   try {
-    const session = await getSession()
+    const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to upgrade your plan.' }
     const userId = session.user.id
     const [price, origin] = await Promise.all([getProPrice(), Promise.resolve(getBillingOrigin())])
@@ -22,6 +23,7 @@ export async function upgradeToPro(): Promise<ActionResult<{ url: string }>> {
       async (tx) => {
         // Cooperates with listing creation, bumps and webhook reconciliation across tabs and server instances.
         await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
+        if (!(await isUnbannedUser(tx, userId))) throw new BillingError('This account is unavailable.')
         const subscription = await tx.subscription.upsert({
           where: { userId },
           create: { userId, status: 'EXPIRED', currentPeriodStart: new Date(0), currentPeriodEnd: new Date(0) },
@@ -80,7 +82,7 @@ export async function upgradeToPro(): Promise<ActionResult<{ url: string }>> {
 
 export async function manageSubscription(): Promise<ActionResult<{ url: string }>> {
   try {
-    const session = await getSession()
+    const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to manage your subscription.' }
     const subscription = await prisma.subscription.findUnique({
       where: { userId: session.user.id },

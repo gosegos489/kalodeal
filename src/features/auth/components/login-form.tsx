@@ -1,16 +1,17 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { toast } from '@/components/ui/toast'
 import { login } from '../actions/login'
+import { getLoginErrorMessage } from '../login-error'
 import { loginSchema } from '../schemas/login'
 import type { LoginInput } from '../types/auth'
-import { toast } from '@/components/ui/toast'
 
 export default function LoginForm() {
   const form = useForm<LoginInput>({
@@ -19,13 +20,12 @@ export default function LoginForm() {
   })
   const isSubmitting = form.formState.isSubmitting
   const onSubmit = form.handleSubmit(async (data) => {
-    const { error } = await login(data)
-
-    if (!error) return
-
-    const message = error.status === 429 ? 'Too many attempts. Please try again later.' : error.status === 403 ? 'Please verify your email address.' : error.message || 'Something went wrong'
-
-    toast.add({ title: 'Login failed', description: message, type: 'error' })
+    try {
+      const { error } = await login(data)
+      if (error) toast.add({ title: 'Login failed', description: getLoginErrorMessage(error), type: 'error' })
+    } catch {
+      toast.add({ title: 'Login failed', description: 'Could not sign in. Please try again.', type: 'error' })
+    }
   })
 
   const [password, setPassword] = useState(false)

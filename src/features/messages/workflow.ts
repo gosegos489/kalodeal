@@ -25,11 +25,14 @@ export function participantWhere(userId: string) {
 
 const participantSelect = { id: true, buyerId: true, sellerId: true, lastSequence: true, buyerReadSequence: true, sellerReadSequence: true } as const
 const messageSelect = { id: true, senderId: true, content: true, sequence: true, createdAt: true } as const
-const previewSelect = {
+const previewBaseSelect = {
   ...participantSelect,
   listingId: true,
   listingTitle: true,
-  lastMessageAt: true,
+  lastMessageAt: true
+} as const
+const previewSelect = {
+  ...previewBaseSelect,
   buyer: { select: { name: true } },
   seller: { select: { name: true } },
   listing: {
@@ -204,12 +207,40 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
         const where = participantWhere(viewer)
         const totalItems = await tx.conversation.count({ where })
         const pagination = getPagination({ pageParam, totalItems })
-        const rows = await tx.conversation.findMany({
+        // Prisma fans out sibling relation reads internally. Keep one relation per
+        // query and await each batch on this transaction's single pg connection.
+        const page = await tx.conversation.findMany({
           where,
-          select: previewSelect,
+          select: { ...previewBaseSelect, messages: previewSelect.messages },
           orderBy: [{ lastMessageAt: 'desc' }, { id: 'desc' }],
           skip: pagination.skip,
           take: pagination.take
+        })
+        const users = page.length
+          ? await tx.user.findMany({
+              where: { id: { in: [...new Set(page.flatMap((row) => [row.buyerId, row.sellerId]))] } },
+              select: { id: true, name: true }
+            })
+          : []
+        const listingIds = page.flatMap((row) => (row.listingId ? [row.listingId] : []))
+        const listings = listingIds.length
+          ? await tx.listing.findMany({
+              where: { id: { in: [...new Set(listingIds)] } },
+              select: { id: true, ...previewSelect.listing.select }
+            })
+          : []
+        const usersById = new Map(users.map((user) => [user.id, user]))
+        const listingsById = new Map(listings.map(({ id, ...listing }) => [id, listing]))
+        const rows = page.map((row) => {
+          const buyer = usersById.get(row.buyerId)
+          const seller = usersById.get(row.sellerId)
+          if (!buyer || !seller) throw new Error('Conversation participant not found')
+          return {
+            ...row,
+            buyer: { name: buyer.name },
+            seller: { name: seller.name },
+            listing: row.listingId ? (listingsById.get(row.listingId) ?? null) : null
+          }
         })
         const unread = rows.length
           ? await tx.message.groupBy({

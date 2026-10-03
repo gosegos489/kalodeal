@@ -176,7 +176,7 @@ async function ListingResults({ searchParams }: Props) {
           </p>
         </div>
         {filtered && (
-          <Button nativeButton={false} variant="outline" render={<Link href="/#listings" />}>
+          <Button nativeButton={false} variant="outline" render={<Link href="/" scroll={false} />}>
             Clear filters
           </Button>
         )}
@@ -201,7 +201,7 @@ async function ListingResults({ searchParams }: Props) {
             {filtered ? 'Try a different keyword or explore another category.' : 'Give something you no longer need a new home.'}
           </p>
           {filtered ? (
-            <Button nativeButton={false} variant="outline" render={<Link href="/#listings" />}>
+            <Button nativeButton={false} variant="outline" render={<Link href="/" scroll={false} />}>
               Browse all listings <ArrowRight />
             </Button>
           ) : (
