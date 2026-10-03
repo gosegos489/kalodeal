@@ -23,6 +23,10 @@ model User {
   favorites Favorite[]
   listings  Listing[]
 
+  buyerConversations  Conversation[] @relation("ConversationBuyer")
+  sellerConversations Conversation[] @relation("ConversationSeller")
+  messages            Message[]
+
   @@unique([email])
   @@map("user")
 }

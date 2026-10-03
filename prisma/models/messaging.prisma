@@ -1,0 +1,42 @@
+model Conversation {
+  id           String   @id @default(uuid())
+  listingId    String?
+  listing      Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  // Retain useful context after an owner deletes the listing.
+  listingTitle String
+
+  buyerId  String
+  buyer    User   @relation("ConversationBuyer", fields: [buyerId], references: [id], onDelete: Restrict)
+  sellerId String
+  seller   User   @relation("ConversationSeller", fields: [sellerId], references: [id], onDelete: Restrict)
+
+  // Sequence watermarks avoid timestamp ties and marking concurrently arriving messages read.
+  lastSequence       Int       @default(0)
+  buyerReadSequence  Int       @default(0)
+  sellerReadSequence Int       @default(0)
+  createdAt          DateTime  @default(now())
+  lastMessageAt      DateTime  @default(now())
+  messages           Message[]
+
+  @@unique([buyerId, sellerId, listingId])
+  @@index([buyerId, lastMessageAt, id])
+  @@index([sellerId, lastMessageAt, id])
+  @@index([listingId])
+  @@map("conversation")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Restrict)
+  content        String       @db.VarChar(2000)
+  sequence       Int
+  createdAt      DateTime     @default(now())
+
+  @@unique([conversationId, sequence])
+  @@index([conversationId, senderId, sequence])
+  @@index([senderId])
+  @@map("message")
+}

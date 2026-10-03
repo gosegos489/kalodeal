@@ -15,6 +15,6 @@ export const mobileNavigation = [
 
 export const accountNavigation = [
   { label: 'Favorites', href: '/account/favorites', icon: Heart },
-  { label: 'Messages', href: '/messages', icon: MessageCircle },
+  { label: 'Messages', href: '/account/messages', icon: MessageCircle },
   { label: 'My account', href: '/account', icon: UserRound }
 ]

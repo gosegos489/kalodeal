@@ -34,9 +34,10 @@ model Listing {
 
   images ListingImage[]
 
-  stats     ListingStats?
-  favorites Favorite[]
-  views     ListingDailyView[]
+  stats         ListingStats?
+  favorites     Favorite[]
+  views         ListingDailyView[]
+  conversations Conversation[]
 
   bumpedAt DateTime?
 

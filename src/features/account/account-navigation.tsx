@@ -10,7 +10,7 @@ const navigation = [
   { label: 'Account', href: '/account', icon: LayoutDashboard },
   { label: 'My listings', href: '/account/listings', icon: List },
   { label: 'Favorites', href: '/account/favorites', icon: Heart },
-  { label: 'Messages', href: '/messages', icon: MessageCircle },
+  { label: 'Messages', href: '/account/messages', icon: MessageCircle },
   { label: 'My plan', href: '/account/subscription', icon: CreditCard },
   { label: 'Orders', href: '/account/orders', icon: ReceiptText },
   { label: 'Analytics', href: '/account/analytics', icon: BarChart3 },

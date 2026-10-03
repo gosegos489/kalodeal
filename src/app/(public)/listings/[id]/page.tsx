@@ -1,4 +1,4 @@
-import { List, MessageCircle, ShieldCheck } from 'lucide-react'
+import { List, ShieldCheck } from 'lucide-react'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -15,6 +15,7 @@ import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
 import { getSellerInitials } from '@/entities/user/public-profile'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
 import { ListingViewTracker } from '@/features/listing-views/listing-view-tracker'
+import { MessageSellerButton } from '@/features/messages/message-seller-button'
 import { RevealListingPhoneButton } from '@/features/reveal-listing-phone/reveal-listing-phone-button'
 import { dayjs } from '@/lib/dayjs'
 import { buildMetadata } from '@/lib/metadata'
@@ -197,20 +198,7 @@ async function ListingDetails({ params }: Props) {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
-                  <Button
-                    nativeButton={false}
-                    size="lg"
-                    className="w-full"
-                    aria-describedby="chat-help"
-                    render={<Link href={listing.isAuthenticated ? '/messages' : '/login'} />}
-                  >
-                    <MessageCircle aria-hidden="true" /> Message seller
-                  </Button>
-                  <p id="chat-help" className="text-muted-foreground text-xs">
-                    Private messaging is coming soon. Contact the seller by phone.
-                  </p>
-                </div>
+                <MessageSellerButton listingId={listing.id} isAuthenticated={listing.isAuthenticated} />
               )}
             </CardContent>
           </Card>

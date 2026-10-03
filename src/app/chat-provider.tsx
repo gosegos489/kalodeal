@@ -4,10 +4,11 @@ import { ChatClient } from '@ably/chat'
 import { ChatClientProvider } from '@ably/chat/react'
 import * as Ably from 'ably'
 import { AblyProvider } from 'ably/react'
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 
 type ChatProviderProps = {
   children: React.ReactNode
+  conversationId?: string
 }
 
 type Clients = {
@@ -15,14 +16,22 @@ type Clients = {
   chat: ChatClient
 }
 
-export function ChatProvider({ children }: ChatProviderProps) {
+const RealtimeContext = createContext<Ably.Realtime | null>(null)
+
+export function useMessagingRealtime() {
+  return useContext(RealtimeContext)
+}
+
+export function ChatProvider({ children, conversationId }: ChatProviderProps) {
   const [clients, setClients] = useState<Clients | null>(null)
 
   useEffect(() => {
+    let disposed = false
     const realtime = new Ably.Realtime({
       authCallback: async (_, callback) => {
         try {
-          const response = await fetch('/api/ably-token', {
+          const query = conversationId ? `?conversationId=${encodeURIComponent(conversationId)}` : ''
+          const response = await fetch(`/api/ably-token${query}`, {
             credentials: 'include',
             cache: 'no-store'
           })
@@ -42,29 +51,26 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
     const chat = new ChatClient(realtime)
 
-    const handleConnected = () => {
-      setClients({
-        realtime,
-        chat
-      })
-    }
-
-    realtime.connection.once('connected', handleConnected)
+    // Render database-backed UI even when Ably cannot connect.
+    queueMicrotask(() => {
+      if (!disposed) setClients({ realtime, chat })
+    })
 
     return () => {
-      realtime.connection.off('connected', handleConnected)
-
+      disposed = true
       realtime.close()
     }
-  }, [])
-
-  if (!clients) {
-    return null
-  }
+  }, [conversationId])
 
   return (
-    <AblyProvider client={clients.realtime}>
-      <ChatClientProvider client={clients.chat}>{children}</ChatClientProvider>
-    </AblyProvider>
+    <RealtimeContext.Provider value={clients?.realtime ?? null}>
+      {clients ? (
+        <AblyProvider client={clients.realtime}>
+          <ChatClientProvider client={clients.chat}>{children}</ChatClientProvider>
+        </AblyProvider>
+      ) : (
+        children
+      )}
+    </RealtimeContext.Provider>
   )
 }
