@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { AccountShellSkeleton } from '@/features/account/account-skeleton'
 import { requireMarketplaceUser } from '@/lib/auth-utils'
 
 async function MarketplaceGuard({ children }: { children: React.ReactNode }) {
@@ -10,8 +11,8 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   return (
     <Suspense
       fallback={
-        <div className="container py-10" role="status">
-          Loading account…
+        <div className="container py-10">
+          <AccountShellSkeleton />
         </div>
       }
     >
