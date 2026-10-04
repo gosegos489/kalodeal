@@ -1,0 +1,19 @@
+/* SSR layout and native scrolling work before the deferred Swiper CSS/JS arrives. */
+.track {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.root:global(.swiper-initialized) .track {
+  gap: 0;
+  overflow: visible;
+  scroll-snap-type: none;
+}

@@ -12,11 +12,12 @@ type ListingRowProps = {
   metadata: ReactNode
   status: ReactNode
   actions: ReactNode
+  actionsClassName?: string
   feedback?: ReactNode
   cornerAction?: ReactNode
 }
 
-export function ListingRow({ listing, href, metadata, status, actions, feedback, cornerAction }: ListingRowProps) {
+export function ListingRow({ listing, href, metadata, status, actions, actionsClassName, feedback, cornerAction }: ListingRowProps) {
   const thumbnailClassName =
     'bg-muted focus-visible:ring-ring relative row-span-2 size-16 overflow-hidden rounded-lg outline-none focus-visible:ring-2 xl:row-span-1'
   const thumbnail = listing.coverUrl ? (
@@ -61,7 +62,9 @@ export function ListingRow({ listing, href, metadata, status, actions, feedback,
         </div>
       </div>
       <div className="col-start-2 xl:col-start-auto">{status}</div>
-      <div className="col-span-2 min-w-0 border-t pt-3 xl:col-span-1 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-4">{actions}</div>
+      <div className={cn('col-span-2 min-w-0 border-t pt-3 xl:col-span-1 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-4', actionsClassName)}>
+        {actions}
+      </div>
       {feedback && <div className="col-span-full min-w-0">{feedback}</div>}
     </article>
   )

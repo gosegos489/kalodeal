@@ -2,8 +2,9 @@ import 'server-only'
 import { getListingImageUrl } from '@/entities/listing/listing-summary'
 import { listingIdSchema } from '@/entities/listing/schema'
 import { requireMarketplaceUser } from '@/lib/auth-utils'
-import { PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
+import { PLAN_LIMITS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
+import { getUserAccess } from '@/lib/user-access'
 import type { EditableListing } from './types'
 
 export async function getEditableListing(id: unknown): Promise<(EditableListing & { categoryName: string }) | null> {
@@ -12,7 +13,7 @@ export async function getEditableListing(id: unknown): Promise<(EditableListing 
   if (!parsed.success) return null
 
   // Filter by ownership before selecting any private listing details.
-  const [listing, subscription] = await Promise.all([
+  const [listing, access] = await Promise.all([
     prisma.listing.findFirst({
       where: { id: parsed.data, userId: session.user.id },
       select: {
@@ -38,10 +39,7 @@ export async function getEditableListing(id: unknown): Promise<(EditableListing 
         }
       }
     }),
-    prisma.subscription.findUnique({
-      where: { userId: session.user.id },
-      select: { plan: true, status: true, currentPeriodStart: true, currentPeriodEnd: true }
-    })
+    getUserAccess(prisma, session.user.id)
   ])
   if (!listing) return null
 
@@ -51,7 +49,7 @@ export async function getEditableListing(id: unknown): Promise<(EditableListing 
     status: listing.status,
     moderationReason: listing.moderationReason,
     moderationMessage: listing.moderationMessage,
-    plan: getListingPlan(subscription),
+    plan: access.plan,
     categoryName: listing.category.name,
     values: {
       title: listing.title,

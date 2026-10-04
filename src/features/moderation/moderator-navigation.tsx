@@ -1,6 +1,6 @@
 'use client'
 
-import { Flag, Images, LayoutDashboard, List, Users } from 'lucide-react'
+import { Flag, Gift, Images, LayoutDashboard, List, Users } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LogoutButton } from '@/features/auth/logout-button'
@@ -11,6 +11,7 @@ export const moderatorNavigation = [
   { label: 'Listings', href: '/moderator/listings', icon: List },
   { label: 'Profiles', href: '/moderator/avatars', icon: Images },
   { label: 'Users', href: '/moderator/users', icon: Users },
+  { label: 'Access grants', href: '/moderator/access-grants', icon: Gift },
   { label: 'Chat reports', href: '/moderator/chat-reports', icon: Flag }
 ]
 

@@ -12,7 +12,7 @@ export function PublicHeader() {
       <div className="container flex items-center justify-between gap-3 py-3 sm:py-4">
         <div className="flex min-w-0 items-center gap-4 lg:gap-10">
           <Link href="/">
-            <Image src="/logo.svg" alt="Kalodeal" width={590} height={169} className="h-auto w-29.5" priority />
+            <Image src="/logo.svg" alt="Kalodeal" width={590} height={169} className="h-auto w-29.5" loading="eager" />
           </Link>
 
           <nav aria-label="Primary" className="hidden md:block">

@@ -12,6 +12,7 @@ import type { ListingSummary } from '../types'
 type ListingCardProps = {
   listing: ListingSummary
   eager?: boolean
+  prefetch?: false
   status?: ListingStatus
   imageSizes?: string
   isFavorited: boolean
@@ -22,6 +23,7 @@ type ListingCardProps = {
 export function ListingCard({
   listing,
   eager = false,
+  prefetch,
   status,
   isFavorited,
   isAuthenticated,
@@ -35,6 +37,7 @@ export function ListingCard({
       <div className="relative">
         <Link
           href={href}
+          prefetch={prefetch}
           aria-label={`View listing: ${listing.title}`}
           className="bg-muted focus-visible:ring-ring relative block aspect-4/3 shrink-0 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset"
         >
@@ -66,7 +69,11 @@ export function ListingCard({
             </Badge>
           )}
         </div>
-        <Link href={href} className="group focus-visible:ring-ring flex flex-col gap-2 rounded-sm outline-none focus-visible:ring-2">
+        <Link
+          href={href}
+          prefetch={prefetch}
+          className="group focus-visible:ring-ring flex flex-col gap-2 rounded-sm outline-none focus-visible:ring-2"
+        >
           <h3 className="group-hover:text-primary line-clamp-2 leading-snug font-semibold">{listing.title}</h3>
           <p className="text-primary text-lg font-semibold">{formatListingPrice(listing.price, listing.currency)}</p>
           <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{listing.description}</p>
@@ -77,6 +84,7 @@ export function ListingCard({
           </time>
           <Link
             href={href}
+            prefetch={prefetch}
             aria-label={`View listing: ${listing.title}`}
             className="text-primary focus-visible:ring-ring rounded-sm font-medium underline underline-offset-4 outline-none focus-visible:ring-2"
           >

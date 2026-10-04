@@ -5,7 +5,7 @@ import { canUseMarketplace } from '@/lib/account-role'
 import type { ActionResult } from '@/lib/action-result'
 import { isActiveMarketplaceUser } from '@/lib/active-user'
 import { getMutationSession } from '@/lib/auth-utils'
-import { getListingPlan } from '@/lib/plan-limits'
+import { getPaidListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
 import { getBillingOrigin, getPortalConfiguration, getProPrice } from './config'
@@ -31,7 +31,7 @@ export async function upgradeToPro(): Promise<ActionResult<{ url: string }>> {
           create: { userId, status: 'EXPIRED', currentPeriodStart: new Date(0), currentPeriodEnd: new Date(0) },
           update: {}
         })
-        if (getListingPlan(subscription) === 'PRO') throw new BillingError('You already have an eligible Pro plan.')
+        if (getPaidListingPlan(subscription) === 'PRO') throw new BillingError('You already have an eligible Pro plan.')
 
         let customerId = subscription.stripeCustomerId
         if (!customerId) {

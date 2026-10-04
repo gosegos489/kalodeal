@@ -7,10 +7,11 @@ import { isActiveMarketplaceUser } from '@/lib/active-user'
 import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import { ListingPhotoValidationError, deleteListingPhotoObjects, prepareListingPhotos, uploadListingPhotos } from '@/lib/listing-photo-storage'
-import { LISTING_SLOT_STATUSES, PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
+import { LISTING_SLOT_STATUSES, PLAN_LIMITS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { checkCreateListingRateLimit } from '@/lib/rate-limit'
 import { MultipartBodyError, readMultipartFormData } from '@/lib/read-multipart-form-data'
+import { getUserAccess } from '@/lib/user-access'
 
 function failure(message: string, status: number, fieldErrors?: Extract<CreateListingResult, { success: false }>['fieldErrors']) {
   return Response.json({ success: false, message, ...(fieldErrors ? { fieldErrors } : {}) } satisfies CreateListingResult, { status })
@@ -46,11 +47,11 @@ export async function POST(request: Request) {
     return failure('Invalid listing data.', 400)
   }
 
-  const [subscription, listingSlotCount] = await Promise.all([
-    prisma.subscription.findUnique({ where: { userId } }),
+  const [access, listingSlotCount] = await Promise.all([
+    getUserAccess(prisma, userId),
     prisma.listing.count({ where: { userId, status: { in: LISTING_SLOT_STATUSES } } })
   ])
-  const plan = getListingPlan(subscription)
+  const plan = access.plan
   const limits = PLAN_LIMITS[plan]
   if (listingSlotCount >= limits.activeListings)
     return failure('You have reached your listing limit, including listings awaiting moderation or changes.', 409)
@@ -84,8 +85,8 @@ export async function POST(request: Request) {
     const result = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
       if (!(await isActiveMarketplaceUser(tx, userId))) return { message: 'This account is unavailable.' }
-      const currentSubscription = await tx.subscription.findUnique({ where: { userId } })
-      const currentLimits = PLAN_LIMITS[getListingPlan(currentSubscription)]
+      const currentAccess = await getUserAccess(tx, userId)
+      const currentLimits = PLAN_LIMITS[currentAccess.plan]
       const currentCount = await tx.listing.count({ where: { userId, status: { in: LISTING_SLOT_STATUSES } } })
       if (currentCount >= currentLimits.activeListings) {
         return { message: 'You have reached your listing limit, including listings awaiting moderation or changes.' }

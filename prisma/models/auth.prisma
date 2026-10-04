@@ -23,6 +23,11 @@ model User {
   subscription         Subscription?
   subscriptionPayments SubscriptionPayment[]
 
+  planGrants       PlanGrant[] @relation("PlanGrantRecipient")
+  issuedPlanGrants PlanGrant[] @relation("PlanGrantIssuer")
+  bumpGrants       BumpGrant[] @relation("BumpGrantRecipient")
+  issuedBumpGrants BumpGrant[] @relation("BumpGrantIssuer")
+
   favorites Favorite[]
   listings  Listing[]
 

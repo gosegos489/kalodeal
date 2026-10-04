@@ -5,8 +5,9 @@ import type { Prisma } from '@/generated/prisma/client'
 import { isActiveMarketplaceUser } from '@/lib/active-user'
 import { deleteListingPhotoObjects, prepareListingPhotos, uploadListingPhotos } from '@/lib/listing-photo-storage'
 import { checkListingSlotAvailable } from '@/lib/listing-slots'
-import { type ListingPlan, PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
+import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
+import { getUserAccess } from '@/lib/user-access'
 import type { ListingPhotoState, PhotoMutation } from './photo-schema'
 
 export class PhotoMutationError extends Error {
@@ -27,8 +28,6 @@ const photoListingSelect = {
 } satisfies Prisma.ListingSelect
 
 type PhotoListing = Prisma.ListingGetPayload<{ select: typeof photoListingSelect }>
-
-const subscriptionSelect = { plan: true, status: true, currentPeriodStart: true, currentPeriodEnd: true } satisfies Prisma.SubscriptionSelect
 
 function checkMutation(listing: PhotoListing | null, mutation: PhotoMutation, plan: ListingPlan) {
   if (!listing) throw new PhotoMutationError('This listing is unavailable or does not belong to you.', 404)
@@ -66,11 +65,8 @@ function toPhotoState(listing: PhotoListing, plan: ListingPlan): ListingPhotoSta
 
 export async function mutateListingPhotos(userId: string, listingId: string, mutation: PhotoMutation) {
   const where = { id: listingId, userId }
-  const [initialListing, subscription] = await Promise.all([
-    prisma.listing.findFirst({ where, select: photoListingSelect }),
-    prisma.subscription.findUnique({ where: { userId }, select: subscriptionSelect })
-  ])
-  checkMutation(initialListing, mutation, getListingPlan(subscription))
+  const [initialListing, access] = await Promise.all([prisma.listing.findFirst({ where, select: photoListingSelect }), getUserAccess(prisma, userId)])
+  checkMutation(initialListing, mutation, access.plan)
 
   const attemptedKeys: string[] = []
   let saved: { data: ListingPhotoState; categoryId: string; changed: boolean; obsoleteKeys: string[] }
@@ -86,11 +82,11 @@ export async function mutateListingPhotos(userId: string, listingId: string, mut
       await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
       if (!(await isActiveMarketplaceUser(tx, userId))) throw new PhotoMutationError('This account is unavailable.', 403)
       await tx.$queryRaw`SELECT id FROM listing WHERE id = ${listingId} AND "userId" = ${userId} FOR UPDATE`
-      const [currentListing, currentSubscription] = await Promise.all([
+      const [currentListing, currentAccess] = await Promise.all([
         tx.listing.findFirst({ where, select: photoListingSelect }),
-        tx.subscription.findUnique({ where: { userId }, select: subscriptionSelect })
+        getUserAccess(tx, userId)
       ])
-      const plan = getListingPlan(currentSubscription)
+      const plan = currentAccess.plan
       const listing = checkMutation(currentListing, mutation, plan)
       if (mutation.operation === 'reorder' && listing.images.every((image, index) => image.id === mutation.imageIds[index])) {
         return { data: toPhotoState(listing, plan), categoryId: listing.categoryId, changed: false, obsoleteKeys: [] }

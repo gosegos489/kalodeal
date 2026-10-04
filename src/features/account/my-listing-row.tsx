@@ -33,6 +33,7 @@ export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowP
         </>
       }
       status={<ListingStatusBadge status={listing.status} />}
+      actionsClassName="xl:self-start"
       feedback={
         ['CHANGES_REQUESTED', 'HIDDEN', 'REJECTED'].includes(listing.status) ? (
           <ListingModerationFeedback
@@ -43,7 +44,7 @@ export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowP
         ) : null
       }
       actions={
-        <div className="flex flex-col items-start gap-2 xl:items-end">
+        <div className="flex w-full min-w-0 flex-col gap-2 xl:w-72">
           <div className="flex flex-wrap items-center gap-2">
             <Button nativeButton={false} variant="outline" size="sm" aria-label={`View listing: ${listing.title}`} render={<Link href={href} />}>
               <Eye aria-hidden="true" /> View
@@ -59,8 +60,8 @@ export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowP
             </Button>
             <DeleteListingButton listingId={listing.id} title={listing.title} />
           </div>
-          <ListingOwnerActions key={listing.updatedAt} id={listing.id} title={listing.title} status={listing.status} updatedAt={listing.updatedAt} />
           <BumpListingButton listingId={listing.id} title={listing.title} status={listing.status} bumpsRemaining={bumpsRemaining} canBump={canBump} />
+          <ListingOwnerActions key={listing.updatedAt} id={listing.id} title={listing.title} status={listing.status} updatedAt={listing.updatedAt} />
         </div>
       }
     />

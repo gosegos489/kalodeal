@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Suspense, cache } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getPublicCategory } from '@/entities/category/get-category-tree'
+import { getCategorySummaries, getPublicCategory } from '@/entities/category/get-category-tree'
 import { CategoryCard } from '@/entities/category/ui/CategoryCard'
 import { getListings } from '@/entities/listing/get-listings'
 import { getMainCategoryFeeds } from '@/entities/listing/get-main-category-feeds'
@@ -61,8 +61,7 @@ async function BrowseIntro({ searchParams, children }: Props & { children: React
 }
 
 async function HomeContent({ searchParams }: Props) {
-  const feeds = await getMainCategoryFeeds()
-  const categories = feeds.map(({ category }) => category)
+  const categories = await getCategorySummaries()
   const searchCategories = categories.flatMap((category) => [
     { slug: category.slug, name: category.name },
     ...category.children.flatMap((child) => [
@@ -110,13 +109,14 @@ async function HomeContent({ searchParams }: Props) {
         )}
       </section>
       <Suspense fallback={<ListingsLoading />}>
-        <CategoryFeeds feeds={feeds} />
+        <CategoryFeeds />
       </Suspense>
     </div>
   )
 }
 
-async function CategoryFeeds({ feeds }: { feeds: Awaited<ReturnType<typeof getMainCategoryFeeds>> }) {
+async function CategoryFeeds() {
+  const feeds = await getMainCategoryFeeds()
   const favoriteState = await getFavoriteState(feeds.flatMap(({ listings }) => listings.map(({ id }) => id)))
   return feeds.map((feed) => <CategoryFeed key={feed.category.id} feed={feed} favoriteState={favoriteState} />)
 }
@@ -154,7 +154,8 @@ function CategoryFeed({
                 isFavorited={favoriteState.favoritedIds.has(listing.id)}
                 isAuthenticated={favoriteState.isAuthenticated}
                 showFavorite={favoriteState.canUseMarketplace}
-                imageSizes="(max-width: 639px) calc((100vw - 32px) * 0.85), (max-width: 767px) calc((100vw - 48px) / 2), (max-width: 1279px) calc((100vw - 64px) / 3), calc((100vw - 80px) / 4)"
+                prefetch={false}
+                imageSizes="(min-width: 1536px) 364px, (min-width: 1280px) 300px, (min-width: 1024px) 320px, (min-width: 768px) 235px, (min-width: 640px) 296px, calc((100vw - 32px) * 0.85)"
               />
             )
           }))}
@@ -241,7 +242,9 @@ async function ListingResults({ searchParams }: Props) {
             <ListingCard
               key={listing.id}
               listing={listing}
-              eager={index < 4}
+              eager={index === 0}
+              prefetch={false}
+              imageSizes="(min-width: 1536px) 364px, (min-width: 1280px) 300px, (min-width: 1024px) 320px, (min-width: 768px) 235px, (min-width: 640px) 296px, calc(100vw - 32px)"
               isFavorited={favoriteState.favoritedIds.has(listing.id)}
               isAuthenticated={favoriteState.isAuthenticated}
               showFavorite={favoriteState.canUseMarketplace}

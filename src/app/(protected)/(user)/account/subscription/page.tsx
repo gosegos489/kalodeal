@@ -8,6 +8,7 @@ import { BillingButton } from '@/features/billing/billing-button'
 import { CheckoutPending } from '@/features/billing/checkout-pending'
 import { getBillingAvailability } from '@/features/billing/config'
 import { PlanComparison } from '@/features/billing/plan-comparison'
+import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 import AccountLoading from '../loading'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
@@ -22,10 +23,11 @@ async function AccountSubscription({ searchParams }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      <RouteAutoRefresh />
       {params.checkout === 'success' && (
         <Card>
           <CardContent className="flex flex-col items-start gap-3" role="status">
-            {account.plan === 'PRO' ? <p>Your Pro plan is active.</p> : <CheckoutPending />}
+            {account.paidPlan === 'PRO' ? <p>Your paid Pro plan is active.</p> : <CheckoutPending />}
           </CardContent>
         </Card>
       )}
@@ -67,20 +69,49 @@ async function AccountSubscription({ searchParams }: Props) {
               <dd className="mt-1 text-lg font-semibold">
                 {account.plan === 'PRO' ? (
                   <>
-                    {account.limits.monthlyBumps} total <span className="text-muted-foreground text-sm">· {account.bumpsRemaining} remaining</span>
+                    {account.limits.monthlyBumps} total{' '}
+                    <span className="text-muted-foreground text-sm">· {account.planBumpsRemaining} remaining</span>
                   </>
                 ) : (
-                  <span className="text-muted-foreground text-sm font-normal">Available with an active paid Pro period</span>
+                  <span className="text-muted-foreground text-sm font-normal">Available with Pro access</span>
                 )}
               </dd>
             </div>
+            <div>
+              <dt className="text-muted-foreground text-sm">Bonus bumps</dt>
+              <dd className="mt-1 text-lg font-semibold">{account.bonusBumpsRemaining} remaining</dd>
+            </div>
+            {account.bumpPeriodEndsAt && (
+              <div>
+                <dt className="text-muted-foreground text-sm">Current plan bump window ends</dt>
+                <dd className="mt-1 font-medium">
+                  {new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(account.bumpPeriodEndsAt)} UTC
+                </dd>
+              </div>
+            )}
           </dl>
-          {account.subscription && (account.plan === 'PRO' || account.subscription.hasStripeSubscription) && (
+          {account.complimentaryGrant && (
+            <div className="bg-muted w-full rounded-lg p-4" role="status">
+              <p className="font-medium">Complimentary Pro access</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Available until{' '}
+                <time dateTime={account.complimentaryGrant.endsAt.toISOString()}>
+                  {new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(
+                    account.complimentaryGrant.endsAt
+                  )}{' '}
+                  UTC
+                </time>
+                . Complimentary bumps renew every 30 days during this access, without carryover.
+                {account.paidPlan === 'PRO' && ' Your paid subscription supplies the plan bump allowance while it is active.'}
+              </p>
+            </div>
+          )}
+          {account.subscription?.hasStripeSubscription && (
             <dl className="grid w-full gap-4 sm:grid-cols-2">
               <div>
                 <dt className="text-muted-foreground text-sm">Status</dt>
                 <dd className="mt-1 font-medium">
-                  {account.plan === 'PRO'
+                  {account.paidPlan === 'PRO'
                     ? account.subscription.status === 'CANCELED'
                       ? 'Canceling'
                       : 'Active'
@@ -94,7 +125,7 @@ async function AccountSubscription({ searchParams }: Props) {
               {account.subscription.currentPeriodEnd.getTime() > 0 && (
                 <div>
                   <dt className="text-muted-foreground text-sm">
-                    {account.plan === 'PRO'
+                    {account.paidPlan === 'PRO'
                       ? account.subscription.status === 'CANCELED'
                         ? 'Access remains active until'
                         : 'Renews on'
@@ -112,7 +143,7 @@ async function AccountSubscription({ searchParams }: Props) {
               )}
             </dl>
           )}
-          {account.plan === 'PRO' && account.subscription?.status === 'CANCELED' && (
+          {account.paidPlan === 'PRO' && account.subscription?.status === 'CANCELED' && (
             <p className="text-muted-foreground text-sm">Pro remains available until the paid period ends. Your subscription will not renew.</p>
           )}
           {account.subscription?.hasStripeSubscription && <BillingButton intent="manage" />}
@@ -123,7 +154,7 @@ async function AccountSubscription({ searchParams }: Props) {
           )}
         </CardContent>
       </Card>
-      <PlanComparison currentPlan={account.plan} price={price} />
+      <PlanComparison currentPlan={account.plan} paidPlan={account.paidPlan} price={price} />
     </div>
   )
 }

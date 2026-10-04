@@ -2,34 +2,30 @@ import 'server-only'
 import { listingSummarySelect, toListingSummary } from '@/entities/listing/listing-summary'
 import { requireMarketplaceUser } from '@/lib/auth-utils'
 import { getPagination } from '@/lib/pagination'
-import { LISTING_SLOT_STATUSES, PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
+import { LISTING_SLOT_STATUSES, PLAN_LIMITS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
+import { getUserAccess } from '@/lib/user-access'
 
 export async function getAccount() {
   const session = await requireMarketplaceUser()
   const userId = session.user.id
 
-  const [subscription, listingSlotCount] = await Promise.all([
-    prisma.subscription.findUnique({
-      where: { userId },
-      select: {
-        plan: true,
-        status: true,
-        currentPeriodStart: true,
-        currentPeriodEnd: true,
-        bumpUsed: true,
-        stripeCustomerId: true,
-        stripeSubscriptionId: true
-      }
-    }),
+  const [access, listingSlotCount] = await Promise.all([
+    getUserAccess(prisma, userId),
     prisma.listing.count({ where: { userId, status: { in: LISTING_SLOT_STATUSES } } })
   ])
 
-  const plan = getListingPlan(subscription)
+  const { plan, subscription } = access
 
   return {
     user: session.user,
     plan,
+    paidPlan: access.paidPlan,
+    complimentaryGrant: access.manualGrant ? { endsAt: access.manualGrant.endsAt } : null,
+    planBumpSource: access.planBumpSource,
+    planBumpsRemaining: access.planBumpsRemaining,
+    bonusBumpsRemaining: access.bonusBumpsRemaining,
+    bumpPeriodEndsAt: access.planBumpSource === 'paid' ? subscription?.currentPeriodEnd : access.manualPeriod?.endsAt,
     limits: PLAN_LIMITS[plan],
     listingSlotCount,
     subscription: subscription
@@ -41,7 +37,7 @@ export async function getAccount() {
           hasStripeSubscription: !!subscription.stripeCustomerId && !!subscription.stripeSubscriptionId
         }
       : null,
-    bumpsRemaining: Math.max(0, PLAN_LIMITS[plan].monthlyBumps - (subscription?.bumpUsed ?? 0))
+    bumpsRemaining: access.bumpsRemaining
   }
 }
 

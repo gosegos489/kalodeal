@@ -27,12 +27,11 @@ export function BumpListingButton({ listingId, title, status, bumpsRemaining, ca
   const [error, setError] = useState<string | null>(null)
   const unavailableStatusReason = status === 'ACTIVE' ? null : unavailableStatusReasons[status]
   const disabled = !canBump || status !== 'ACTIVE' || bumpsRemaining <= 0
-  const label = status === 'ACTIVE' && !canBump ? 'Bump (Pro)' : 'Bump'
-  const disabledReason =
-    unavailableStatusReason ?? (!canBump ? 'Available with Pro.' : bumpsRemaining <= 0 ? 'No bumps remaining this billing period.' : null)
+  const label = 'Bump'
+  const disabledReason = unavailableStatusReason ?? (!canBump || bumpsRemaining <= 0 ? 'No plan or bonus bumps remaining.' : null)
 
   return (
-    <div className="flex max-w-full flex-col items-start gap-1" title={disabledReason ?? undefined}>
+    <div className="flex w-full min-w-0 flex-col items-start gap-1" title={disabledReason ?? undefined}>
       <Button
         variant="outline"
         size="sm"
@@ -68,11 +67,9 @@ export function BumpListingButton({ listingId, title, status, bumpsRemaining, ca
         {pending ? <Loader2 aria-hidden="true" className="motion-safe:animate-spin" /> : <ArrowUp aria-hidden="true" />}
         {pending ? 'Bumping...' : label}
       </Button>
-      {disabledReason && (
-        <span id={reasonId} className="text-muted-foreground max-w-xs text-xs">
-          {disabledReason}
-        </span>
-      )}
+      <span id={reasonId} className="text-muted-foreground min-h-8 w-full text-xs leading-4 wrap-anywhere">
+        {disabledReason}
+      </span>
       {error && (
         <p role="alert" className="text-destructive max-w-xs text-xs">
           {error}

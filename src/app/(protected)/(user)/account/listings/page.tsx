@@ -48,9 +48,9 @@ async function MyListings({ searchParams }: Props) {
   return (
     <>
       <RouteAutoRefresh />
-      {account.limits.monthlyBumps > 0 ? (
+      {account.limits.monthlyBumps > 0 || account.bonusBumpsRemaining > 0 ? (
         <p className="text-muted-foreground text-sm" role="status">
-          Bumps remaining this period: {account.bumpsRemaining} / {account.limits.monthlyBumps}
+          Plan bumps: {account.planBumpsRemaining} / {account.limits.monthlyBumps} remaining. Bonus bumps: {account.bonusBumpsRemaining} remaining.
         </p>
       ) : (
         <p className="text-muted-foreground text-sm">
@@ -65,7 +65,7 @@ async function MyListings({ searchParams }: Props) {
       </p>
       <div className={listingsRowsClassName}>
         {listings.map((listing) => (
-          <MyListingRow key={listing.id} listing={listing} bumpsRemaining={account.bumpsRemaining} canBump={account.limits.monthlyBumps > 0} />
+          <MyListingRow key={listing.id} listing={listing} bumpsRemaining={account.bumpsRemaining} canBump={account.bumpsRemaining > 0} />
         ))}
       </div>
       <NuqsPagination totalPages={totalPages} ariaLabel="My listings pages" />

@@ -3,9 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
 import { BillingButton } from './billing-button'
 
-type PlanComparisonProps = { currentPlan: ListingPlan; price: string | null }
+type PlanComparisonProps = { currentPlan: ListingPlan; paidPlan: ListingPlan; price: string | null }
 
-export function PlanComparison({ currentPlan, price }: PlanComparisonProps) {
+export function PlanComparison({ currentPlan, paidPlan, price }: PlanComparisonProps) {
   const free = PLAN_LIMITS.FREE
   const pro = PLAN_LIMITS.PRO
   const features = [
@@ -45,7 +45,7 @@ export function PlanComparison({ currentPlan, price }: PlanComparisonProps) {
           <CardHeader>
             <CardTitle className="flex flex-wrap items-center justify-between gap-2">
               <h3>Pro</h3>
-              {currentPlan === 'PRO' && <Badge>Your plan</Badge>}
+              {currentPlan === 'PRO' && <Badge>{paidPlan === 'PRO' ? 'Your paid plan' : 'Complimentary access'}</Badge>}
             </CardTitle>
             <CardDescription>For active sellers</CardDescription>
           </CardHeader>
@@ -74,14 +74,14 @@ export function PlanComparison({ currentPlan, price }: PlanComparisonProps) {
                 </li>
               )}
             </ul>
-            {currentPlan === 'FREE' &&
+            {paidPlan === 'FREE' &&
               (price ? (
-                <BillingButton intent="upgrade" upgradeLabel={`Upgrade to Pro — ${price}/month`} />
+                <BillingButton intent="upgrade" upgradeLabel={`${currentPlan === 'PRO' ? 'Start paid Pro' : 'Upgrade to Pro'} — ${price}/month`} />
               ) : (
                 <p className="text-muted-foreground text-sm">Upgrades are temporarily unavailable. Please try again later.</p>
               ))}
             <p className="text-muted-foreground text-xs leading-relaxed">
-              Cancel anytime. Your Pro features remain active until the end of the current billing period.
+              Paid subscriptions can be canceled anytime. Paid Pro features remain active until the end of the paid billing period.
             </p>
           </CardContent>
         </Card>
@@ -123,8 +123,8 @@ export function PlanComparison({ currentPlan, price }: PlanComparisonProps) {
             </table>
           </div>
           <p className="text-muted-foreground text-xs leading-relaxed">
-            Listings awaiting moderation or changes also count toward your listing limit. Bumps apply to active listings and renew each paid billing
-            period; unused bumps do not carry over.
+            Listings awaiting moderation or changes also count toward your listing limit. Plan bumps apply to active listings and renew each paid
+            billing period or every 30 days of complimentary access; unused plan bumps do not carry over. Bonus bumps have separate expiration dates.
           </p>
         </CardContent>
       </Card>

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ListingStatusBadge } from '@/features/account/listing-status-badge'
 import { getAnalytics } from '@/features/analytics/data'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
+import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 import AccountLoading from '../loading'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
@@ -153,6 +154,7 @@ async function AccountAnalytics({ searchParams }: Props) {
 export default function AnalyticsPage({ searchParams }: Props) {
   return (
     <Suspense fallback={<AccountLoading />}>
+      <RouteAutoRefresh />
       <AccountAnalytics searchParams={searchParams} />
     </Suspense>
   )

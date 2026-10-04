@@ -10,14 +10,15 @@ import { CustomPagination } from './CustomPagination'
 type NuqsPaginationProps = {
   totalPages: number
   ariaLabel?: string
+  pageKey?: string
 }
 
-export default function NuqsPagination({ totalPages, ariaLabel }: NuqsPaginationProps) {
+export default function NuqsPagination({ totalPages, ariaLabel, pageKey = 'page' }: NuqsPaginationProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
   const [page, setPage] = useQueryState(
-    'page',
+    pageKey,
     paginationPageParser.withOptions({
       shallow: false,
       history: 'push',
@@ -39,7 +40,12 @@ export default function NuqsPagination({ totalPages, ariaLabel }: NuqsPagination
       page={Math.min(page, Math.max(1, totalPages))}
       totalPages={totalPages}
       onPageChange={handlePageChange}
-      getPageHref={(nextPage) => `${pathname}${serializePagination(searchParams, { page: nextPage })}`}
+      getPageHref={(nextPage) => {
+        if (pageKey === 'page') return `${pathname}${serializePagination(searchParams, { page: nextPage })}`
+        const query = new URLSearchParams(searchParams)
+        query.set(pageKey, String(nextPage))
+        return `${pathname}?${query}`
+      }}
       disabled={isPending}
       ariaLabel={ariaLabel}
     />

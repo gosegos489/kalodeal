@@ -1,0 +1,44 @@
+enum PlanGrantPlan {
+  PRO
+}
+
+model PlanGrant {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation("PlanGrantRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  plan        PlanGrantPlan @default(PRO)
+  startsAt    DateTime      @default(now())
+  endsAt      DateTime
+  grantedById String
+  grantedBy   User          @relation("PlanGrantIssuer", fields: [grantedById], references: [id], onDelete: Restrict)
+  reason      String?       @db.VarChar(500)
+  createdAt   DateTime      @default(now())
+  revokedAt   DateTime?
+
+  // Complimentary monthly allowance; independent of Stripe Subscription.bumpUsed.
+  bumpPeriodStart DateTime @default(now())
+  bumpUsed        Int      @default(0)
+
+  @@index([userId, revokedAt, endsAt])
+  @@index([userId, createdAt, id])
+  @@index([grantedById])
+  @@map("plan_grant")
+}
+
+model BumpGrant {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("BumpGrantRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  total       Int
+  remaining   Int
+  grantedById String
+  grantedBy   User     @relation("BumpGrantIssuer", fields: [grantedById], references: [id], onDelete: Restrict)
+  expiresAt   DateTime?
+  reason      String?  @db.VarChar(500)
+  createdAt   DateTime @default(now())
+
+  @@index([userId, expiresAt])
+  @@index([userId, createdAt, id])
+  @@index([grantedById])
+  @@map("bump_grant")
+}
