@@ -2,7 +2,7 @@
 
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Textarea } from '@/components/ui/textarea'
@@ -22,23 +22,28 @@ export function ProfileModerationControls({
 }) {
   const router = useRouter()
   const messageId = useId()
+  const inFlight = useRef(false)
+  const [reviewedVersion, setReviewedVersion] = useState(version)
   const [busy, setBusy] = useState(false)
   const [requesting, setRequesting] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null)
+  const changed = reviewedVersion !== version
 
   async function submit(decision: 'approve' | 'reject' | 'request-changes' | 'cleanup') {
+    if (inFlight.current || changed) return
     const parsed = decision === 'request-changes' ? moderationMessageSchema.safeParse(message) : null
     if (parsed && !parsed.success) {
       setError(parsed.error.issues[0].message)
       return
     }
+    inFlight.current = true
     setBusy(true)
     setError(null)
     setResult(null)
     try {
-      const review = { userId, version, decision, ...(parsed?.success ? { message: parsed.data } : {}) }
+      const review = { userId, version: reviewedVersion, decision, ...(parsed?.success ? { message: parsed.data } : {}) }
       const response = await (decision === 'cleanup' ? retryAvatarCleanup(userId) : kind === 'name' ? moderateName(review) : moderateAvatar(review))
       setResult(response)
       if (response.success) {
@@ -49,8 +54,33 @@ export function ProfileModerationControls({
     } catch {
       setResult({ success: false, message: `Could not moderate this ${kind}. Please try again.` })
     } finally {
+      inFlight.current = false
       setBusy(false)
     }
+  }
+
+  if (changed) {
+    return (
+      <div className="flex flex-col items-start gap-3" aria-busy={busy}>
+        <p role="status" className="text-sm">
+          This pending {kind} has changed. Review the latest profile details before making a decision.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy}
+          onClick={() => {
+            setReviewedVersion(version)
+            setRequesting(false)
+            setMessage('')
+            setError(null)
+            setResult(null)
+          }}
+        >
+          Review latest version
+        </Button>
+      </div>
+    )
   }
 
   return (

@@ -2,6 +2,7 @@ import { ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 import { formatListingPrice } from '../format-price'
 import type { ListingSummary } from '../types'
 
@@ -11,9 +12,11 @@ type ListingRowProps = {
   metadata: ReactNode
   status: ReactNode
   actions: ReactNode
+  feedback?: ReactNode
+  cornerAction?: ReactNode
 }
 
-export function ListingRow({ listing, href, metadata, status, actions }: ListingRowProps) {
+export function ListingRow({ listing, href, metadata, status, actions, feedback, cornerAction }: ListingRowProps) {
   const thumbnailClassName =
     'bg-muted focus-visible:ring-ring relative row-span-2 size-16 overflow-hidden rounded-lg outline-none focus-visible:ring-2 xl:row-span-1'
   const thumbnail = listing.coverUrl ? (
@@ -25,7 +28,13 @@ export function ListingRow({ listing, href, metadata, status, actions }: Listing
   )
 
   return (
-    <article className="bg-card hover:border-primary/25 focus-within:border-primary/40 grid min-w-0 grid-cols-[64px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-xl border p-3 transition-colors sm:p-4 xl:grid-cols-[64px_minmax(0,1fr)_auto_auto] xl:gap-4">
+    <article
+      className={cn(
+        'bg-card hover:border-primary/25 focus-within:border-primary/40 relative grid min-w-0 grid-cols-[64px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-xl border p-3 transition-colors sm:p-4 xl:grid-cols-[64px_minmax(0,1fr)_auto_auto] xl:gap-4',
+        cornerAction && 'pr-16 sm:pr-16'
+      )}
+    >
+      {cornerAction && <div className="absolute top-3 right-3 sm:top-4 sm:right-4">{cornerAction}</div>}
       {href ? (
         <Link href={href} aria-label={`View listing: ${listing.title}`} className={thumbnailClassName}>
           {thumbnail}
@@ -53,6 +62,7 @@ export function ListingRow({ listing, href, metadata, status, actions }: Listing
       </div>
       <div className="col-start-2 xl:col-start-auto">{status}</div>
       <div className="col-span-2 min-w-0 border-t pt-3 xl:col-span-1 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-4">{actions}</div>
+      {feedback && <div className="col-span-full min-w-0">{feedback}</div>}
     </article>
   )
 }

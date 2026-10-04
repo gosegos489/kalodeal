@@ -53,14 +53,21 @@ export async function getMyListings(pageParam?: string | string[]) {
 
   const listings = await prisma.listing.findMany({
     where,
-    select: { ...listingSummarySelect, status: true, bumpedAt: true },
+    select: { ...listingSummarySelect, status: true, bumpedAt: true, updatedAt: true, moderationReason: true, moderationMessage: true },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     skip: pagination.skip,
     take: pagination.take
   })
 
   return {
-    listings: listings.map((listing) => ({ ...toListingSummary(listing), status: listing.status, bumpedAt: listing.bumpedAt })),
+    listings: listings.map((listing) => ({
+      ...toListingSummary(listing),
+      status: listing.status,
+      bumpedAt: listing.bumpedAt,
+      updatedAt: listing.updatedAt.toISOString(),
+      moderationReason: listing.moderationReason,
+      moderationMessage: listing.moderationMessage
+    })),
     ...pagination
   }
 }

@@ -5,6 +5,8 @@ import type { ListingPhotoState } from './photo-schema'
 export type EditableListing = ListingPhotoState & {
   id: string
   values: ListingDetailsValues
+  moderationReason: string | null
+  moderationMessage: string | null
 }
 
 export type UpdateListingResult =

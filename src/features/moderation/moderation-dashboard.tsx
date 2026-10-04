@@ -2,6 +2,7 @@ import { ArrowRight, Flag, Images, List, RefreshCw, UserRound } from 'lucide-rea
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 import { getModerationOverview } from './data'
 import { ModerationListingRow } from './moderation-listing-row'
 
@@ -47,6 +48,7 @@ export async function ModerationDashboard() {
 
   return (
     <section aria-labelledby="moderation-dashboard-heading" className="flex min-w-0 flex-col gap-6">
+      <RouteAutoRefresh />
       <div>
         <h2 id="moderation-dashboard-heading" className="text-2xl font-semibold">
           Dashboard

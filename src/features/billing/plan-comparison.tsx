@@ -123,8 +123,8 @@ export function PlanComparison({ currentPlan, price }: PlanComparisonProps) {
             </table>
           </div>
           <p className="text-muted-foreground text-xs leading-relaxed">
-            Listings awaiting moderation also count toward your listing limit. Bumps apply to active listings and renew each paid billing period;
-            unused bumps do not carry over.
+            Listings awaiting moderation or changes also count toward your listing limit. Bumps apply to active listings and renew each paid billing
+            period; unused bumps do not carry over.
           </p>
         </CardContent>
       </Card>

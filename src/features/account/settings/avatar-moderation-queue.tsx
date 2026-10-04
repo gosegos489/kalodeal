@@ -9,6 +9,7 @@ import { getPagination } from '@/lib/pagination'
 import prisma from '@/lib/prisma'
 import { cn } from '@/lib/utils'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
+import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 import { ProfileModerationControls } from './avatar-moderation-controls'
 import { avatarVersion, getApprovedAvatarUrl, pendingAvatarUrl } from './avatar-reference'
 import { nameModerationVersion } from './name-moderation'
@@ -30,6 +31,7 @@ export async function AvatarModerationQueue({ page, q, embedded = false }: { pag
   const Heading = embedded ? 'h2' : 'h1'
   return (
     <section aria-labelledby="avatar-moderation-heading" className={cn('flex min-w-0 flex-col gap-6', !embedded && 'container max-w-5xl py-8')}>
+      <RouteAutoRefresh />
       <div>
         <Heading id="avatar-moderation-heading" className="text-2xl font-semibold">
           Profile moderation

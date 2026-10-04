@@ -5,6 +5,7 @@ enum ListingCurrency {
 
 enum ListingStatus {
   PENDING
+  CHANGES_REQUESTED
   ACTIVE
   HIDDEN
   REJECTED
@@ -25,6 +26,9 @@ model Listing {
   messengerUrl String?
 
   status ListingStatus @default(PENDING)
+
+  moderationReason  String?
+  moderationMessage String?
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -28,6 +28,8 @@ export async function getEditableListing(id: unknown): Promise<(EditableListing 
         facebookUrl: true,
         messengerUrl: true,
         status: true,
+        moderationReason: true,
+        moderationMessage: true,
         updatedAt: true,
         images: {
           select: { id: true, key: true, sortOrder: true },
@@ -47,6 +49,8 @@ export async function getEditableListing(id: unknown): Promise<(EditableListing 
     id: listing.id,
     updatedAt: listing.updatedAt.toISOString(),
     status: listing.status,
+    moderationReason: listing.moderationReason,
+    moderationMessage: listing.moderationMessage,
     plan: getListingPlan(subscription),
     categoryName: listing.category.name,
     values: {

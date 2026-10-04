@@ -1,8 +1,10 @@
 import 'server-only'
+import { getEditedListingStatus } from '@/entities/listing/lifecycle'
 import { getListingImageUrl } from '@/entities/listing/listing-summary'
 import type { Prisma } from '@/generated/prisma/client'
 import { isActiveMarketplaceUser } from '@/lib/active-user'
 import { deleteListingPhotoObjects, prepareListingPhotos, uploadListingPhotos } from '@/lib/listing-photo-storage'
+import { checkListingSlotAvailable } from '@/lib/listing-slots'
 import { type ListingPlan, PLAN_LIMITS, getListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import type { ListingPhotoState, PhotoMutation } from './photo-schema'
@@ -94,10 +96,15 @@ export async function mutateListingPhotos(userId: string, listingId: string, mut
         return { data: toPhotoState(listing, plan), categoryId: listing.categoryId, changed: false, obsoleteKeys: [] }
       }
 
-      const status = listing.status === 'ACTIVE' ? 'PENDING' : listing.status
+      const status = getEditedListingStatus(listing.status)
+      await checkListingSlotAvailable(tx, userId, listing.status, status)
       const updated = await tx.listing.updateMany({
         where: { ...where, updatedAt: listing.updatedAt, status: listing.status },
-        data: { status, updatedAt: new Date(Math.max(Date.now(), listing.updatedAt.getTime() + 1)) }
+        data: {
+          status,
+          ...(status === 'PENDING' ? { moderationReason: null, moderationMessage: null } : {}),
+          updatedAt: new Date(Math.max(Date.now(), listing.updatedAt.getTime() + 1))
+        }
       })
       if (updated.count !== 1) throw new PhotoMutationError('This listing has changed. Reload the page before trying again.')
 

@@ -1,10 +1,13 @@
+import { listingStatusLabels } from '@/entities/listing/lifecycle'
 import type { Prisma } from '@/generated/prisma/client'
 import { ListingStatus } from '@/generated/prisma/enums'
 
 export type ModerationSearchParams = { page?: string | string[]; q?: string | string[]; status?: string | string[] }
 export const listingStatusOptions = [
   { value: 'ALL', label: 'All statuses' },
-  ...Object.values(ListingStatus).map((value) => ({ value, label: value[0] + value.slice(1).toLowerCase() }))
+  ...Object.values(ListingStatus)
+    .filter((value) => value !== 'SOLD')
+    .map((value) => ({ value, label: listingStatusLabels[value] }))
 ]
 
 export function getModerationQuery(value?: string | string[]) {

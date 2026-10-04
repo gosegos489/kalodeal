@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPublicCategory } from '@/entities/category/get-category-tree'
 import { formatListingPrice } from '@/entities/listing/format-price'
 import { getListing } from '@/entities/listing/get-listing'
+import { listingStatusLabels } from '@/entities/listing/lifecycle'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
 import { getSellerInitials } from '@/entities/user/public-profile'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
@@ -70,7 +71,7 @@ async function ListingDetails({ params }: Props) {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-muted-foreground text-xs">{listing.category.name}</p>
                 <Badge variant={listing.status === 'ACTIVE' ? 'default' : 'secondary'} className="capitalize">
-                  {listing.status.toLowerCase()}
+                  {listingStatusLabels[listing.status]}
                 </Badge>
               </div>
               <p className="text-primary text-3xl font-semibold">{formatListingPrice(listing.price, listing.currency)}</p>
@@ -196,7 +197,7 @@ async function ListingDetails({ params }: Props) {
                 </div>
                 <div className="space-y-1">
                   <dt className="text-muted-foreground">Status</dt>
-                  <dd className="capitalize">{listing.status.toLowerCase()}</dd>
+                  <dd>{listingStatusLabels[listing.status]}</dd>
                 </div>
                 <div className="space-y-1">
                   <dt className="text-muted-foreground">Published</dt>

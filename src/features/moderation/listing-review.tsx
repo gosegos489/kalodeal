@@ -1,18 +1,35 @@
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatListingPrice } from '@/entities/listing/format-price'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
+import { ListingModerationFeedback } from '@/features/account/listing-moderation-feedback'
 import { ListingStatusBadge } from '@/features/account/listing-status-badge'
+import { getListingCategoryOptions } from '@/features/create-listing/get-category-options'
 import { dayjs } from '@/lib/dayjs'
+import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 import { getModerationListing } from './data'
 import { ListingModerationControls } from './listing-moderation-controls'
 
 export async function ListingReview({ id }: { id: string }) {
   const listing = await getModerationListing(id)
-  if (!listing) notFound()
+  if (!listing) {
+    return (
+      <section aria-labelledby="listing-review-heading" className="flex flex-col gap-4">
+        <h2 id="listing-review-heading" className="text-2xl font-semibold">
+          Listing no longer available
+        </h2>
+        <p role="status" className="text-muted-foreground text-sm">
+          This listing may have been deleted. Return to the queue to review another listing.
+        </p>
+        <Button nativeButton={false} variant="outline" className="self-start" render={<Link href="/moderator/listings" />}>
+          <ArrowLeft aria-hidden="true" /> Back to queue
+        </Button>
+      </section>
+    )
+  }
+  const categories = listing.status === 'PENDING' ? await getListingCategoryOptions() : []
   const details = [
     { label: 'Seller', value: listing.seller.name },
     { label: 'Seller email', value: listing.seller.email },
@@ -26,6 +43,7 @@ export async function ListingReview({ id }: { id: string }) {
 
   return (
     <section aria-labelledby="listing-review-heading" className="flex min-w-0 flex-col gap-6">
+      <RouteAutoRefresh />
       <Button nativeButton={false} variant="outline" className="self-start" render={<Link href="/moderator/listings" />}>
         <ArrowLeft aria-hidden="true" /> Back to queue
       </Button>
@@ -34,10 +52,15 @@ export async function ListingReview({ id }: { id: string }) {
           {listing.title}
         </h2>
         <ListingStatusBadge status={listing.status} />
+        <ListingModerationFeedback
+          status={listing.status}
+          moderationReason={listing.moderationReason}
+          moderationMessage={listing.moderationMessage}
+        />
       </div>
       <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
         <div className="flex min-w-0 flex-col gap-6">
-          <ListingGallery key={listing.id} title={listing.title} images={listing.images} />
+          <ListingGallery key={`${listing.id}:${listing.updatedAt}`} title={listing.title} images={listing.images} />
           <Card className="min-w-0">
             <CardHeader>
               <CardTitle>
@@ -57,11 +80,20 @@ export async function ListingReview({ id }: { id: string }) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {listing.status === 'PENDING' ? (
-                <ListingModerationControls key={listing.updatedAt} id={listing.id} updatedAt={listing.updatedAt} />
+              {listing.status === 'PENDING' || listing.status === 'ACTIVE' ? (
+                <ListingModerationControls
+                  key={listing.id}
+                  id={listing.id}
+                  updatedAt={listing.updatedAt}
+                  status={listing.status}
+                  categoryId={listing.category.id}
+                  categories={categories}
+                />
               ) : (
                 <p role="status" className="text-muted-foreground text-sm">
-                  This listing is no longer pending. There is no moderation decision to make.
+                  {listing.status === 'CHANGES_REQUESTED' || listing.status === 'HIDDEN'
+                    ? 'Waiting for the owner to edit and submit this listing for review.'
+                    : 'No moderation decision is available for this listing.'}
                 </p>
               )}
             </CardContent>

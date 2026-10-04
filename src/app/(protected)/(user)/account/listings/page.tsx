@@ -9,6 +9,7 @@ import { MyListingRow } from '@/features/account/my-listing-row'
 import { serializePagination } from '@/lib/pagination'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
+import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 
@@ -31,6 +32,7 @@ async function MyListings({ searchParams }: Props) {
   if (!listings.length) {
     return (
       <div className="bg-card flex flex-col items-center gap-4 rounded-2xl border border-dashed px-6 py-12 text-center">
+        <RouteAutoRefresh />
         <List aria-hidden="true" className="text-muted-foreground size-8" strokeWidth={1.5} />
         <h3 className="text-lg font-semibold">You don&apos;t have any listings yet</h3>
         <p className="text-muted-foreground max-w-sm text-sm">
@@ -45,6 +47,7 @@ async function MyListings({ searchParams }: Props) {
 
   return (
     <>
+      <RouteAutoRefresh />
       {account.limits.monthlyBumps > 0 ? (
         <p className="text-muted-foreground text-sm" role="status">
           Bumps remaining this period: {account.bumpsRemaining} / {account.limits.monthlyBumps}

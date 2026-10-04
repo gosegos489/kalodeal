@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { getReportReasonLabel } from '@/features/messages/report-schema'
 import { requireModerator } from '@/lib/auth-utils'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
+import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 import { chatReports } from './chat-report-server'
 import type { ModerationSearchParams } from './search'
 
@@ -18,6 +19,7 @@ export async function ChatReportQueue(params: ModerationSearchParams) {
   const { reports, status, totalItems, totalPages } = await chatReports.getReports(params)
   return (
     <section aria-labelledby="chat-reports-heading" className="flex min-w-0 flex-col gap-6">
+      <RouteAutoRefresh />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="chat-reports-heading" className="text-2xl font-semibold">

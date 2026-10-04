@@ -25,7 +25,7 @@ async function AccountOverview() {
         <Card>
           <CardHeader>
             <CardTitle>Used listing slots</CardTitle>
-            <CardDescription>Active listings and listings awaiting moderation.</CardDescription>
+            <CardDescription>Published listings and listings awaiting moderation or changes.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-start gap-4">
             <p className="text-3xl font-semibold tabular-nums">

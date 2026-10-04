@@ -52,7 +52,8 @@ export async function POST(request: Request) {
   ])
   const plan = getListingPlan(subscription)
   const limits = PLAN_LIMITS[plan]
-  if (listingSlotCount >= limits.activeListings) return failure('You have reached your listing limit, including listings awaiting moderation.', 409)
+  if (listingSlotCount >= limits.activeListings)
+    return failure('You have reached your listing limit, including listings awaiting moderation or changes.', 409)
 
   const parsed = createListingSchema(plan).safeParse({
     title: payload.get('title'),
@@ -87,7 +88,7 @@ export async function POST(request: Request) {
       const currentLimits = PLAN_LIMITS[getListingPlan(currentSubscription)]
       const currentCount = await tx.listing.count({ where: { userId, status: { in: LISTING_SLOT_STATUSES } } })
       if (currentCount >= currentLimits.activeListings) {
-        return { message: 'You have reached your listing limit, including listings awaiting moderation.' }
+        return { message: 'You have reached your listing limit, including listings awaiting moderation or changes.' }
       }
       if (images.length > currentLimits.imagesPerListing) {
         return { message: 'Your plan has changed. Reduce the number of photos and try again.' }

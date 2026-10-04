@@ -1,4 +1,5 @@
 import NuqsPagination from '@/shared/ui/NuqsPagination'
+import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 import { getListingModerationQueue } from './data'
 import { ModerationListingRow } from './moderation-listing-row'
 import { ModerationSearch } from './moderation-search'
@@ -9,6 +10,7 @@ export async function ListingModerationQueue(params: ModerationSearchParams) {
 
   return (
     <section aria-labelledby="listing-moderation-heading" className="flex min-w-0 flex-col gap-6">
+      <RouteAutoRefresh />
       <div>
         <h2 id="listing-moderation-heading" className="text-2xl font-semibold">
           Listing moderation

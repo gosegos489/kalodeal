@@ -1,39 +1,25 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
 import 'server-only'
+import { deleteListingRecord, finishListingDeletion } from '@/entities/listing/delete-listing'
 import { listingIdSchema } from '@/entities/listing/schema'
 import { canUseMarketplace } from '@/lib/account-role'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { getMutationSession } from '@/lib/auth-utils'
-import { cacheTags } from '@/lib/cache-tags'
-import { deleteListingPhotoObjects } from '@/lib/listing-photo-storage'
 import prisma from '@/lib/prisma'
 
 export async function deleteListing(id: unknown): Promise<ActionMessageResult> {
   const parsed = listingIdSchema.safeParse(id)
   if (!parsed.success) return { success: false, message: 'Invalid listing.' }
 
-  let deletedListing: { categoryId: string; images: { key: string }[] } | null
+  let deletedListing: Awaited<ReturnType<typeof deleteListingRecord>>
   try {
     const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to delete your listing.' }
     if (!canUseMarketplace(session.user.role)) return { success: false, message: 'Moderator accounts cannot use marketplace actions.' }
 
     const where = { id: parsed.data, userId: session.user.id }
-    deletedListing = await prisma.$transaction(async (tx) => {
-      // Read keys after acquiring the same listing lock as photo management.
-      // Otherwise a concurrent upload could commit between this read and cascade deletion.
-      await tx.$queryRaw`SELECT id FROM listing WHERE id = ${parsed.data} AND "userId" = ${session.user.id} FOR UPDATE`
-      const listing = await tx.listing.findFirst({
-        where,
-        select: { categoryId: true, images: { select: { key: true } } }
-      })
-      if (!listing) return null
-
-      const deleted = await tx.listing.deleteMany({ where })
-      return deleted.count === 1 ? listing : null
-    })
+    deletedListing = await prisma.$transaction((tx) => deleteListingRecord(tx, where))
   } catch {
     console.error('Could not delete listing.')
     return { success: false, message: 'Could not delete your listing. Please try again.' }
@@ -41,14 +27,9 @@ export async function deleteListing(id: unknown): Promise<ActionMessageResult> {
 
   if (!deletedListing) return { success: false, message: 'This listing is unavailable or does not belong to you.' }
 
-  await deleteListingPhotoObjects(deletedListing.images.map(({ key }) => key))
-
-  revalidateTag(cacheTags.listings, { expire: 0 })
-  revalidateTag(cacheTags.categories, { expire: 0 })
-  revalidateTag(cacheTags.categoryListings(deletedListing.categoryId), { expire: 0 })
-  revalidatePath(`/listings/${parsed.data}`)
-  revalidatePath('/account', 'layout')
-  revalidatePath('/sell')
-
-  return { success: true, message: 'Your listing has been deleted.' }
+  const { photosCleaned, pagesRefreshed } = await finishListingDeletion(parsed.data, deletedListing)
+  const warnings = [!photosCleaned && 'Some stored photos could not be removed.', !pagesRefreshed && 'Reload to see the updated listings.'].filter(
+    Boolean
+  )
+  return { success: true, message: ['Your listing has been deleted.', ...warnings].join(' ') }
 }

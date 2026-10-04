@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { LISTING_CURRENCIES } from '@/entities/listing/currency'
+import { ListingModerationFeedback } from '@/features/account/listing-moderation-feedback'
 import { ListingPhotos } from '@/features/edit-listing/listing-photos'
 import type { ListingPhotoState } from '@/features/edit-listing/photo-schema'
 import type { EditableListing } from '@/features/edit-listing/types'
@@ -50,6 +51,13 @@ export function ListingForm(props: ListingFormProps) {
       }}
     >
       <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+        {listing && (
+          <ListingModerationFeedback
+            status={listing.status}
+            moderationReason={listing.moderationReason}
+            moderationMessage={listing.moderationMessage}
+          />
+        )}
         <section className="bg-card flex min-w-0 flex-col gap-6 rounded-2xl border p-5 shadow-xs sm:p-7">
           <div className="flex items-start gap-3 border-b pb-5">
             <span className="bg-primary/8 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold">01</span>

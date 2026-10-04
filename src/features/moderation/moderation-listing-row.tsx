@@ -5,6 +5,7 @@ import { ListingRow } from '@/entities/listing/ui/listing-row'
 import { ListingStatusBadge } from '@/features/account/listing-status-badge'
 import { dayjs } from '@/lib/dayjs'
 import type { getListingModerationQueue } from './data'
+import { ModeratorDeleteListingButton } from './delete-listing-button'
 
 type Props = { listing: Awaited<ReturnType<typeof getListingModerationQueue>>['listings'][number] }
 
@@ -26,6 +27,7 @@ export function ModerationListingRow({ listing }: Props) {
         </>
       }
       status={<ListingStatusBadge status={listing.status} />}
+      cornerAction={<ModeratorDeleteListingButton listingId={listing.id} />}
       actions={
         <Button nativeButton={false} variant="outline" size="sm" aria-label={`Review listing: ${listing.title}`} render={<Link href={href} />}>
           <Eye aria-hidden="true" /> Review

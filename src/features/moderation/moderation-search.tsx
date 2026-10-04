@@ -61,7 +61,7 @@ export function ModerationSearch({ kind }: { kind: 'listings' | 'avatars' | 'use
         </div>
       </div>
       {kind === 'listings' && (
-        <div className="sm:w-44">
+        <div className="sm:w-56">
           <label id={`${id}-status`} className="mb-2 block text-sm font-medium">
             Status
           </label>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
+import { needsListingResubmission } from '@/entities/listing/lifecycle'
 import { IMAGE_TYPES, listingImageSchema } from '@/features/create-listing/schema'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
 import { updateListingPhotos } from './photo-actions'
@@ -65,7 +66,12 @@ export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingCh
       toast.add({
         title: 'Photos updated',
         description:
-          result.warning ?? (result.data.status === 'PENDING' ? 'Your listing is awaiting moderation.' : 'Your listing status is unchanged.'),
+          result.warning ??
+          (needsListingResubmission(result.data.status)
+            ? 'Photos saved. Complete your corrections, then select Submit for review.'
+            : result.data.status === 'PENDING'
+              ? 'Your listing is awaiting moderation.'
+              : 'Your listing status is unchanged.'),
         type: result.warning ? 'warning' : 'success'
       })
     } catch {

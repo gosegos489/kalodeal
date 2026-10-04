@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { formatListingPrice } from '@/entities/listing/format-price'
+import { listingStatusLabels } from '@/entities/listing/lifecycle'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
 import type { ListingStatus } from '@/generated/prisma/enums'
 import { dayjs } from '@/lib/dayjs'
@@ -61,7 +62,7 @@ export function ListingCard({
           <p className="text-muted-foreground truncate text-xs">{listing.category.name}</p>
           {status && (
             <Badge variant={status === 'ACTIVE' ? 'default' : 'secondary'} className="capitalize">
-              {status.toLowerCase()}
+              {listingStatusLabels[status]}
             </Badge>
           )}
         </div>

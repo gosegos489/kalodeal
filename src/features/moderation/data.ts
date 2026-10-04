@@ -14,12 +14,22 @@ import { type ModerationSearchParams, getModerationQuery, listingModerationWhere
 
 const moderationListingSelect = {
   ...listingSummarySelect,
+  category: { select: { id: true, name: true } },
   status: true,
+  moderationReason: true,
+  moderationMessage: true,
   user: { select: { name: true, email: true } }
 } satisfies Prisma.ListingSelect
 
 function toModerationListing({ user, ...listing }: Prisma.ListingGetPayload<{ select: typeof moderationListingSelect }>) {
-  return { ...toListingSummary(listing), status: listing.status, seller: { name: getSellerName(user.name), email: user.email } }
+  return {
+    ...toListingSummary(listing),
+    category: listing.category,
+    status: listing.status,
+    moderationReason: listing.moderationReason,
+    moderationMessage: listing.moderationMessage,
+    seller: { name: getSellerName(user.name), email: user.email }
+  }
 }
 
 export async function getModerationOverview() {

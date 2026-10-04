@@ -34,12 +34,12 @@ export function ListingAllowanceCard({ plan, listingSlotCount, categoriesAvailab
         </div>
       </div>
 
-      <p className="text-muted-foreground text-xs">Active listings and listings awaiting moderation count toward your limit.</p>
+      <p className="text-muted-foreground text-xs">Published listings and listings awaiting moderation or changes count toward your limit.</p>
 
       <div className="flex flex-col gap-3 text-sm">
         {limitReached ? (
           <p className="text-destructive leading-relaxed">
-            You have reached your listing limit, including listings awaiting moderation.{' '}
+            You have reached your listing limit, including listings awaiting moderation or changes.{' '}
             <Link href="/account/listings" className="font-medium">
               Manage your listings
             </Link>{' '}

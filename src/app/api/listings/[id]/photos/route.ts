@@ -7,6 +7,7 @@ import { canUseMarketplace } from '@/lib/account-role'
 import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import { ListingPhotoValidationError } from '@/lib/listing-photo-storage'
+import { ListingSlotError } from '@/lib/listing-slots'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
 import { checkListingPhotoRateLimit } from '@/lib/rate-limit'
 import { MultipartBodyError, readMultipartFormData } from '@/lib/read-multipart-form-data'
@@ -62,6 +63,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         revalidateTag(cacheTags.categoryListings(saved.categoryId), { expire: 0 })
         revalidatePath(`/listings/${reference.data}`)
         revalidatePath('/account', 'layout')
+        revalidatePath('/moderator', 'layout')
         revalidatePath('/sell')
       } catch {
         console.error('Could not refresh pages after a committed listing photo mutation.')
@@ -72,6 +74,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   } catch (error) {
     if (error instanceof PhotoMutationError || error instanceof MultipartBodyError) return failure(error.message, error.status)
     if (error instanceof ListingPhotoValidationError) return failure(error.message, 400)
+    if (error instanceof ListingSlotError) return failure(error.message, 409)
     console.error('Could not manage listing photos.', error instanceof Error ? error.name : 'Unknown error')
     return failure('Could not save your photos. Please try again.', 500)
   }

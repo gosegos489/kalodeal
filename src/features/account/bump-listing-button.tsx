@@ -11,9 +11,10 @@ import { bumpListing } from './bump-listing'
 type BumpListingButtonProps = { listingId: string; title: string; status: ListingStatus; bumpsRemaining: number; canBump: boolean }
 
 const unavailableStatusReasons = {
-  PENDING: 'Awaiting approval.',
-  HIDDEN: 'Hidden listings cannot be bumped.',
-  INACTIVE: 'Inactive listings cannot be bumped.',
+  PENDING: 'Available after approval.',
+  CHANGES_REQUESTED: 'Submit your changes and wait for approval before bumping.',
+  HIDDEN: 'Unavailable while hidden by moderation.',
+  INACTIVE: 'Unhide this listing before bumping it.',
   REJECTED: 'Rejected listings cannot be bumped.',
   SOLD: 'Sold listings cannot be bumped.'
 } satisfies Record<Exclude<ListingStatus, 'ACTIVE'>, string>
@@ -26,10 +27,9 @@ export function BumpListingButton({ listingId, title, status, bumpsRemaining, ca
   const [error, setError] = useState<string | null>(null)
   const unavailableStatusReason = status === 'ACTIVE' ? null : unavailableStatusReasons[status]
   const disabled = !canBump || status !== 'ACTIVE' || bumpsRemaining <= 0
-  const label = !canBump ? 'Bump (Pro)' : status === 'ACTIVE' && bumpsRemaining <= 0 ? 'No bumps remaining' : 'Bump'
+  const label = status === 'ACTIVE' && !canBump ? 'Bump (Pro)' : 'Bump'
   const disabledReason =
-    unavailableStatusReason ??
-    (!canBump ? 'An active Pro plan is required.' : bumpsRemaining <= 0 ? 'Your bumps for this period have been used.' : null)
+    unavailableStatusReason ?? (!canBump ? 'Available with Pro.' : bumpsRemaining <= 0 ? 'No bumps remaining this billing period.' : null)
 
   return (
     <div className="flex max-w-full flex-col items-start gap-1" title={disabledReason ?? undefined}>
@@ -69,7 +69,7 @@ export function BumpListingButton({ listingId, title, status, bumpsRemaining, ca
         {pending ? 'Bumping...' : label}
       </Button>
       {disabledReason && (
-        <span id={reasonId} className="sr-only">
+        <span id={reasonId} className="text-muted-foreground max-w-xs text-xs">
           {disabledReason}
         </span>
       )}
