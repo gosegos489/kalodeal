@@ -11,16 +11,17 @@ import { captureServerExceptionAfterResponse } from '@/lib/sentry-server'
 import ResetPasswordEmail from '../../emails/ResetPasswordEmail'
 import VerifyEmail from '../../emails/VerifyEmail'
 import { ac, adminRole, moderatorRole, userRole } from './auth-permissions'
+import { getAuthOriginOptions } from './auth-origins'
 import { authorizeAuthMutation, normalizeBanUpdate } from './auth-security'
 import prisma from './prisma'
 import { resend, resendFrom } from './resend'
 
 export const auth = betterAuth({
+  ...getAuthOriginOptions(process.env),
   onAPIError: {
     onError(error) {
       if (error instanceof APIError && error.statusCode < 500) return
       captureServerExceptionAfterResponse(error, { feature: 'auth', operation: 'api' })
-      // Do not print Better Auth's raw exception, which can contain private adapter data.
       console.error('Authentication request failed.')
     }
   },
@@ -72,8 +73,6 @@ export const auth = betterAuth({
 
   user: {
     additionalFields: {
-      // Required by the adapter for the create hook, excluded from API input,
-      // user responses and session payloads. Settings reads are owner-scoped.
       pendingName: { type: 'string', required: false, input: false, returned: false },
       nameModerationMessage: { type: 'string', required: false, input: false, returned: false },
       avatarModerationMessage: { type: 'string', required: false, input: false, returned: false }
