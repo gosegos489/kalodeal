@@ -14,6 +14,7 @@ import { cacheTags } from '@/lib/cache-tags'
 import { ListingSlotError, checkListingSlotAvailable } from '@/lib/listing-slots'
 import prisma from '@/lib/prisma'
 import { checkUpdateListingRateLimit } from '@/lib/rate-limit'
+import { captureServerException } from '@/lib/sentry-server'
 import type { UpdateListingResult } from './types'
 
 const updateReferenceSchema = z.object({ id: listingIdSchema, updatedAt: z.iso.datetime() }).strict()
@@ -103,14 +104,16 @@ export async function updateListing(id: unknown, input: unknown, expectedUpdated
         revalidatePath('/account', 'layout')
         revalidatePath('/moderator', 'layout')
         revalidatePath('/sell')
-      } catch {
+      } catch (error) {
         // The edit is committed. Never invite a repeat submission after a refresh failure.
+        await captureServerException(error, { feature: 'listings', operation: 'edit-refresh', listingId: saved.id })
         console.error('Could not refresh pages after a listing edit.')
       }
     }
     return { success: true, data: { id: saved.id, status: saved.status, changed: saved.changed } }
   } catch (error) {
     if (error instanceof ListingSlotError) return { success: false, message: error.message }
+    await captureServerException(error, { feature: 'listings', operation: 'edit' })
     console.error('Could not update listing.')
     return { success: false, message: 'Could not save your listing. Please try again.' }
   }

@@ -1,9 +1,13 @@
 'use client'
 
 import { RotateCcw, TriangleAlert } from 'lucide-react'
+import { useEffect } from 'react'
+import { captureClientException } from '@/lib/sentry-client'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function GlobalError({ error: _error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    captureClientException(error)
+  }, [error])
   return (
     <html>
       <body>

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import 'server-only'
 import { listingImageSchema } from '@/features/create-listing/schema'
 import { matchesImageType } from '@/lib/image-validation'
+import { captureServerException } from '@/lib/sentry-server'
 
 export class ListingPhotoValidationError extends Error {}
 
@@ -57,6 +58,7 @@ export async function deleteListingPhotoObjects(keys: string[]): Promise<boolean
       // Deletion is idempotent; retry all outstanding keys after transport errors.
     }
   }
-  console.error('Could not clean up listing photo objects after retries.', { keys: pending })
+  await captureServerException(new Error('Listing photo cleanup failed after retries'), { feature: 'listing-photos', operation: 'cleanup' })
+  console.error('Could not clean up listing photo objects after retries.')
   return false
 }

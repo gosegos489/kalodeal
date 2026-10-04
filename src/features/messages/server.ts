@@ -5,6 +5,7 @@ import { publishMessagingUpdate } from '@/lib/ably'
 import { getSession } from '@/lib/auth-utils'
 import prisma from '@/lib/prisma'
 import { checkConversationCreateRateLimit, checkMessageSendRateLimit } from '@/lib/rate-limit'
+import { captureServerException } from '@/lib/sentry-server'
 import type { ConversationDetails, ConversationPreview } from './types'
 import { createMessagingOperations } from './workflow'
 
@@ -13,7 +14,15 @@ export const messaging = createMessagingOperations({
   currentUserId: async () => (await getSession(true))?.user.id ?? null,
   limitSend: checkMessageSendRateLimit,
   limitCreate: checkConversationCreateRateLimit,
-  publish: publishMessagingUpdate
+  publish: async (channels) => {
+    try {
+      await publishMessagingUpdate(channels)
+    } catch (error) {
+      // workflow.notify catches this rethrow and returns false, so global error tracking never sees it.
+      await captureServerException(error, { feature: 'messages', operation: 'realtime-publish' })
+      throw error
+    }
+  }
 })
 
 export async function getMyConversations(pageParam?: string | string[]) {

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import type { ActionMessageResult } from '@/lib/action-result'
+import { captureServerException } from '@/lib/sentry-server'
 import { contactRequests } from './contact-server'
 import { ContactRequestError } from './contact-workflow'
 
@@ -10,6 +11,7 @@ async function execute(work: () => Promise<string>, message: string): Promise<Ac
   try {
     id = await work()
   } catch (error) {
+    if (!(error instanceof ContactRequestError)) await captureServerException(error, { feature: 'contact-support', operation: 'mutation' })
     return {
       success: false,
       message: error instanceof ContactRequestError ? error.message : 'Could not save this contact request. Please try again.'
@@ -18,7 +20,8 @@ async function execute(work: () => Promise<string>, message: string): Promise<Ac
   try {
     revalidatePath('/moderator/contact')
     revalidatePath(`/moderator/contact/${id}`)
-  } catch {
+  } catch (error) {
+    await captureServerException(error, { feature: 'contact-support', operation: 'refresh', ticketId: id })
     return { success: true, message: `${message} Reload to see the update.` }
   }
   return { success: true, message }

@@ -13,6 +13,7 @@ import { cacheTags } from '@/lib/cache-tags'
 import { ListingSlotError, checkListingSlotAvailable } from '@/lib/listing-slots'
 import prisma from '@/lib/prisma'
 import { checkUpdateListingRateLimit } from '@/lib/rate-limit'
+import { captureServerException } from '@/lib/sentry-server'
 
 const ownerListingActionSchema = z
   .object({
@@ -58,6 +59,7 @@ export async function changeListingVisibility(input: unknown): Promise<ActionMes
     categoryId = result.categoryId
   } catch (error) {
     if (error instanceof ListingSlotError) return { success: false, message: error.message }
+    await captureServerException(error, { feature: 'listings', operation: 'visibility', listingId: parsed.data.id })
     console.error('Could not change listing visibility.')
     return { success: false, message: 'Could not update your listing. Please try again.' }
   }
@@ -75,7 +77,8 @@ export async function changeListingVisibility(input: unknown): Promise<ActionMes
     revalidatePath('/account', 'layout')
     revalidatePath('/moderator', 'layout')
     revalidatePath('/sell')
-  } catch {
+  } catch (error) {
+    await captureServerException(error, { feature: 'listings', operation: 'visibility-refresh', listingId: parsed.data.id })
     console.error('Could not refresh pages after listing visibility changed.')
     return { success: true, message: `${message} Reload to see the updated listings.` }
   }

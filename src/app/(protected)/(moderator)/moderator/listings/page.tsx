@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
-import { ListingModerationQueue } from '@/features/moderation/listing-moderation-queue'
-import { ModerationLoading } from '@/features/moderation/moderation-loading'
-import type { ModerationSearchParams } from '@/features/moderation/search'
+import { ListingModerationQueue } from '@/features/moderation/listings/listing-moderation-queue'
+import { ModerationLoading } from '@/features/moderation/shared/moderation-loading'
+import type { ModerationSearchParams } from '@/features/moderation/shared/search'
 
 type Props = { searchParams: Promise<ModerationSearchParams> }
 

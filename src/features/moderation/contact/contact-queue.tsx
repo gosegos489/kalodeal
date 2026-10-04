@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { requireModerator } from '@/lib/auth-utils'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
 import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
-import { ModerationTime } from './chat-report-queue'
+import { ModerationTime } from '../shared/moderation-time'
 import { type ContactSearchParams, contactStatusLabels } from './contact-schema'
 import { contactRequests } from './contact-server'
 

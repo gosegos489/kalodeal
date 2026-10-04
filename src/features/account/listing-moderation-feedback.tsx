@@ -1,4 +1,4 @@
-import { listingModerationReasons } from '@/features/moderation/schema'
+import { listingModerationReasons } from '@/features/moderation/listings/schema'
 import type { ListingStatus } from '@/generated/prisma/enums'
 
 export function ListingModerationFeedback({

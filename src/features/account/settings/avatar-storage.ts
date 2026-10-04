@@ -1,6 +1,7 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import 'server-only'
 import { MAX_IMAGE_BYTES } from '@/features/create-listing/schema'
+import { captureServerException } from '@/lib/sentry-server'
 import { decryptAvatar, encryptAvatar } from './avatar-crypto'
 import type { AvatarStorage } from './avatar-lifecycle'
 
@@ -34,7 +35,12 @@ export const avatarStorage: AvatarStorage = {
     return decryptAvatar(envelope, key, secret)
   },
   async delete(key) {
-    const { r2, R2_BUCKET_NAME } = await import('@/lib/r2')
-    await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET_NAME, Key: key }), { abortSignal: AbortSignal.timeout(8000) })
+    try {
+      const { r2, R2_BUCKET_NAME } = await import('@/lib/r2')
+      await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET_NAME, Key: key }), { abortSignal: AbortSignal.timeout(8000) })
+    } catch (error) {
+      await captureServerException(error, { feature: 'avatars', operation: 'cleanup' })
+      throw error
+    }
   }
 }

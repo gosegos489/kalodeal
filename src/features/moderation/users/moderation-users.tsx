@@ -4,9 +4,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
+import { ModerationSearch } from '../shared/moderation-search'
+import type { ModerationSearchParams } from '../shared/search'
 import { getModerationUsers } from './data'
-import { ModerationSearch } from './moderation-search'
-import type { ModerationSearchParams } from './search'
 import { UserBanControls } from './user-ban-controls'
 
 export async function ModerationUsers(params: ModerationSearchParams) {

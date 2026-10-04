@@ -76,19 +76,27 @@ export function createContactOperations({ db, moderatorActor }: Dependencies) {
     return parsed.success ? db.contactUs.findUnique({ where: { id: parsed.data }, select: detailSelect }) : null
   }
 
+  async function markTicketViewed(tx: Prisma.TransactionClient, id: string) {
+    const ticket = await tx.contactUs.findUnique({ where: { id }, select: { id: true, viewedAt: true, updatedAt: true } })
+    if (!ticket) throw new ContactRequestError('Contact request is no longer available.')
+    if (ticket.viewedAt === null) {
+      // Viewing is bookkeeping, not a new status version. The condition prevents
+      // restoring an older updatedAt if another moderator changes status.
+      await tx.contactUs.updateMany({
+        where: { id, viewedAt: null, updatedAt: ticket.updatedAt },
+        data: { viewedAt: new Date(), updatedAt: ticket.updatedAt }
+      })
+    }
+    return id
+  }
+
   async function markViewed(input: unknown) {
     const actor = await moderator()
     const parsed = contactIdSchema.safeParse(input)
     if (!parsed.success) throw new ContactRequestError('Invalid contact request ID.')
     return db.$transaction(async (tx) => {
       await checkActor(tx, actor.id)
-      const ticket = await tx.contactUs.findUnique({ where: { id: parsed.data }, select: { id: true, viewedAt: true } })
-      if (!ticket) throw new ContactRequestError('Contact request is no longer available.')
-      if (ticket.viewedAt === null) {
-        // One winner for concurrent opens; repeat opens do not touch updatedAt.
-        await tx.contactUs.updateMany({ where: { id: ticket.id, viewedAt: null }, data: { viewedAt: new Date() } })
-      }
-      return ticket.id
+      return markTicketViewed(tx, parsed.data)
     })
   }
 
@@ -99,6 +107,7 @@ export function createContactOperations({ db, moderatorActor }: Dependencies) {
     const { id, status, updatedAt } = parsed.data
     return db.$transaction(async (tx) => {
       await checkActor(tx, actor.id)
+      await markTicketViewed(tx, id)
       const ticket = await tx.contactUs.findUnique({ where: { id }, select: { status: true, updatedAt: true } })
       if (!ticket) throw new ContactRequestError('Contact request is no longer available.')
       if (ticket.status === status) return id

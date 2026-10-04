@@ -8,6 +8,7 @@ import { getSettingsActor } from '@/features/account/settings/server'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { auth } from '@/lib/auth'
 import { getAuthHeaders } from '@/lib/auth-utils'
+import { captureServerException } from '@/lib/sentry-server'
 import { banUserSchema, getBanSeconds, unbanUserSchema } from './ban-schema'
 
 export async function banUser(input: unknown): Promise<ActionMessageResult> {
@@ -46,6 +47,7 @@ async function changeBan(work: () => Promise<void>, message: string): Promise<Ac
     if (error instanceof APIError && ['BAD_REQUEST', 'FORBIDDEN', 'UNAUTHORIZED', 'NOT_FOUND'].includes(String(error.status))) {
       return { success: false, message: error.body?.message ?? 'You cannot manage bans for this user.' }
     }
+    await captureServerException(error, { feature: 'moderation', operation: 'ban' })
     console.error('Could not update user ban.')
     return { success: false, message: 'Could not update this ban. Please try again.' }
   }

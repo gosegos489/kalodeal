@@ -6,6 +6,7 @@ import { Prisma } from '@/generated/prisma/client'
 import { getMutationSession } from '@/lib/auth-utils'
 import prisma from '@/lib/prisma'
 import { checkListingPhoneRevealRateLimit } from '@/lib/rate-limit'
+import { captureServerException } from '@/lib/sentry-server'
 import type { RevealListingPhoneResult } from './types'
 
 export async function revealListingPhone(id: unknown): Promise<RevealListingPhoneResult> {
@@ -35,6 +36,7 @@ export async function revealListingPhone(id: unknown): Promise<RevealListingPhon
       return { success: false, message: 'This listing or phone number is unavailable.' }
     }
 
+    await captureServerException(error, { feature: 'listings', operation: 'reveal-phone', listingId: result.data })
     console.error('Could not reveal listing phone.', error instanceof Error ? error.name : 'Unknown error')
     return { success: false, message: 'Could not reveal the phone number. Please try again.' }
   }

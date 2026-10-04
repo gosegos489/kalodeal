@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 import { getModerationOverview } from './data'
-import { ModerationListingRow } from './moderation-listing-row'
+import { ModerationListingRow } from './listings/moderation-listing-row'
 
 export async function ModerationDashboard() {
   const overview = await getModerationOverview()

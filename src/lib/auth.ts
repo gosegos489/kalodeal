@@ -7,6 +7,7 @@ import 'server-only'
 import React from 'react'
 import { guardAuthProfileData, prepareNewProfileName } from '@/features/account/settings/auth-profile'
 import { displayNameSchema } from '@/features/account/settings/schema'
+import { captureServerExceptionAfterResponse } from '@/lib/sentry-server'
 import ResetPasswordEmail from '../../emails/ResetPasswordEmail'
 import VerifyEmail from '../../emails/VerifyEmail'
 import { ac, adminRole, moderatorRole, userRole } from './auth-permissions'
@@ -15,6 +16,14 @@ import prisma from './prisma'
 import { resend, resendFrom } from './resend'
 
 export const auth = betterAuth({
+  onAPIError: {
+    onError(error) {
+      if (error instanceof APIError && error.statusCode < 500) return
+      captureServerExceptionAfterResponse(error, { feature: 'auth', operation: 'api' })
+      // Do not print Better Auth's raw exception, which can contain private adapter data.
+      console.error('Authentication request failed.')
+    }
+  },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       const banBody = await authorizeAuthMutation(ctx)

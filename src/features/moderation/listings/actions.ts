@@ -9,6 +9,7 @@ import type { ActionMessageResult } from '@/lib/action-result'
 import { hasActiveBan } from '@/lib/ban-status'
 import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'
+import { captureServerException } from '@/lib/sentry-server'
 import { listingModerationSchema } from './schema'
 
 export async function moderateListing(input: unknown): Promise<ActionMessageResult> {
@@ -59,6 +60,7 @@ export async function moderateListing(input: unknown): Promise<ActionMessageResu
     categories = result.categories
   } catch (error) {
     if (error instanceof AvatarError) return { success: false, message: error.message }
+    await captureServerException(error, { feature: 'listing-moderation', operation: 'review', listingId: parsed.data.id })
     console.error('Could not moderate listing.')
     return { success: false, message: 'Could not moderate this listing. Please try again.' }
   }
@@ -78,7 +80,8 @@ export async function moderateListing(input: unknown): Promise<ActionMessageResu
     revalidatePath(`/listings/${parsed.data.id}`)
     revalidatePath('/account', 'layout')
     revalidatePath('/sell')
-  } catch {
+  } catch (error) {
+    await captureServerException(error, { feature: 'listing-moderation', operation: 'refresh', listingId: parsed.data.id })
     console.error('Could not refresh pages after listing moderation.')
     return { success: true, message: `${message} Reload to see the updated queues.` }
   }

@@ -1,12 +1,13 @@
 'use client'
 
+import { RotateCcw, TriangleAlert } from 'lucide-react'
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { RotateCcw, TriangleAlert } from 'lucide-react'
+import { captureClientException } from '@/lib/sentry-client'
 
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    console.error(error)
+    captureClientException(error)
   }, [error])
 
   return (

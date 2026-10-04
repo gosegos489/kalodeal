@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import type { GrantHistoryParams } from '@/features/access-grants/data'
 import { UserAccessReview } from '@/features/access-grants/user-access-review'
-import { ModerationLoading } from '@/features/moderation/moderation-loading'
+import { ModerationLoading } from '@/features/moderation/shared/moderation-loading'
 
 type Props = { params: Promise<{ userId: string }>; searchParams: Promise<GrantHistoryParams> }
 

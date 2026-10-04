@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { ModerationDashboard } from '@/features/moderation/moderation-dashboard'
-import { ModerationLoading } from '@/features/moderation/moderation-loading'
+import { ModerationLoading } from '@/features/moderation/shared/moderation-loading'
 
 export default function ModeratorPage() {
   return (

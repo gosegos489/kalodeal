@@ -1,7 +1,7 @@
 import { APIError, getAuthoritativeSessionFromCtx } from 'better-auth/api'
 import 'server-only'
-import { canManageUserBan } from '@/features/moderation/ban-policy'
-import { banEndpointSchema, unbanUserSchema } from '@/features/moderation/ban-schema'
+import { canManageUserBan } from '@/features/moderation/users/ban-policy'
+import { banEndpointSchema, unbanUserSchema } from '@/features/moderation/users/ban-schema'
 import { canUseMarketplace } from './account-role'
 import { hasActiveBan } from './ban-status'
 

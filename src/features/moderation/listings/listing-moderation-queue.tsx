@@ -1,9 +1,9 @@
 import NuqsPagination from '@/shared/ui/NuqsPagination'
 import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
+import { ModerationSearch } from '../shared/moderation-search'
+import type { ModerationSearchParams } from '../shared/search'
 import { getListingModerationQueue } from './data'
 import { ModerationListingRow } from './moderation-listing-row'
-import { ModerationSearch } from './moderation-search'
-import type { ModerationSearchParams } from './search'
 
 export async function ListingModerationQueue(params: ModerationSearchParams) {
   const { listings, page: currentPage, pageSize, totalItems, totalPages } = await getListingModerationQueue(params)

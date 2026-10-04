@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
-import { ConversationLookup } from '@/features/moderation/conversation-lookup'
-import { ModerationLoading } from '@/features/moderation/moderation-loading'
-import type { ModerationSearchParams } from '@/features/moderation/search'
+import { ConversationLookup } from '@/features/moderation/chat-reports/conversation-lookup'
+import { ModerationLoading } from '@/features/moderation/shared/moderation-loading'
+import type { ModerationSearchParams } from '@/features/moderation/shared/search'
 
 type Props = { searchParams: Promise<ModerationSearchParams> }
 async function Lookup({ searchParams }: Props) {

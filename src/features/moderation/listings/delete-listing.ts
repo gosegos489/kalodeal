@@ -8,6 +8,7 @@ import { getSettingsActor } from '@/features/account/settings/server'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { hasActiveBan } from '@/lib/ban-status'
 import prisma from '@/lib/prisma'
+import { captureServerException } from '@/lib/sentry-server'
 
 type ModeratorDeleteListingResult = ActionMessageResult & { unavailable?: boolean; warning?: string }
 
@@ -35,6 +36,7 @@ export async function deleteModeratedListing(id: unknown): Promise<ModeratorDele
     deletedListing = result.listing
   } catch (error) {
     if (error instanceof AvatarError) return { success: false, message: error.message }
+    await captureServerException(error, { feature: 'listing-moderation', operation: 'delete', listingId: parsed.data })
     console.error('Could not permanently delete listing from moderation.')
     return { success: false, message: 'Could not delete this listing. Please try again.' }
   }

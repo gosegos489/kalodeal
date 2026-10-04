@@ -7,6 +7,7 @@ import { isActiveMarketplaceUser } from '@/lib/active-user'
 import { getMutationSession } from '@/lib/auth-utils'
 import { getPaidListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
+import { captureServerException } from '@/lib/sentry-server'
 import { stripe } from '@/lib/stripe'
 import { getBillingOrigin, getPortalConfiguration, getProPrice } from './config'
 import { isOpenSubscription } from './subscription-state'
@@ -77,6 +78,7 @@ export async function upgradeToPro(): Promise<ActionResult<{ url: string }>> {
     return { success: true, data: { url } }
   } catch (error) {
     if (error instanceof BillingError) return { success: false, message: error.message }
+    await captureServerException(error, { feature: 'billing', operation: 'checkout' })
     console.error('Could not start PRO checkout.')
     return { success: false, message: 'Billing is temporarily unavailable. Please try again.' }
   }
@@ -102,7 +104,8 @@ export async function manageSubscription(): Promise<ActionResult<{ url: string }
       return_url: `${getBillingOrigin()}/account/subscription`
     })
     return { success: true, data: { url: portal.url } }
-  } catch {
+  } catch (error) {
+    await captureServerException(error, { feature: 'billing', operation: 'portal' })
     console.error('Could not open subscription management.')
     return { success: false, message: 'Subscription management is temporarily unavailable. Please try again.' }
   }

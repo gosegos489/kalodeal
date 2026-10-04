@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { requireModerator } from '@/lib/auth-utils'
-import { ModerationTime } from './chat-report-queue'
+import { ModerationTime } from '../shared/moderation-time'
 import { chatReports } from './chat-report-server'
 import { ChatReportError } from './chat-report-workflow'
 

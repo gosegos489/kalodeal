@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { AvatarModerationQueue } from '@/features/account/settings/avatar-moderation-queue'
-import { ModerationLoading } from '@/features/moderation/moderation-loading'
+import { ModerationLoading } from '@/features/moderation/shared/moderation-loading'
 
 type Props = { searchParams: Promise<{ page?: string | string[]; q?: string | string[] }> }
 

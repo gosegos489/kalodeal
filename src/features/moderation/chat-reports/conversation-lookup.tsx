@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { requireModerator } from '@/lib/auth-utils'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
+import type { ModerationSearchParams } from '../shared/search'
 import { chatReports } from './chat-report-server'
 import { ModeratorConversationHistory } from './moderator-conversation-history'
-import type { ModerationSearchParams } from './search'
 
 export async function ConversationLookup(params: ModerationSearchParams) {
   await requireModerator()

@@ -4,6 +4,7 @@ import { listingIdSchema } from '@/entities/listing/schema'
 import { recordListingView } from '@/features/listing-views/record-view'
 import { getSession } from '@/lib/auth-utils'
 import { checkListingViewRateLimit, getRateLimitIp } from '@/lib/rate-limit'
+import { captureServerException } from '@/lib/sentry-server'
 
 const VIEW_COOKIE = 'kalodeal-browser'
 
@@ -35,7 +36,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         maxAge: 60 * 60 * 24 * 365
       })
     return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } })
-  } catch {
+  } catch (error) {
+    await captureServerException(error, { feature: 'listing-views', operation: 'record' })
     console.error('Could not record listing view.')
     return new Response(null, { status: 503 })
   }

@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { ListingReview } from '@/features/moderation/listing-review'
-import { ModerationLoading } from '@/features/moderation/moderation-loading'
+import { ListingReview } from '@/features/moderation/listings/listing-review'
+import { ModerationLoading } from '@/features/moderation/shared/moderation-loading'
 
 type Props = { params: Promise<{ id: string }> }
 

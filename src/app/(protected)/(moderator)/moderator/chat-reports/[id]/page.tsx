@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { ChatReportReview } from '@/features/moderation/chat-report-review'
-import { ModerationLoading } from '@/features/moderation/moderation-loading'
+import { ChatReportReview } from '@/features/moderation/chat-reports/chat-report-review'
+import { ModerationLoading } from '@/features/moderation/shared/moderation-loading'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ before?: string | string[] }> }
 async function Review({ params, searchParams }: Props) {

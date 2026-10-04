@@ -5,6 +5,7 @@ import { avatarFileSchema } from '@/features/account/settings/schema'
 import { avatars, getMarketplaceSettingsActor } from '@/features/account/settings/server'
 import { matchesImageType } from '@/lib/image-validation'
 import { checkAvatarUploadRateLimit } from '@/lib/rate-limit'
+import { captureServerException } from '@/lib/sentry-server'
 
 export async function POST(request: Request) {
   try {
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof AvatarBodyError) return Response.json({ success: false, message: error.message }, { status: error.status })
     if (error instanceof AvatarError) return Response.json({ success: false, message: error.message }, { status: 403 })
+    await captureServerException(error, { feature: 'avatars', operation: 'upload' })
     console.error('Avatar upload failed.', error instanceof Error ? error.name : 'Unknown error')
     return Response.json({ success: false, message: 'Could not upload your avatar. Please try again.' }, { status: 500 })
   }

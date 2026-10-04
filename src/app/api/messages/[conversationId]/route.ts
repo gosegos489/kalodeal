@@ -1,5 +1,6 @@
 import { messaging } from '@/features/messages/server'
 import { MessagingError } from '@/features/messages/workflow'
+import { captureServerException } from '@/lib/sentry-server'
 
 export async function GET(request: Request, { params }: { params: Promise<{ conversationId: string }> }) {
   const responseHeaders = { 'Cache-Control': 'private, no-store' }
@@ -17,6 +18,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ conv
     })
     return Response.json({ success: true, data }, { headers: responseHeaders })
   } catch (error) {
+    if (!(error instanceof MessagingError)) await captureServerException(error, { feature: 'messages', operation: 'history' })
     return Response.json(
       { success: false, message: error instanceof MessagingError ? error.message : 'Could not load messages. Please try again.' },
       { status: error instanceof MessagingError ? error.status : 500, headers: responseHeaders }

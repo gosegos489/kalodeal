@@ -3,6 +3,7 @@ import 'server-only'
 import type { Prisma } from '@/generated/prisma/client'
 import { cacheTags } from '@/lib/cache-tags'
 import { deleteListingPhotoObjects } from '@/lib/listing-photo-storage'
+import { captureServerException } from '@/lib/sentry-server'
 
 // The caller must authorize the actor before using this internal helper.
 export async function deleteListingRecord(tx: Prisma.TransactionClient, where: { id: string; userId?: string }) {
@@ -39,7 +40,8 @@ export async function finishListingDeletion(id: string, listing: NonNullable<Awa
     revalidatePath('/account', 'layout')
     revalidatePath('/moderator', 'layout')
     revalidatePath('/sell')
-  } catch {
+  } catch (error) {
+    await captureServerException(error, { feature: 'listings', operation: 'delete-refresh', listingId: id })
     console.error('Could not refresh pages after listing deletion.')
     pagesRefreshed = false
   }

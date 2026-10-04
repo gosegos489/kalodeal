@@ -6,13 +6,9 @@ import { getReportReasonLabel } from '@/features/messages/report-schema'
 import { requireModerator } from '@/lib/auth-utils'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
 import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
+import { ModerationTime } from '../shared/moderation-time'
+import type { ModerationSearchParams } from '../shared/search'
 import { chatReports } from './chat-report-server'
-import type { ModerationSearchParams } from './search'
-
-export function ModerationTime({ date }: { date: Date }) {
-  const iso = date.toISOString()
-  return <time dateTime={iso}>{iso.slice(0, 16).replace('T', ' ')} UTC</time>
-}
 
 export async function ChatReportQueue(params: ModerationSearchParams) {
   await requireModerator()

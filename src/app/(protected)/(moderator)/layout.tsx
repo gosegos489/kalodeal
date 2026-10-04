@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { ModerationLoading } from '@/features/moderation/moderation-loading'
 import { ModeratorShell } from '@/features/moderation/moderator-shell'
+import { ModerationLoading } from '@/features/moderation/shared/moderation-loading'
 import { requireModerator } from '@/lib/auth-utils'
 
 export const metadata: Metadata = { robots: { index: false, follow: false } }

@@ -6,8 +6,8 @@ import type { Prisma, PrismaClient } from '@/generated/prisma/client'
 import { canUseMarketplace } from '@/lib/account-role'
 import { hasActiveBan } from '@/lib/ban-status'
 import { getPagination } from '@/lib/pagination'
-import { canManageUserBan } from './ban-policy'
-import { getModerationQuery } from './search'
+import { getModerationQuery } from '../shared/search'
+import { canManageUserBan } from '../users/ban-policy'
 
 export class ChatReportError extends Error {
   constructor(

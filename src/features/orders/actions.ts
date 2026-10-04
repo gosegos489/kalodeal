@@ -6,6 +6,7 @@ import { canUseMarketplace } from '@/lib/account-role'
 import type { ActionResult } from '@/lib/action-result'
 import { getMutationSession } from '@/lib/auth-utils'
 import prisma from '@/lib/prisma'
+import { captureServerException } from '@/lib/sentry-server'
 import { stripe } from '@/lib/stripe'
 import { paymentInvoiceRequestSchema, stripeInvoiceUrlSchema } from './schema'
 
@@ -50,7 +51,8 @@ export async function getPaymentInvoiceUrl(input: unknown): Promise<ActionResult
     if (!safeUrl.success) throw new Error('Invalid Stripe invoice URL.')
 
     return { success: true, data: { url: safeUrl.data } }
-  } catch {
+  } catch (error) {
+    await captureServerException(error, { feature: 'billing', operation: 'invoice' })
     console.error('Could not retrieve payment invoice.')
     return { success: false, message: 'Invoices are temporarily unavailable. Please try again.' }
   }

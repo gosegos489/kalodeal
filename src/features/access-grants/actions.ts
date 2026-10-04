@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import 'server-only'
 import type { ActionMessageResult, ActionResult } from '@/lib/action-result'
 import prisma from '@/lib/prisma'
+import { captureServerException } from '@/lib/sentry-server'
 import { AccessGrantError } from './error'
 import { getGrantExpiration, grantBumpsSchema, grantProSchema } from './schema'
 import { getAccessGrantManager } from './server'
@@ -16,6 +17,7 @@ async function changeGrant(work: typeof grantProAccess, input: unknown): Promise
     saved = await prisma.$transaction((tx) => work(tx, actor.id, input))
   } catch (error) {
     if (error instanceof AccessGrantError) return { success: false, message: error.message }
+    await captureServerException(error, { feature: 'access-grants', operation: 'change' })
     console.error('Could not update access grant.')
     return { success: false, message: 'Could not update access. Please try again.' }
   }

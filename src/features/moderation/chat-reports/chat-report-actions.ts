@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import 'server-only'
 import type { ActionMessageResult } from '@/lib/action-result'
+import { captureServerException } from '@/lib/sentry-server'
 import { chatReports } from './chat-report-server'
 import { ChatReportError } from './chat-report-workflow'
 
@@ -11,6 +12,7 @@ async function execute(work: () => Promise<string>): Promise<ActionMessageResult
   try {
     message = await work()
   } catch (error) {
+    if (!(error instanceof ChatReportError)) await captureServerException(error, { feature: 'chat-reports', operation: 'mutation' })
     return { success: false, message: error instanceof ChatReportError ? error.message : 'Could not save this report. Please try again.' }
   }
   try {

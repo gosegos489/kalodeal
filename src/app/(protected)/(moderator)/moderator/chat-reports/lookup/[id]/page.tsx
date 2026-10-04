@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { ConversationLookupReview } from '@/features/moderation/conversation-lookup'
-import { ModerationLoading } from '@/features/moderation/moderation-loading'
+import { ConversationLookupReview } from '@/features/moderation/chat-reports/conversation-lookup'
+import { ModerationLoading } from '@/features/moderation/shared/moderation-loading'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ before?: string | string[] }> }
 async function Review({ params, searchParams }: Props) {

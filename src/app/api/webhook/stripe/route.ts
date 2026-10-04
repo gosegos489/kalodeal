@@ -2,6 +2,7 @@ import { revalidatePath } from 'next/cache'
 import type Stripe from 'stripe'
 import { getStripeLiveMode } from '@/features/billing/config'
 import { BILLING_EVENTS, reconcileBillingEvent } from '@/features/billing/webhook'
+import { captureServerException } from '@/lib/sentry-server'
 import { stripe } from '@/lib/stripe'
 
 export async function POST(request: Request) {
@@ -26,7 +27,8 @@ export async function POST(request: Request) {
     revalidatePath('/account', 'layout')
     revalidatePath('/sell')
     return Response.json({ received: true })
-  } catch {
+  } catch (error) {
+    await captureServerException(error, { feature: 'stripe-webhook', operation: 'reconcile', eventId: event.id, eventType: event.type })
     console.error('Stripe webhook reconciliation failed.')
     return Response.json({ error: 'Could not process event.' }, { status: 500 })
   }

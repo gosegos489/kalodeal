@@ -11,6 +11,7 @@ import { LISTING_SLOT_STATUSES, PLAN_LIMITS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { checkCreateListingRateLimit } from '@/lib/rate-limit'
 import { MultipartBodyError, readMultipartFormData } from '@/lib/read-multipart-form-data'
+import { captureServerException } from '@/lib/sentry-server'
 import { getUserAccess } from '@/lib/user-access'
 
 function failure(message: string, status: number, fieldErrors?: Extract<CreateListingResult, { success: false }>['fieldErrors']) {
@@ -119,6 +120,7 @@ export async function POST(request: Request) {
   } catch (error) {
     await deleteListingPhotoObjects(attemptedKeys)
     if (error instanceof ListingPhotoValidationError) return failure(error.message, 400, { images: [error.message] })
+    await captureServerException(error, { feature: 'listings', operation: 'create' })
     console.error('Listing creation failed.', error instanceof Error ? error.name : 'Unknown error')
     return failure('Could not publish your listing. Please try again.', 500)
   }

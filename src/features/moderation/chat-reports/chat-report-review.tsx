@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button'
 import { getReportReasonLabel } from '@/features/messages/report-schema'
 import { requireModerator } from '@/lib/auth-utils'
 import { hasActiveBan } from '@/lib/ban-status'
-import { ModerationTime } from './chat-report-queue'
+import { ModerationTime } from '../shared/moderation-time'
+import { UserBanControls } from '../users/user-ban-controls'
 import { chatReports } from './chat-report-server'
 import { ModeratorConversationHistory } from './moderator-conversation-history'
 import { ResolveReportButton } from './resolve-report-button'
-import { UserBanControls } from './user-ban-controls'
 
 export async function ChatReportReview({ id, before }: { id: string; before?: string | string[] }) {
   await requireModerator()

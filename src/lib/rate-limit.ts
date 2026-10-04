@@ -2,6 +2,7 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { isIP } from 'node:net'
 import 'server-only'
 import { redis } from '@/lib/redis'
+import { captureServerException } from '@/lib/sentry-server'
 
 const createListingLimiter = new Ratelimit({
   redis,
@@ -109,6 +110,7 @@ async function checkRateLimit(limiter: Ratelimit, identifier: string): Promise<R
     const retryAfter = Math.max(1, Math.ceil((result.reset - Date.now()) / 1000))
     return { success: false, status: 429, message: `Too many attempts. Please try again in ${retryAfter} seconds.`, retryAfter }
   } catch (error) {
+    await captureServerException(error, { feature: 'rate-limit', operation: 'check' })
     console.error('Rate limit check failed.', error instanceof Error ? error.name : 'Unknown error')
     return unavailable()
   }

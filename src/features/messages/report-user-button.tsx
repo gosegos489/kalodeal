@@ -11,7 +11,7 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
-import { reportConversationUser } from '@/features/moderation/chat-report-actions'
+import { reportConversationUser } from '@/features/moderation/chat-reports/chat-report-actions'
 import { createChatReportSchema, reportReasons } from './report-schema'
 
 const formSchema = createChatReportSchema.omit({ conversationId: true })

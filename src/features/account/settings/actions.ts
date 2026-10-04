@@ -6,6 +6,7 @@ import type { ActionMessageResult } from '@/lib/action-result'
 import { auth } from '@/lib/auth'
 import { getAuthHeaders } from '@/lib/auth-utils'
 import { checkPasswordChangeRateLimit } from '@/lib/rate-limit'
+import { captureServerException } from '@/lib/sentry-server'
 import { AvatarError } from './avatar-lifecycle'
 import { reviewProfileName, submitProfileName } from './name-moderation'
 import { avatarModerationSchema, nameModerationSchema, passwordChangeSchema, profileSchema } from './schema'
@@ -24,8 +25,9 @@ function refreshProfile(publicChanged = false) {
   }
 }
 
-function failure(error: unknown): ActionMessageResult {
+async function failure(error: unknown): Promise<ActionMessageResult> {
   if (error instanceof AvatarError) return { success: false, message: error.message }
+  await captureServerException(error, { feature: 'account-settings', operation: 'mutation' })
   console.error('Account settings operation failed.', error instanceof Error ? error.name : 'Unknown error')
   return { success: false, message: 'Could not update your account. Please try again.' }
 }
@@ -56,6 +58,7 @@ export async function changeAccountPassword(input: unknown): Promise<ActionMessa
     return { success: true, message: 'Password changed. Your other sessions have been signed out.' }
   } catch (error) {
     if (error instanceof APIError) {
+      if (error.statusCode >= 500) await captureServerException(error, { feature: 'auth', operation: 'change-password' })
       const code = error.body?.code
       const message =
         code === 'INVALID_PASSWORD'
