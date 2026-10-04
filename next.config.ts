@@ -1,8 +1,12 @@
 import { withSentryConfig } from '@sentry/nextjs/config'
 import type { NextConfig } from 'next'
-import { canUploadSentrySourceMaps } from './src/lib/sentry-config'
 
 const nextConfig: NextConfig = {
+  // DSN is public. This build-time alias is derived from the single server env value.
+  // Never add SENTRY_AUTH_TOKEN (or spread process.env) here.
+  env: { NEXT_PUBLIC_SENTRY_DSN: process.env.SENTRY_DSN?.trim() || '' },
+  // These SDK flags work with Next's compiler in both Turbopack and webpack.
+  compiler: { define: { __SENTRY_DEBUG__: false, __SENTRY_TRACING__: false } },
   cacheComponents: true,
   serverExternalPackages: ['ably'],
   images: {
@@ -15,29 +19,25 @@ const nextConfig: NextConfig = {
   }
 }
 
-const uploadSourceMaps = canUploadSentrySourceMaps({
-  clientDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  serverDsn: process.env.SENTRY_DSN,
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT
-})
+const authToken = process.env.SENTRY_AUTH_TOKEN?.trim() || undefined
 
 export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  authToken: uploadSourceMaps ? process.env.SENTRY_AUTH_TOKEN : undefined,
+  org: 'kalodeal',
+  project: 'javascript-nextjs',
+  authToken,
   telemetry: false,
+  silent: !process.env.CI,
   widenClientFileUpload: true,
-  sourcemaps: { disable: !uploadSourceMaps, deleteSourcemapsAfterUpload: true },
-  release: { create: uploadSourceMaps, finalize: uploadSourceMaps },
+  sourcemaps: { disable: !authToken, deleteSourcemapsAfterUpload: true },
+  // With credentials the SDK manages the release automatically; offline builds create no release.
+  release: authToken ? undefined : { create: false, finalize: false },
+  buildTimeInstrumentation: false,
   routeManifestInjection: false,
   suppressOnRouterTransitionStartWarning: true,
   webpack: {
+    // onRequestError already captures App Router request errors without build-time wrappers.
     autoInstrumentServerFunctions: false,
     autoInstrumentMiddleware: false,
-    autoInstrumentAppDirectory: false,
-    automaticVercelMonitors: false,
-    treeshake: { removeDebugLogging: true, removeTracing: true }
+    autoInstrumentAppDirectory: false
   }
 })
