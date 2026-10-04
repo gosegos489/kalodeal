@@ -1,7 +1,7 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
 import { toast } from '@/components/ui/toast'
 import { createContactUs } from './action'
 import { contactUsSchema } from './schema'
@@ -20,7 +20,13 @@ export const useContactUs = () => {
   const { isSubmitting } = form.formState
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const result = await createContactUs(values)
+    let result
+    try {
+      result = await createContactUs(values)
+    } catch {
+      toast.add({ title: 'Error', description: 'Could not submit your message. Please try again.', type: 'error' })
+      return
+    }
 
     if (result.success) {
       form.reset()

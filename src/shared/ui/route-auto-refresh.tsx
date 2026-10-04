@@ -6,7 +6,7 @@ import { createRouteRefreshPoller } from './route-refresh-poller'
 
 const REFRESH_INTERVAL_MS = 25_000
 
-export function RouteAutoRefresh() {
+export function RouteAutoRefresh({ refreshOnFocus = false }: { refreshOnFocus?: boolean }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const poller = useRef<ReturnType<typeof createRouteRefreshPoller> | null>(null)
@@ -23,12 +23,14 @@ export function RouteAutoRefresh() {
     poller.current = current
     current.start()
     document.addEventListener('visibilitychange', current.visibilityChanged)
+    if (refreshOnFocus) window.addEventListener('focus', current.visibilityChanged)
     return () => {
       current.stop()
       document.removeEventListener('visibilitychange', current.visibilityChanged)
+      if (refreshOnFocus) window.removeEventListener('focus', current.visibilityChanged)
       poller.current = null
     }
-  }, [router, startTransition])
+  }, [router, startTransition, refreshOnFocus])
 
   useEffect(() => {
     // router.refresh() returns void; its React transition tracks the RSC commit.
