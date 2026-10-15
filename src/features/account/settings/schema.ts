@@ -6,6 +6,7 @@ import { listingImageSchema } from '@/features/create-listing/schema'
 export const displayNameSchema = z
   .string()
   .trim()
+  .normalize()
   .max(64, 'Use no more than 64 characters.')
   .refine((value) => value === '' || value.length >= 2, 'Use at least 2 characters or leave the name empty.')
   .refine((value) => !/[@\p{Cc}\p{Cf}]/u.test(value), 'Use a display name without an email address or control characters.')
@@ -27,7 +28,7 @@ export const passwordChangeSchema = z
 
 export const moderationMessageSchema = z.string().trim().min(1, 'Enter a message for the user.').max(500, 'Use no more than 500 characters.')
 
-const moderationDecisionSchema = z.discriminatedUnion('decision', [
+export const moderationDecisionSchema = z.discriminatedUnion('decision', [
   z.object({ decision: z.literal('approve') }),
   z.object({ decision: z.literal('reject') }),
   z.object({ decision: z.literal('request-changes'), message: moderationMessageSchema })

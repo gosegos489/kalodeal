@@ -13,17 +13,7 @@ import { toast } from '@/components/ui/toast'
 import { saveBusinessName } from './actions'
 import { businessNameSchema } from './schema'
 
-export function BusinessNameForm({
-  name,
-  pendingName,
-  feedback,
-  eligible
-}: {
-  name: string | null
-  pendingName: string | null
-  feedback: string | null
-  eligible: boolean
-}) {
+export function BusinessNameForm({ name, pendingName, feedback }: { name: string | null; pendingName: string | null; feedback: string | null }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const form = useForm<z.infer<typeof businessNameSchema>>({
@@ -64,14 +54,13 @@ export function BusinessNameForm({
               aria-describedby="business-name-help"
             />
             <FieldDescription id="business-name-help">
-              Reviewed before appearing on listings. Shown only with active Business access; this is not a verified company identity. Leave empty to
-              remove.
+              Reviewed before becoming public. Available on your seller page on any plan; branding on listings requires an active Business Plan. This
+              is a display name, not a verified company identity. Leave empty to remove.
             </FieldDescription>
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
         )}
       />
-      {!eligible && <p className="text-muted-foreground text-sm">Business access is required to submit a name. You can clear a saved name.</p>}
       {pendingName && (
         <p role="status" className="text-muted-foreground text-sm">
           Awaiting moderation. Approved name: {name ?? 'None'}

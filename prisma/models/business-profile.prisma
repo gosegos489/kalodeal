@@ -1,0 +1,17 @@
+// Names remain in User's approved/pending business-name moderation fields.
+// User.image is also the business logo: the encrypted avatar lifecycle is shared.
+model BusinessProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description       String?  @db.VarChar(2000)
+  address           String?  @db.VarChar(300)
+  website           String?  @db.VarChar(500)
+  openingHours      String?  @db.VarChar(500)
+  pendingDetails    Json?
+  moderationMessage String?  @db.VarChar(500)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("business_profile")
+}

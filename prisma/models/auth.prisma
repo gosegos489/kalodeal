@@ -1,5 +1,11 @@
+enum AccountType {
+  PERSONAL
+  BUSINESS
+}
+
 model User {
   id                            String   @id
+  accountType                   AccountType @default(PERSONAL)
   name                          String
   pendingName                   String?
   nameModerationMessage         String?
@@ -24,6 +30,7 @@ model User {
   accounts Account[]
 
   subscription         Subscription?
+  businessProfile      BusinessProfile?
   subscriptionPayments SubscriptionPayment[]
 
   planGrants        PlanGrant[] @relation("PlanGrantRecipient")

@@ -1,13 +1,14 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/components/ui/toast'
 import { register } from '../actions/register'
 import { registerSchema } from '../schemas/register'
@@ -17,22 +18,31 @@ export default function RegisterForm() {
   const router = useRouter()
   const registerForm = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { name: '', email: '', password: '', confirm_password: '' }
+    defaultValues: { accountType: 'PERSONAL', name: '', email: '', password: '', confirm_password: '' }
   })
   const isSubmitting = registerForm.formState.isSubmitting
   const onSubmit = registerForm.handleSubmit(async (data) => {
-    const { error } = await register(data)
+    try {
+      const { error } = await register(data)
 
-    if (error) {
-      const message = error.status === 429 ? 'Too many attempts. Please try again later.' : error.code === 'USER_ALREADY_EXISTS' ? 'An account with this email already exists.' : error.message || 'Something went wrong'
+      if (error) {
+        const message =
+          error.status === 429
+            ? 'Too many attempts. Please try again later.'
+            : error.code === 'USER_ALREADY_EXISTS'
+              ? 'An account with this email already exists.'
+              : error.message || 'Something went wrong'
 
-      toast.add({ title: 'Registration failed', description: message, type: 'error' })
-      return
+        toast.add({ title: 'Registration failed', description: message, type: 'error' })
+        return
+      }
+
+      registerForm.reset()
+      toast.add({ title: 'Check your email', description: 'Please check your email to verify your account.', type: 'success' })
+      router.push('/')
+    } catch {
+      toast.add({ title: 'Registration failed', description: 'Please try again.', type: 'error' })
     }
-
-    registerForm.reset()
-    toast.add({ title: 'Check your email', description: 'Please check your email to verify your account.', type: 'success' })
-    router.push('/')
   })
 
   const [password, setShowpassword] = useState(false)
@@ -48,6 +58,34 @@ export default function RegisterForm() {
 
   return (
     <form className="flex flex-col items-center justify-center gap-6" onSubmit={onSubmit}>
+      <Controller
+        name="accountType"
+        control={registerForm.control}
+        render={({ field }) => (
+          <Tabs
+            className="w-full"
+            value={field.value}
+            onValueChange={(value) => {
+              if (value === 'PERSONAL' || value === 'BUSINESS') field.onChange(value)
+            }}
+          >
+            <TabsList className="h-auto w-full" aria-label="Account type">
+              <TabsTrigger value="PERSONAL" disabled={isSubmitting} className="min-h-10 whitespace-normal">
+                Personal Account
+              </TabsTrigger>
+              <TabsTrigger value="BUSINESS" disabled={isSubmitting} className="min-h-10 whitespace-normal">
+                Business Account
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="PERSONAL" className="text-muted-foreground pt-2">
+              For individuals selling personal items.
+            </TabsContent>
+            <TabsContent value="BUSINESS" className="text-muted-foreground pt-2">
+              For businesses, shops and professional sellers.
+            </TabsContent>
+          </Tabs>
+        )}
+      />
       <FieldGroup>
         <Controller
           name="name"
@@ -112,7 +150,12 @@ export default function RegisterForm() {
                   className="pr-10"
                 />
 
-                <button onClick={handleTogglePassword} className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer" type="button">
+                <button
+                  aria-label={password ? 'Hide password' : 'Show password'}
+                  onClick={handleTogglePassword}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer"
+                  type="button"
+                >
                   {password ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                 </button>
               </div>
@@ -141,7 +184,12 @@ export default function RegisterForm() {
                   className="pr-10"
                 />
 
-                <button onClick={handleToggleConfirmPassword} className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer" type="button">
+                <button
+                  aria-label={confirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  onClick={handleToggleConfirmPassword}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer"
+                  type="button"
+                >
                   {confirmPassword ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                 </button>
               </div>

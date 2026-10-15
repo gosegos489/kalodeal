@@ -33,10 +33,19 @@ export async function getMarketplaceSettingsActor() {
 
 export const avatars = createAvatarLifecycle(
   {
-    locked(userId, work) {
+    async locked(userId, work) {
+      const actor = await getSettingsActor()
       return prisma.$transaction(
         async (tx) => {
           await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
+          const currentActor = await tx.user.findUnique({ where: { id: actor.id }, select: { role: true, banned: true, banExpires: true } })
+          if (
+            !currentActor ||
+            hasActiveBan(currentActor) ||
+            (!['admin', 'moderator'].includes(currentActor.role ?? '') && !(actor.id === userId && canUseMarketplace(currentActor.role)))
+          ) {
+            throw new AvatarError('This account is unavailable.')
+          }
           const user = await tx.user.findUnique({
             where: { id: userId },
             select: { id: true, image: true, pendingAvatarKey: true, avatarCleanupKey: true, avatarModerationMessage: true }

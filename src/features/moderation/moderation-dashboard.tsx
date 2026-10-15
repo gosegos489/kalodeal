@@ -24,9 +24,9 @@ export async function ModerationDashboard() {
       icon: List
     },
     {
-      label: 'Pending names',
+      label: 'Pending profile details',
       count: overview.pendingNames,
-      description: 'Profile names awaiting approval.',
+      description: 'Names and business details awaiting approval.',
       href: '/moderator/avatars',
       icon: UserRound
     },

@@ -5,7 +5,8 @@ import { nextCookies } from 'better-auth/next-js'
 import { admin } from 'better-auth/plugins'
 import 'server-only'
 import React from 'react'
-import { guardAuthProfileData, prepareNewProfileName } from '@/features/account/settings/auth-profile'
+import { accountTypeSchema } from '@/entities/user/account-type'
+import { guardAuthAccountType, guardAuthProfileData, prepareNewProfileName } from '@/features/account/settings/auth-profile'
 import { displayNameSchema } from '@/features/account/settings/schema'
 import { captureServerExceptionAfterResponse } from '@/lib/sentry-server'
 import ResetPasswordEmail from '../../emails/ResetPasswordEmail'
@@ -39,6 +40,7 @@ export const auth = betterAuth({
       }
       // The generic auth API must not bypass profile moderation or file cleanup.
       if (data) guardAuthProfileData(data, isProfileUpdate || ctx.path === '/admin/update-user')
+      if (data) guardAuthAccountType(data, isProfileUpdate || ctx.path === '/admin/update-user', isSignUp)
       if (data && ['banned', 'banReason', 'banExpires'].some((field) => field in data)) {
         throw new APIError('BAD_REQUEST', { message: 'Manage bans through the ban/unban endpoints.' })
       }
@@ -55,11 +57,13 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        before: async (data) => ({ data: { ...data, ...prepareNewProfileName(data.name) } })
+        before: async (data) => ({
+          data: { ...data, accountType: accountTypeSchema.parse(data.accountType ?? 'PERSONAL'), ...prepareNewProfileName(data.name) }
+        })
       },
       update: {
         before: async (data, ctx) => {
-          if ('name' in data) {
+          if ('name' in data || 'accountType' in data) {
             throw new APIError('BAD_REQUEST', { message: 'Manage profile names through account settings and moderation.' })
           }
           return { data: normalizeBanUpdate(data, ctx?.path) }
@@ -73,6 +77,7 @@ export const auth = betterAuth({
 
   user: {
     additionalFields: {
+      accountType: { type: ['PERSONAL', 'BUSINESS'], required: false, defaultValue: 'PERSONAL', validator: { input: accountTypeSchema } },
       businessName: { type: 'string', required: false, input: false, returned: false },
       pendingBusinessName: { type: 'string', required: false, input: false, returned: false },
       businessNameModerationMessage: { type: 'string', required: false, input: false, returned: false },

@@ -1,5 +1,6 @@
 import 'server-only'
 import { getSettingsPageActor } from '@/features/account/settings/server'
+import { Prisma } from '@/generated/prisma/client'
 import prisma from '@/lib/prisma'
 import { moderationListingSelect, toModerationListing } from './listings/data'
 
@@ -10,7 +11,15 @@ export async function getModerationOverview() {
   await getSettingsPageActor(true)
   const [pendingListings, pendingNames, pendingAvatars, avatarCleanup, listings, openChatReports] = await Promise.all([
     prisma.listing.count({ where: { status: 'PENDING' } }),
-    prisma.user.count({ where: { OR: [{ pendingName: { not: null } }, { pendingBusinessName: { not: null } }] } }),
+    prisma.user.count({
+      where: {
+        OR: [
+          { pendingName: { not: null } },
+          { pendingBusinessName: { not: null } },
+          { businessProfile: { is: { pendingDetails: { not: Prisma.DbNull } } } }
+        ]
+      }
+    }),
     prisma.user.count({ where: { pendingAvatarKey: { not: null } } }),
     prisma.user.count({ where: { avatarCleanupKey: { not: null } } }),
     prisma.listing.findMany({

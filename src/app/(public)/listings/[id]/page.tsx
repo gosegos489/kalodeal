@@ -15,7 +15,7 @@ import { getListing } from '@/entities/listing/get-listing'
 import { listingStatusLabels } from '@/entities/listing/lifecycle'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
 import { formatLocation } from '@/entities/location/catalog'
-import { getSellerInitials } from '@/entities/user/public-profile'
+import { getSellerInitials, postingSince } from '@/entities/user/public-profile'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
 import { ListingViewTracker } from '@/features/listing-views/listing-view-tracker'
 import { MessageSellerButton } from '@/features/messages/message-seller-button'
@@ -118,8 +118,19 @@ async function ListingDetails({ params }: Props) {
                   )}
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
-                <p className="min-w-0 font-medium wrap-break-word">{sellerName}</p>
+                <Link href={`/sellers/${encodeURIComponent(listing.seller.id)}`} className="hover:text-primary min-w-0 font-medium wrap-break-word">
+                  {sellerName}
+                </Link>
               </div>
+              <div className="text-muted-foreground space-y-1 text-sm">
+                <p>{postingSince(listing.seller.createdAt)}</p>
+                <p>
+                  {listing.seller.activeAds} active {listing.seller.activeAds === 1 ? 'ad' : 'ads'}
+                </p>
+              </div>
+              <Link href={`/sellers/${encodeURIComponent(listing.seller.id)}`} className="text-primary text-sm underline underline-offset-4">
+                Other ads from this seller
+              </Link>
               {listing.maskedPhone && (
                 <RevealListingPhoneButton
                   key={listing.id}

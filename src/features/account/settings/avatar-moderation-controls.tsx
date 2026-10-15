@@ -6,7 +6,7 @@ import { useId, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Textarea } from '@/components/ui/textarea'
-import { moderateAvatar, moderateName, retryAvatarCleanup } from './actions'
+import { moderateAvatar, moderateBusinessDetails, moderateName, retryAvatarCleanup } from './actions'
 import { moderationMessageSchema } from './schema'
 
 export function ProfileModerationControls({
@@ -17,7 +17,7 @@ export function ProfileModerationControls({
 }: {
   userId: string
   version: string | null
-  kind: 'name' | 'business-name' | 'avatar'
+  kind: 'name' | 'business-name' | 'business-profile' | 'avatar'
   cleanup?: boolean
 }) {
   const router = useRouter()
@@ -50,7 +50,13 @@ export function ProfileModerationControls({
         decision,
         ...(parsed?.success ? { message: parsed.data } : {})
       }
-      const response = await (decision === 'cleanup' ? retryAvatarCleanup(userId) : kind !== 'avatar' ? moderateName(review) : moderateAvatar(review))
+      const response = await (decision === 'cleanup'
+        ? retryAvatarCleanup(userId)
+        : kind === 'business-profile'
+          ? moderateBusinessDetails(review)
+          : kind !== 'avatar'
+            ? moderateName(review)
+            : moderateAvatar(review))
       setResult(response)
       if (response.success) {
         setRequesting(false)

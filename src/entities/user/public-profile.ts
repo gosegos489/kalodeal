@@ -12,3 +12,7 @@ export function getSellerInitials(displayName: string | null | undefined) {
     .join('')
     .toUpperCase()
 }
+
+export function postingSince(createdAt: Date) {
+  return `Posting since ${new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(createdAt)}`
+}

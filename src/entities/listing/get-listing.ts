@@ -1,10 +1,9 @@
 import 'server-only'
 import { cache } from 'react'
-import { getSellerName } from '@/entities/user/public-profile'
-import { getApprovedAvatarUrl } from '@/features/account/settings/avatar-reference'
+import { getPublicSeller } from '@/entities/user/get-public-seller'
 import { canUseMarketplace } from '@/lib/account-role'
 import { getSession } from '@/lib/auth-utils'
-import { MAX_LISTING_PHOTOS, getPaidListingPlan } from '@/lib/plan-limits'
+import { MAX_LISTING_PHOTOS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { getListingImageUrl, listingSummarySelect, toListingSummary } from './listing-summary'
 import { getPublicListingIds } from './public-eligibility'
@@ -24,14 +23,6 @@ const getListingRow = cache(async (id: string, userId: string | null) => {
       messengerUrl: true,
       _count: { select: { favorites: true } },
       favorites: { where: { userId: userId ?? '' }, select: { id: true }, take: 1 },
-      user: {
-        select: {
-          name: true,
-          image: true,
-          businessName: true,
-          subscription: { select: { plan: true, status: true, currentPeriodStart: true, currentPeriodEnd: true } }
-        }
-      },
       category: { select: { name: true, slug: true } },
       images: {
         select: { id: true, key: true },
@@ -50,10 +41,12 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
   const listing = await getListingRow(result.data, session?.user.id ?? null)
   if (!listing) return null
 
-  const { userId, user, phone, facebookUrl, messengerUrl, status, favorites, _count, ...summary } = listing
+  const { userId, phone, facebookUrl, messengerUrl, status, favorites, _count, ...summary } = listing
   const isOwner = session?.user.id === userId
   const publiclyVisible = status === 'ACTIVE' && (await getPublicListingIds([listing.id])).has(listing.id)
   if (!publiclyVisible && !isOwner) return null
+  const seller = await getPublicSeller(userId)
+  if (!seller) return null
 
   return {
     ...toListingSummary(summary),
@@ -64,8 +57,11 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
     messengerUrl,
     maskedPhone: phone ? `${phone.trim().startsWith('+') ? '+' : ''}${phone.replace(/\D/g, '').slice(0, 3)} ••••••` : null,
     seller: {
-      name: getPaidListingPlan(user.subscription) === 'BUSINESS' && user.businessName ? user.businessName : getSellerName(user.name),
-      image: getApprovedAvatarUrl(userId, user.image)
+      id: seller.id,
+      name: seller.listingName,
+      image: seller.listingImage,
+      createdAt: seller.createdAt,
+      activeAds: seller.activeAds
     },
     isOwner,
     isAuthenticated: !!session,

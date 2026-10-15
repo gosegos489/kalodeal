@@ -17,7 +17,7 @@ export type ListingDetails = Omit<ListingSummary, 'category'> & {
   publiclyVisible: boolean
   category: { name: string; slug: string }
   images: { id: string; url: string }[]
-  seller: { name: string; image: string | null }
+  seller: { id: string; name: string; image: string | null; createdAt: Date; activeAds: number }
   maskedPhone: string | null
   facebookUrl: string | null
   messengerUrl: string | null

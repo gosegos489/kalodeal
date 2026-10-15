@@ -1,8 +1,10 @@
 import z from 'zod'
+import { accountTypeSchema } from '@/entities/user/account-type'
 import { displayNameSchema } from '@/features/account/settings/schema'
 
 export const registerSchema = z
   .object({
+    accountType: accountTypeSchema,
     name: displayNameSchema,
     email: z.email().max(64, {
       message: 'Email must be at most 64 characters long'

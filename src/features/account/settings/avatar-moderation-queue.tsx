@@ -4,7 +4,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { getSellerName } from '@/entities/user/public-profile'
 import { ModerationSearch } from '@/features/moderation/shared/moderation-search'
-import { profileModerationWhere } from '@/features/moderation/shared/search'
 import { getPagination } from '@/lib/pagination'
 import prisma from '@/lib/prisma'
 import { cn } from '@/lib/utils'
@@ -12,8 +11,10 @@ import NuqsPagination from '@/shared/ui/NuqsPagination'
 import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 import { ProfileModerationControls } from './avatar-moderation-controls'
 import { avatarVersion, getApprovedAvatarUrl, pendingAvatarUrl } from './avatar-reference'
+import { businessDetailsSchema } from './business-schema'
 import { nameModerationVersion } from './name-moderation'
 import { AwaitingModeration } from './profile-moderation-notice'
+import { profileModerationWhere } from './profile-moderation-where'
 import { getSettingsPageActor } from './server'
 
 export async function AvatarModerationQueue({ page, q, embedded = false }: { page?: string | string[]; q?: string | string[]; embedded?: boolean }) {
@@ -29,6 +30,8 @@ export async function AvatarModerationQueue({ page, q, embedded = false }: { pag
       pendingName: true,
       businessName: true,
       pendingBusinessName: true,
+      accountType: true,
+      businessProfile: { select: { pendingDetails: true, updatedAt: true } },
       updatedAt: true,
       email: true,
       image: true,
@@ -48,7 +51,7 @@ export async function AvatarModerationQueue({ page, q, embedded = false }: { pag
           Profile moderation
         </Heading>
         <p className="text-muted-foreground mt-1 text-sm">
-          Review pending names and avatars before they appear publicly, or retry unfinished storage cleanup.
+          Review pending names, business details and avatars/logos before they appear publicly, or retry unfinished storage cleanup.
         </p>
       </div>
       <ModerationSearch kind="avatars" />
@@ -58,6 +61,7 @@ export async function AvatarModerationQueue({ page, q, embedded = false }: { pag
           const approved = getApprovedAvatarUrl(user.id, user.image)
           const pending = user.pendingAvatarKey ? pendingAvatarUrl(user.id, user.pendingAvatarKey) : null
           const version = user.pendingAvatarKey ? avatarVersion(user.id, user.pendingAvatarKey) : null
+          const businessDetails = businessDetailsSchema.safeParse(user.businessProfile?.pendingDetails)
           return (
             <Card key={user.id} className="min-w-0">
               <CardHeader>
@@ -92,8 +96,27 @@ export async function AvatarModerationQueue({ page, q, embedded = false }: { pag
                     />
                   </div>
                 )}
+                {businessDetails.success && user.businessProfile && (
+                  <div className="space-y-3 border-b pb-4">
+                    <p className="text-sm font-medium">Pending business details</p>
+                    <AwaitingModeration />
+                    <dl className="space-y-2 text-sm">
+                      {Object.entries(businessDetails.data).map(([label, value]) => (
+                        <div key={label}>
+                          <dt className="text-muted-foreground">{label}</dt>
+                          <dd className="wrap-anywhere whitespace-pre-wrap">{value || 'Not specified'}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <ProfileModerationControls
+                      userId={user.id}
+                      version={nameModerationVersion(JSON.stringify(businessDetails.data), user.businessProfile.updatedAt)}
+                      kind="business-profile"
+                    />
+                  </div>
+                )}
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-medium">Profile photo</p>
+                  <p className="text-sm font-medium">{user.accountType === 'BUSINESS' ? 'Business logo / profile photo' : 'Profile photo'}</p>
                   {pending && <AwaitingModeration />}
                 </div>
                 <div className="flex flex-wrap gap-6">

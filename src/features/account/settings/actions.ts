@@ -1,28 +1,80 @@
 'use server'
 
 import { APIError } from 'better-auth/api'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { auth } from '@/lib/auth'
 import { getAuthHeaders } from '@/lib/auth-utils'
+import { cacheTags } from '@/lib/cache-tags'
 import { checkPasswordChangeRateLimit } from '@/lib/rate-limit'
 import { captureServerException } from '@/lib/sentry-server'
 import { AvatarError } from './avatar-lifecycle'
+import { businessDetailsSchema, businessReviewSchema } from './business-schema'
+import { convertToBusiness, reviewBusinessDetails, submitBusinessDetails } from './business-workflow'
 import { reviewProfileName, submitBusinessName, submitProfileName } from './name-moderation'
 import { avatarModerationSchema, businessNameSchema, nameModerationSchema, passwordChangeSchema, profileSchema } from './schema'
 import { avatars, getMarketplaceSettingsActor, getSettingsActor } from './server'
 
 function refreshProfile(publicChanged = false) {
+  if (publicChanged) updateTag(cacheTags.sellers)
   revalidatePath('/account/settings')
   revalidatePath('/admin')
   revalidatePath('/moderator')
   revalidatePath('/moderator/avatars')
   if (publicChanged) {
+    revalidatePath('/sellers/[id]', 'page')
     revalidatePath('/account')
     revalidatePath('/listings/[id]', 'page')
     revalidatePath('/account/messages', 'layout')
     revalidatePath('/moderator/users')
   }
+}
+
+export async function enableBusinessAccount(): Promise<ActionMessageResult> {
+  try {
+    await convertToBusiness()
+  } catch (error) {
+    return failure(error)
+  }
+  try {
+    refreshProfile(true)
+  } catch {
+    /* The account change is already committed. */
+  }
+  return { success: true, message: 'Business Account enabled. Your subscription and listings are unchanged.' }
+}
+
+export async function saveBusinessDetails(input: unknown): Promise<ActionMessageResult> {
+  const parsed = businessDetailsSchema.safeParse(input)
+  if (!parsed.success) return { success: false, message: parsed.error.issues[0].message }
+  let pending: boolean
+  try {
+    pending = await submitBusinessDetails(parsed.data)
+  } catch (error) {
+    return failure(error)
+  }
+  try {
+    refreshProfile(true)
+  } catch {
+    /* Preserve committed success if refresh fails. */
+  }
+  return { success: true, message: pending ? 'Business details sent for moderation. Approved details remain public.' : 'Business details saved.' }
+}
+
+export async function moderateBusinessDetails(input: unknown): Promise<ActionMessageResult> {
+  const parsed = businessReviewSchema.safeParse(input)
+  if (!parsed.success) return { success: false, message: 'Invalid moderation request.' }
+  try {
+    await reviewBusinessDetails(parsed.data)
+  } catch (error) {
+    return failure(error)
+  }
+  try {
+    refreshProfile(parsed.data.decision === 'approve')
+  } catch {
+    /* Preserve committed success. */
+  }
+  return { success: true, message: 'Business profile review saved.' }
 }
 
 async function failure(error: unknown): Promise<ActionMessageResult> {

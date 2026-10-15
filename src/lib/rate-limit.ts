@@ -53,6 +53,13 @@ const passwordChangeLimiter = new Ratelimit({
   timeout: 3000
 })
 
+const profileUpdateLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(15, '10 m'),
+  prefix: 'ratelimit:account:profile',
+  timeout: 3000
+})
+
 const listingSearchLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(60, '1 m'),
@@ -146,6 +153,10 @@ export function checkAvatarUploadRateLimit(userId: string) {
 
 export function checkPasswordChangeRateLimit(userId: string) {
   return checkRateLimit(passwordChangeLimiter, `user:${userId}`)
+}
+
+export function checkProfileUpdateRateLimit(userId: string) {
+  return checkRateLimit(profileUpdateLimiter, `user:${userId}`)
 }
 
 export function checkContactUsRateLimit(ip: string | null) {
