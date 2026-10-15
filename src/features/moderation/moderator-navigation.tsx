@@ -14,16 +14,16 @@ export const moderatorNavigation = [
   { label: 'Access grants', href: '/moderator/access-grants', icon: Gift },
   { label: 'Contact requests', href: '/moderator/contact', icon: Mail },
   { label: 'Chat reports', href: '/moderator/chat-reports', icon: Flag },
-  { label: 'Category icons', href: '/moderator/categories', icon: Tags, adminOnly: true }
+  { label: 'Category icons', href: '/moderator/categories', icon: Tags, categoryIconsOnly: true }
 ]
 
-export function ModeratorNavigation({ isAdmin = false }: { isAdmin?: boolean }) {
+export function ModeratorNavigation({ canEditCategoryIcons = false }: { canEditCategoryIcons?: boolean }) {
   const pathname = usePathname()
 
   return (
     <nav aria-label="Moderator navigation" className="grid min-w-0 gap-1 p-2 sm:grid-cols-2 lg:grid-cols-1">
       {moderatorNavigation
-        .filter((item) => !item.adminOnly || isAdmin)
+        .filter((item) => !item.categoryIconsOnly || canEditCategoryIcons)
         .map(({ label, href, icon: Icon }) => {
           const active = pathname === href || (href !== '/moderator' && pathname.startsWith(`${href}/`))
 

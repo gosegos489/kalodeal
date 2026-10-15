@@ -14,9 +14,7 @@ export async function CategoryIconQueue(params: CategoryIconSearchParams) {
         <h2 id="category-icons-heading" className="text-2xl font-semibold">
           Category icons
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Manage icons for main categories and subcategories at every level. Administrator access only.
-        </p>
+        <p className="text-muted-foreground mt-1 text-sm">Upload, replace or remove icons for main categories and subcategories at every level.</p>
       </div>
       <form action="/moderator/categories" className="flex flex-wrap items-end gap-3">
         <div className="min-w-0 flex-1 space-y-2">

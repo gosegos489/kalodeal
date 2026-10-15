@@ -2,6 +2,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { CategoryIconError } from '@/features/moderation/categories/icon-workflow'
 import { CATEGORY_ICON_BODY_MAX_BYTES, categoryIdSchema } from '@/features/moderation/categories/schema'
 import { categoryIcons } from '@/features/moderation/categories/server'
+import { canManageCategoryIcons } from '@/lib/auth-permissions'
 import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import { checkCategoryIconRateLimit } from '@/lib/rate-limit'
@@ -18,8 +19,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   try {
     const session = await getMutationSession()
-    if (!session) throw new CategoryIconError('Sign in with an administrator account.', 401)
-    if (session.user.role !== 'admin') throw new CategoryIconError('Administrator access is required.', 403)
+    if (!session) throw new CategoryIconError('Sign in to manage category icons.', 401)
+    if (!canManageCategoryIcons(session.user.role)) throw new CategoryIconError('Category icon management access is required.', 403)
     const { id } = await params
     if (!categoryIdSchema.safeParse(id).success) throw new CategoryIconError('Invalid category.')
     const limit = await checkCategoryIconRateLimit(session.user.id)

@@ -1,14 +1,14 @@
 import 'server-only'
-import { requireAdmin } from '@/lib/auth-utils'
 import { getPagination } from '@/lib/pagination'
 import prisma from '@/lib/prisma'
 import { getModerationQuery } from '../shared/search'
 import { categoryIdSchema } from './schema'
+import { requireCategoryIconManager } from './server'
 
 export type CategoryIconSearchParams = { q?: string | string[]; page?: string | string[] }
 
 export async function getCategoryIconQueue(params: CategoryIconSearchParams) {
-  await requireAdmin()
+  await requireCategoryIconManager()
   const query = getModerationQuery(params.q)
   const contains = { contains: query, mode: 'insensitive' } as const
   const where = query ? { OR: [{ name: contains }, { slug: contains }, { id: contains }, { parent: { is: { name: contains } } }] } : {}
@@ -30,7 +30,7 @@ export async function getCategoryIconQueue(params: CategoryIconSearchParams) {
 }
 
 export async function getCategoryIconEditor(id: unknown) {
-  await requireAdmin()
+  await requireCategoryIconManager()
   const parsed = categoryIdSchema.safeParse(id)
   if (!parsed.success) return null
   return prisma.category.findUnique({

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { PrismaClient } from '@/generated/prisma/client'
+import { canManageCategoryIcons } from '@/lib/auth-permissions'
 import { hasActiveBan } from '@/lib/ban-status'
 import { matchesImageType } from '@/lib/image-validation'
 import { categoryIconFileSchema, categoryIconMutationSchema } from './schema'
@@ -29,8 +30,8 @@ type Dependencies = {
 export function createCategoryIconOperations({ db, actor, storage }: Dependencies) {
   async function save(input: unknown, file?: unknown) {
     const user = await actor()
-    if (!user) throw new CategoryIconError('Sign in with an administrator account.', 401)
-    if (user.role !== 'admin' || hasActiveBan(user)) throw new CategoryIconError('Administrator access is required.', 403)
+    if (!user) throw new CategoryIconError('Sign in to manage category icons.', 401)
+    if (!canManageCategoryIcons(user.role) || hasActiveBan(user)) throw new CategoryIconError('Category icon management access is required.', 403)
     const parsed = categoryIconMutationSchema.safeParse(input)
     if (!parsed.success) throw new CategoryIconError('Invalid category or version. Reload this page.')
     const { categoryId, updatedAt, operation } = parsed.data
@@ -61,8 +62,9 @@ export function createCategoryIconOperations({ db, actor, storage }: Dependencie
       saved = await db.$transaction(async (tx) => {
         // Preserve user -> category lock order and fresh authorization at commit.
         await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${user.id} FOR SHARE`
-        const admin = await tx.user.findUnique({ where: { id: user.id }, select: { role: true, banned: true, banExpires: true } })
-        if (!admin || admin.role !== 'admin' || hasActiveBan(admin)) throw new CategoryIconError('Administrator access is required.', 403)
+        const currentActor = await tx.user.findUnique({ where: { id: user.id }, select: { role: true, banned: true, banExpires: true } })
+        if (!currentActor || !canManageCategoryIcons(currentActor.role) || hasActiveBan(currentActor))
+          throw new CategoryIconError('Category icon management access is required.', 403)
         await tx.$queryRaw`SELECT id FROM category WHERE id = ${categoryId} FOR UPDATE`
         const current = await tx.category.findUnique({ where: { id: categoryId }, select: { icon: true, updatedAt: true } })
         if (!current) throw new CategoryIconError('This category no longer exists.', 404)

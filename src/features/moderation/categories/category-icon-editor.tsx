@@ -108,8 +108,8 @@ export function CategoryIconEditor({ categoryId, updatedAt, hasIcon, currentPrev
             }
             const parsed = categoryIconFileSchema.safeParse(selected)
             if (!parsed.success) {
+              reset()
               setError(parsed.error.issues[0].message)
-              event.target.value = ''
               return
             }
             setFile(selected)
