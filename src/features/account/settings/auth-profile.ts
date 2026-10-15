@@ -7,6 +7,9 @@ export const privateProfileFields = [
   'pendingAvatarKey',
   'avatarCleanupKey',
   'pendingName',
+  'businessName',
+  'pendingBusinessName',
+  'businessNameModerationMessage',
   'nameModerationMessage',
   'avatarModerationMessage'
 ]

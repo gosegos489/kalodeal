@@ -1,6 +1,7 @@
 'use server'
 
 import 'server-only'
+import { getPublicListingIds } from '@/entities/listing/public-eligibility'
 import { listingIdSchema } from '@/entities/listing/schema'
 import { Prisma } from '@/generated/prisma/client'
 import { getMutationSession } from '@/lib/auth-utils'
@@ -20,10 +21,11 @@ export async function revealListingPhone(id: unknown): Promise<RevealListingPhon
     const rateLimit = await checkListingPhoneRevealRateLimit(session.user.id)
     if (!rateLimit.success) return { success: false, message: rateLimit.message }
 
+    const visible = (await getPublicListingIds([result.data])).has(result.data)
     const listing = await prisma.listing.update({
       where: {
         id: result.data,
-        OR: [{ status: 'ACTIVE' }, { userId: session.user.id }],
+        OR: [...(visible ? [{ status: 'ACTIVE' as const }] : []), { userId: session.user.id }],
         phone: { not: '' }
       },
       data: { phoneReveals: { increment: 1 } },

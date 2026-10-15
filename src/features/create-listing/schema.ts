@@ -4,6 +4,9 @@ import { listingLocationSchema, locationPairError, matchesLocation } from '@/ent
 import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+// Keep the existing aggregate buffering budget even when Business allows 20 files.
+export const MAX_PHOTO_BATCH_BYTES = 50 * 1024 * 1024
+export const MAX_PHOTO_REQUEST_BYTES = MAX_PHOTO_BATCH_BYTES + 1024 * 1024
 export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
 
 export const listingImageSchema = z
@@ -83,6 +86,13 @@ export function createListingSchema(plan: ListingPlan = 'FREE') {
   const maxImages = PLAN_LIMITS[plan].imagesPerListing
 
   return listingDetailsSchema.safeExtend({
-    images: z.array(listingImageSchema).max(maxImages, `Add no more than ${maxImages} images.`).default([])
+    images: z
+      .array(listingImageSchema)
+      .max(maxImages, `Add no more than ${maxImages} images.`)
+      .refine(
+        (images) => images.reduce((bytes, image) => bytes + image.size, 0) <= MAX_PHOTO_BATCH_BYTES,
+        'Use no more than 50 MB of photos per upload. Add remaining photos later.'
+      )
+      .default([])
   })
 }

@@ -17,7 +17,7 @@ export function ProfileModerationControls({
 }: {
   userId: string
   version: string | null
-  kind: 'name' | 'avatar'
+  kind: 'name' | 'business-name' | 'avatar'
   cleanup?: boolean
 }) {
   const router = useRouter()
@@ -43,8 +43,14 @@ export function ProfileModerationControls({
     setError(null)
     setResult(null)
     try {
-      const review = { userId, version: reviewedVersion, decision, ...(parsed?.success ? { message: parsed.data } : {}) }
-      const response = await (decision === 'cleanup' ? retryAvatarCleanup(userId) : kind === 'name' ? moderateName(review) : moderateAvatar(review))
+      const review = {
+        kind: kind === 'business-name' ? 'business-name' : 'name',
+        userId,
+        version: reviewedVersion,
+        decision,
+        ...(parsed?.success ? { message: parsed.data } : {})
+      }
+      const response = await (decision === 'cleanup' ? retryAvatarCleanup(userId) : kind !== 'avatar' ? moderateName(review) : moderateAvatar(review))
       setResult(response)
       if (response.success) {
         setRequesting(false)

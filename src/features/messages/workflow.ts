@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import 'server-only'
+import { getPublicListingIds } from '@/entities/listing/public-eligibility'
 import type { Prisma, PrismaClient } from '@/generated/prisma/client'
 import { canUseMarketplace } from '@/lib/account-role'
 import { getPagination } from '@/lib/pagination'
@@ -117,7 +118,8 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
         where: { id: candidate.id, userId: candidate.userId, status: 'ACTIVE' },
         select: { id: true, userId: true, title: true }
       })
-      if (!listing) throw new MessagingError('This listing is no longer available.', 404)
+      if (!listing || !(await getPublicListingIds([listing.id], tx)).has(listing.id))
+        throw new MessagingError('This listing is no longer available.', 404)
       const where = { buyerId: viewer, sellerId: listing.userId, listingId: listing.id }
       // ON CONFLICT plus the database unique constraint handles simultaneous clicks/tabs.
       await tx.conversation.createMany({ data: [{ id: randomUUID(), ...where, listingTitle: listing.title }], skipDuplicates: true })

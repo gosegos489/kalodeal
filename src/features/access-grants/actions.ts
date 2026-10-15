@@ -6,9 +6,9 @@ import type { ActionMessageResult, ActionResult } from '@/lib/action-result'
 import prisma from '@/lib/prisma'
 import { captureServerException } from '@/lib/sentry-server'
 import { AccessGrantError } from './error'
-import { getGrantExpiration, grantBumpsSchema, grantProSchema } from './schema'
+import { getGrantExpiration, grantBoostsSchema, grantProSchema } from './schema'
 import { getAccessGrantManager } from './server'
-import { grantBonusBumps, grantProAccess, revokeProAccess } from './workflow'
+import { grantBonusBoosts, grantProAccess, revokeProAccess } from './workflow'
 
 async function changeGrant(work: typeof grantProAccess, input: unknown): Promise<ActionMessageResult> {
   let saved: { userId: string; message: string }
@@ -38,16 +38,16 @@ export async function grantPro(input: unknown) {
 export async function revokePro(input: unknown) {
   return changeGrant(revokeProAccess, input)
 }
-export async function grantBumps(input: unknown) {
-  return changeGrant(grantBonusBumps, input)
+export async function grantBoosts(input: unknown) {
+  return changeGrant(grantBonusBoosts, input)
 }
 
 // Preset expiration is quoted by the server before the confirmation step.
-export async function previewGrant(input: unknown, kind: 'pro' | 'bumps'): Promise<ActionResult<{ expiresAt: string | null }>> {
+export async function previewGrant(input: unknown, kind: 'pro' | 'boosts'): Promise<ActionResult<{ expiresAt: string | null }>> {
   try {
     await getAccessGrantManager()
-    if (kind !== 'pro' && kind !== 'bumps') return { success: false, message: 'Invalid grant type.' }
-    const parsed = (kind === 'pro' ? grantProSchema : grantBumpsSchema).safeParse(input)
+    if (kind !== 'pro' && kind !== 'boosts') return { success: false, message: 'Invalid grant type.' }
+    const parsed = (kind === 'pro' ? grantProSchema : grantBoostsSchema).safeParse(input)
     if (!parsed.success) return { success: false, message: parsed.error.issues[0].message }
     const user = await prisma.user.findUnique({ where: { id: parsed.data.userId }, select: { id: true } })
     if (!user) return { success: false, message: 'This user no longer exists.' }

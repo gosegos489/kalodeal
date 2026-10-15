@@ -51,7 +51,11 @@ export async function changeListingVisibility(input: unknown): Promise<ActionMes
       await checkListingSlotAvailable(tx, userId, listing.status, status)
       const updated = await tx.listing.updateMany({
         where: { id, userId, status: listing.status, updatedAt: listing.updatedAt },
-        data: { status, updatedAt: new Date(Math.max(Date.now(), listing.updatedAt.getTime() + 1)) }
+        data: {
+          status,
+          ...(status !== 'ACTIVE' ? { featuredAt: null } : {}),
+          updatedAt: new Date(Math.max(Date.now(), listing.updatedAt.getTime() + 1))
+        }
       })
       return updated.count === 1 ? { categoryId: listing.categoryId } : { message: 'This listing has changed. Reload before trying again.' }
     })

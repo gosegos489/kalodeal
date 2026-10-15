@@ -12,7 +12,7 @@ export const proDurations = [
   { value: 'month', label: '30 days' },
   { value: 'custom', label: 'Custom expiration' }
 ] as const
-export const bumpExpirations = [{ value: 'never', label: 'Never' }, ...proDurations.filter(({ value }) => value !== 'day')]
+export const boostExpirations = [{ value: 'never', label: 'Never' }, ...proDurations.filter(({ value }) => value !== 'day')]
 
 const expiration = z.iso.datetime().optional()
 export const grantProSchema = z
@@ -23,7 +23,7 @@ export const grantProSchema = z
     reason: grantReasonSchema.optional()
   })
   .strict()
-export const grantBumpsSchema = z
+export const grantBoostsSchema = z
   .object({
     userId: grantUserIdSchema,
     amount: z.number().int().min(1).max(100),

@@ -83,6 +83,7 @@ export async function updateListing(id: unknown, input: unknown, expectedUpdated
         data: {
           ...data,
           status,
+          ...(status !== 'ACTIVE' ? { featuredAt: null } : {}),
           ...(status === 'PENDING' ? { moderationReason: null, moderationMessage: null } : {}),
           updatedAt: new Date(Math.max(Date.now(), listing.updatedAt.getTime() + 1))
         }

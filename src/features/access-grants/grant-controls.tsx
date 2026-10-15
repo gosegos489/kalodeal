@@ -13,9 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
 import type { ActionMessageResult } from '@/lib/action-result'
-import { grantBumps, grantPro, previewGrant, revokePro } from './actions'
+import { grantBoosts, grantPro, previewGrant, revokePro } from './actions'
 import { formatGrantDate } from './format'
-import { bumpExpirations, grantReasonSchema, proDurations } from './schema'
+import { boostExpirations, grantReasonSchema, proDurations } from './schema'
 
 const formSchema = z
   .object({
@@ -32,7 +32,7 @@ const formSchema = z
 type GrantForm = z.infer<typeof formSchema>
 type GrantQuote = { values: GrantForm; expiresAt: string | null }
 
-function GrantDialog({ userId, kind, disabled = false }: { userId: string; kind: 'pro' | 'bumps'; disabled?: boolean }) {
+function GrantDialog({ userId, kind, disabled = false }: { userId: string; kind: 'pro' | 'boosts'; disabled?: boolean }) {
   const router = useRouter()
   const id = useId()
   const inFlight = useRef(false)
@@ -45,8 +45,8 @@ function GrantDialog({ userId, kind, disabled = false }: { userId: string; kind:
     defaultValues: { duration: kind === 'pro' ? 'month' : 'never', amount: 5, reason: '', expiresLocal: '' }
   })
   const duration = useWatch({ control: form.control, name: 'duration' })
-  const options = kind === 'pro' ? proDurations : bumpExpirations
-  const title = kind === 'pro' ? 'Grant PRO access' : 'Grant bonus bumps'
+  const options = kind === 'pro' ? proDurations : boostExpirations
+  const title = kind === 'pro' ? 'Grant PRO access' : 'Grant bonus boosts'
 
   function run(work: () => Promise<void>) {
     if (inFlight.current) return
@@ -73,7 +73,7 @@ function GrantDialog({ userId, kind, disabled = false }: { userId: string; kind:
             userId,
             duration: values.duration,
             reason: values.reason,
-            ...(kind === 'bumps' ? { amount: values.amount } : {}),
+            ...(kind === 'boosts' ? { amount: values.amount } : {}),
             ...(values.duration === 'custom' ? { expiresAt: new Date(values.expiresLocal).toISOString() } : {})
           },
           kind
@@ -97,7 +97,7 @@ function GrantDialog({ userId, kind, disabled = false }: { userId: string; kind:
         duration: quote.expiresAt ? 'custom' : 'never',
         ...(quote.expiresAt ? { expiresAt: quote.expiresAt } : {})
       }
-      const result = kind === 'pro' ? await grantPro(input) : await grantBumps({ ...input, amount: quote.values.amount })
+      const result = kind === 'pro' ? await grantPro(input) : await grantBoosts({ ...input, amount: quote.values.amount })
       toast.add({
         type: result.success ? 'success' : 'error',
         title: result.success ? result.message : 'Could not grant access',
@@ -140,13 +140,13 @@ function GrantDialog({ userId, kind, disabled = false }: { userId: string; kind:
             <AlertDialogDescription>
               {kind === 'pro'
                 ? 'Complimentary access is separate from paid subscriptions.'
-                : 'Bonus bumps can be used with any plan and do not grant Pro features.'}
+                : 'Bonus boosts can be used with any plan and do not grant Pro features.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {quote ? (
             <div className="flex flex-col gap-4">
               <p className="text-sm">
-                {kind === 'pro' ? 'Grant PRO access' : `Grant ${quote.values.amount} bonus bumps`}
+                {kind === 'pro' ? 'Grant PRO access' : `Grant ${quote.values.amount} bonus boosts`}
                 {quote.expiresAt ? ` until ${formatGrantDate(quote.expiresAt)}?` : ' without expiration?'}
               </p>
               {quote.values.reason && <p className="text-muted-foreground text-sm wrap-anywhere">Reason: {quote.values.reason}</p>}
@@ -173,7 +173,7 @@ function GrantDialog({ userId, kind, disabled = false }: { userId: string; kind:
             </div>
           ) : (
             <form onSubmit={review} className="flex min-w-0 flex-col gap-4">
-              {kind === 'bumps' && (
+              {kind === 'boosts' && (
                 <Controller
                   name="amount"
                   control={form.control}
@@ -343,7 +343,7 @@ export function GrantControls({ userId, manualGrantId }: { userId: string; manua
     <div className="flex flex-wrap gap-2">
       <GrantDialog userId={userId} kind="pro" disabled={!!manualGrantId} />
       {manualGrantId && <RevokeDialog userId={userId} grantId={manualGrantId} />}
-      <GrantDialog userId={userId} kind="bumps" />
+      <GrantDialog userId={userId} kind="boosts" />
     </div>
   )
 }

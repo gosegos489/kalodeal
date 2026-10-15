@@ -48,16 +48,22 @@ async function MyListings({ searchParams }: Props) {
   return (
     <>
       <RouteAutoRefresh />
-      {account.limits.monthlyBumps > 0 || account.bonusBumpsRemaining > 0 ? (
+      {account.monthlyBoosts > 0 || account.bonusBoostsRemaining > 0 ? (
         <p className="text-muted-foreground text-sm" role="status">
-          Plan bumps: {account.planBumpsRemaining} / {account.limits.monthlyBumps} remaining. Bonus bumps: {account.bonusBumpsRemaining} remaining.
+          Plan boosts: {account.planBoostsRemaining} / {account.monthlyBoosts} remaining. Bonus boosts: {account.bonusBoostsRemaining} remaining.
         </p>
       ) : (
         <p className="text-muted-foreground text-sm">
-          Pro includes {PLAN_LIMITS.PRO.monthlyBumps} listing bumps each month to move your active listings toward the top of search results.{' '}
-          <Link href="/account/subscription" className="text-primary hover:underline">
-            Upgrade to Pro
+          Plus includes {PLAN_LIMITS.PLUS.monthlyBoosts} listing boosts each month to move your active listings toward the top of search results.{' '}
+          <Link href="/pricing" className="text-primary hover:underline">
+            Compare plans
           </Link>
+        </p>
+      )}
+      {account.limits.featuredSlots > 0 && (
+        <p role="status" className="text-muted-foreground text-sm">
+          Featured Listings: {account.featuredUsed} / {account.limits.featuredSlots} selected. Priority in relevant results while Business is active;
+          no Boosts used.
         </p>
       )}
       <p className="text-muted-foreground text-sm" role="status">
@@ -65,7 +71,13 @@ async function MyListings({ searchParams }: Props) {
       </p>
       <div className={listingsRowsClassName}>
         {listings.map((listing) => (
-          <MyListingRow key={listing.id} listing={listing} bumpsRemaining={account.bumpsRemaining} canBump={account.bumpsRemaining > 0} />
+          <MyListingRow
+            key={listing.id}
+            listing={listing}
+            boostsRemaining={account.boostsRemaining}
+            canBoost={account.boostsRemaining > 0}
+            canFeature={account.limits.featuredSlots > 0}
+          />
         ))}
       </div>
       <NuqsPagination totalPages={totalPages} ariaLabel="My listings pages" />

@@ -15,9 +15,9 @@ model PlanGrant {
   createdAt   DateTime      @default(now())
   revokedAt   DateTime?
 
-  // Complimentary monthly allowance; independent of Stripe Subscription.bumpUsed.
-  bumpPeriodStart DateTime @default(now())
-  bumpUsed        Int      @default(0)
+  // Complimentary monthly allowance; independent of Stripe Subscription.boostsUsed.
+  boostPeriodStart DateTime @default(now()) @map("bumpPeriodStart")
+  boostsUsed       Int      @default(0) @map("bumpUsed")
 
   @@index([userId, revokedAt, endsAt])
   @@index([userId, createdAt, id])
@@ -25,14 +25,14 @@ model PlanGrant {
   @@map("plan_grant")
 }
 
-model BumpGrant {
+model BoostGrant {
   id          String   @id @default(cuid())
   userId      String
-  user        User     @relation("BumpGrantRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation("BoostGrantRecipient", fields: [userId], references: [id], onDelete: Cascade)
   total       Int
   remaining   Int
   grantedById String
-  grantedBy   User     @relation("BumpGrantIssuer", fields: [grantedById], references: [id], onDelete: Restrict)
+  grantedBy   User     @relation("BoostGrantIssuer", fields: [grantedById], references: [id], onDelete: Restrict)
   expiresAt   DateTime?
   reason      String?  @db.VarChar(500)
   createdAt   DateTime @default(now())

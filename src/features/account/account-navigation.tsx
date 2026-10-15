@@ -48,7 +48,7 @@ function AccountNavigationLinks({ pathname, onNavigate }: { pathname: string; on
             {label}
             {href === '/account/analytics' && (
               <Badge variant="outline" className="ml-auto">
-                Pro
+                Plus+
               </Badge>
             )}
           </Link>
@@ -83,7 +83,7 @@ function MobileAccountMenu({ pathname }: { pathname: string }) {
           >
             <Icon aria-hidden="true" className="text-primary size-4" />
             <span className="min-w-0 whitespace-normal">{currentItem.label}</span>
-            {currentItem.href === '/account/analytics' && <Badge variant="outline">Pro</Badge>}
+            {currentItem.href === '/account/analytics' && <Badge variant="outline">Plus+</Badge>}
             <ChevronDown aria-hidden="true" className="text-muted-foreground ml-auto size-4" />
           </Button>
         }

@@ -1,18 +1,21 @@
 import 'server-only'
+import { cache } from 'react'
 import { listingSummarySelect, toListingSummary } from '@/entities/listing/listing-summary'
+import { getPublicListingIds } from '@/entities/listing/public-eligibility'
 import { requireMarketplaceUser } from '@/lib/auth-utils'
 import { getPagination } from '@/lib/pagination'
 import { LISTING_SLOT_STATUSES, PLAN_LIMITS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { getUserAccess } from '@/lib/user-access'
 
-export async function getAccount() {
+export const getAccount = cache(async function getAccount() {
   const session = await requireMarketplaceUser()
   const userId = session.user.id
 
-  const [access, listingSlotCount] = await Promise.all([
+  const [access, listingSlotCount, featuredUsed] = await Promise.all([
     getUserAccess(prisma, userId),
-    prisma.listing.count({ where: { userId, status: { in: LISTING_SLOT_STATUSES } } })
+    prisma.listing.count({ where: { userId, status: { in: LISTING_SLOT_STATUSES } } }),
+    prisma.listing.count({ where: { userId, status: 'ACTIVE', featuredAt: { not: null } } })
   ])
 
   const { plan, subscription } = access
@@ -22,24 +25,28 @@ export async function getAccount() {
     plan,
     paidPlan: access.paidPlan,
     complimentaryGrant: access.manualGrant ? { endsAt: access.manualGrant.endsAt } : null,
-    planBumpSource: access.planBumpSource,
-    planBumpsRemaining: access.planBumpsRemaining,
-    bonusBumpsRemaining: access.bonusBumpsRemaining,
-    bumpPeriodEndsAt: access.planBumpSource === 'paid' ? subscription?.currentPeriodEnd : access.manualPeriod?.endsAt,
+    planBoostSource: access.planBoostSource,
+    planBoostsRemaining: access.planBoostsRemaining,
+    bonusBoostsRemaining: access.bonusBoostsRemaining,
+    boostPeriodEndsAt: access.planBoostSource === 'paid' ? subscription?.currentPeriodEnd : access.manualPeriod?.endsAt,
     limits: PLAN_LIMITS[plan],
     listingSlotCount,
+    featuredUsed,
+    monthlyBoosts: access.monthlyBoosts,
+    planBoostsUsed: access.planBoostsUsed,
     subscription: subscription
       ? {
           status: subscription.status,
+          stripeStatus: subscription.stripeStatus,
           currentPeriodStart: subscription.currentPeriodStart,
           currentPeriodEnd: subscription.currentPeriodEnd,
-          bumpUsed: subscription.bumpUsed,
+          boostsUsed: subscription.boostsUsed,
           hasStripeSubscription: !!subscription.stripeCustomerId && !!subscription.stripeSubscriptionId
         }
       : null,
-    bumpsRemaining: access.bumpsRemaining
+    boostsRemaining: access.boostsRemaining
   }
-}
+})
 
 export async function getMyListings(pageParam?: string | string[]) {
   const session = await requireMarketplaceUser()
@@ -49,17 +56,28 @@ export async function getMyListings(pageParam?: string | string[]) {
 
   const listings = await prisma.listing.findMany({
     where,
-    select: { ...listingSummarySelect, status: true, bumpedAt: true, updatedAt: true, moderationReason: true, moderationMessage: true },
+    select: {
+      ...listingSummarySelect,
+      status: true,
+      boostedAt: true,
+      featuredAt: true,
+      updatedAt: true,
+      moderationReason: true,
+      moderationMessage: true
+    },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     skip: pagination.skip,
     take: pagination.take
   })
 
+  const visible = await getPublicListingIds(listings.map(({ id }) => id))
   return {
     listings: listings.map((listing) => ({
       ...toListingSummary(listing),
       status: listing.status,
-      bumpedAt: listing.bumpedAt,
+      boostedAt: listing.boostedAt,
+      featured: !!listing.featuredAt,
+      planLimited: listing.status === 'ACTIVE' && !visible.has(listing.id),
       updatedAt: listing.updatedAt.toISOString(),
       moderationReason: listing.moderationReason,
       moderationMessage: listing.moderationMessage

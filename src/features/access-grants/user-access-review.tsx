@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { PLAN_LIMITS, isActivePlanGrant } from '@/lib/plan-limits'
+import { isActivePlanGrant } from '@/lib/plan-limits'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
 import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 import { type GrantHistoryParams, getAccessGrantUser } from './data'
@@ -83,13 +83,14 @@ export async function UserAccessReview({ userId, params }: { userId: unknown; pa
             <div>
               <dt className="text-sm font-medium">Paid subscription</dt>
               <dd className="text-muted-foreground mt-2 text-sm">
-                {access.paidPlan === 'PRO' ? (
+                {access.paidPlan !== 'FREE' ? (
                   <>
-                    PRO · {subscription?.status === 'CANCELED' ? 'Ends' : 'Renews'}: {formatGrantDate(subscription?.currentPeriodEnd ?? null)}
+                    {access.paidPlan} · {subscription?.status === 'CANCELED' ? 'Ends' : 'Renews'}:{' '}
+                    {formatGrantDate(subscription?.currentPeriodEnd ?? null)}
                   </>
                 ) : subscription?.stripeSubscriptionId ? (
                   <>
-                    No active paid PRO · {subscription.status}
+                    No active paid subscription · {subscription.status}
                     <br />
                     Last paid period ends: {formatGrantDate(subscription.currentPeriodEnd)}
                   </>
@@ -105,20 +106,20 @@ export async function UserAccessReview({ userId, params }: { userId: unknown; pa
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium">Plan bumps</dt>
+              <dt className="text-sm font-medium">Plan boosts</dt>
               <dd className="text-muted-foreground mt-2 text-sm">
-                {access.planBumpsRemaining} / {PLAN_LIMITS[access.plan].monthlyBumps} remaining
-                {access.planBumpSource ? ` · ${access.planBumpSource}` : ''}
+                {access.planBoostsRemaining} / {access.monthlyBoosts} remaining
+                {access.planBoostSource ? ` · ${access.planBoostSource}` : ''}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium">Bonus bumps</dt>
-              <dd className="text-muted-foreground mt-2 text-sm">{access.bonusBumpsRemaining} remaining</dd>
+              <dt className="text-sm font-medium">Bonus boosts</dt>
+              <dd className="text-muted-foreground mt-2 text-sm">{access.bonusBoostsRemaining} remaining</dd>
             </div>
           </dl>
           <GrantControls userId={user.id} manualGrantId={access.manualGrant?.id ?? null} />
           <p className="text-muted-foreground text-xs">
-            Bumps use expiring bonus credits first, then the current plan allowance, then bonus credits without expiration. Paid and complimentary
+            Boosts use expiring bonus credits first, then the current plan allowance, then bonus credits without expiration. Paid and complimentary
             plan allowances do not stack.
           </p>
         </CardContent>
@@ -146,10 +147,10 @@ export async function UserAccessReview({ userId, params }: { userId: unknown; pa
           </tr>
         )}
       </History>
-      <History title="Bonus bump history" totalPages={data.bumpsPagination.totalPages} pageKey="bumpsPage">
-        {data.bumpGrants.map((grant) => (
+      <History title="Bonus boost history" totalPages={data.boostsPagination.totalPages} pageKey="boostsPage">
+        {data.boostGrants.map((grant) => (
           <tr key={grant.id} className="border-t [&>td]:px-3 [&>td]:py-3">
-            <td>Bumps</td>
+            <td>Boosts</td>
             <td>+{grant.total}</td>
             <td className="wrap-anywhere">{grant.grantedBy.email}</td>
             <td>{formatGrantDate(grant.createdAt)}</td>
@@ -161,10 +162,10 @@ export async function UserAccessReview({ userId, params }: { userId: unknown; pa
             </td>
           </tr>
         ))}
-        {!data.bumpGrants.length && (
+        {!data.boostGrants.length && (
           <tr>
             <td colSpan={7} className="text-muted-foreground p-3">
-              No bonus bump grants.
+              No bonus boost grants.
             </td>
           </tr>
         )}

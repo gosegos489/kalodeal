@@ -1,4 +1,5 @@
 import 'server-only'
+import { getPublicListingIds } from '@/entities/listing/public-eligibility'
 import prisma from '@/lib/prisma'
 import { getViewDay, getVisitorHash } from './view-identity'
 
@@ -11,7 +12,7 @@ export async function recordListingView(listingId: string, userId: string | null
       SELECT id FROM listing WHERE id = ${listingId} AND status = 'ACTIVE'
       AND "userId" <> ${userId ?? ''} FOR UPDATE
     `
-    if (!listings.length) return false
+    if (!listings.length || !(await getPublicListingIds([listingId], tx)).has(listingId)) return false
     const inserted = await tx.listingDailyView.createMany({ data: [{ listingId, visitorHash, day }], skipDuplicates: true })
     if (inserted.count === 0) return false
     await tx.listingStats.upsert({

@@ -4,9 +4,10 @@ import { Loader2 } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
-import { manageSubscription, upgradeToPro } from './actions'
+import type { PaidPlan } from '@/lib/plan-limits'
+import { manageSubscription, startPlanCheckout } from './actions'
 
-export function BillingButton({ intent, upgradeLabel }: { intent: 'upgrade' | 'manage'; upgradeLabel?: string }) {
+export function BillingButton({ intent, upgradeLabel, plan = 'PRO' }: { intent: 'upgrade' | 'manage'; upgradeLabel?: string; plan?: PaidPlan }) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   return (
@@ -19,7 +20,7 @@ export function BillingButton({ intent, upgradeLabel }: { intent: 'upgrade' | 'm
           setError(null)
           startTransition(async () => {
             try {
-              const result = await (intent === 'upgrade' ? upgradeToPro() : manageSubscription())
+              const result = await (intent === 'upgrade' ? startPlanCheckout(plan) : manageSubscription())
               if (result.success) {
                 window.location.assign(result.data.url)
                 return
@@ -35,7 +36,7 @@ export function BillingButton({ intent, upgradeLabel }: { intent: 'upgrade' | 'm
         }}
       >
         {pending && <Loader2 aria-hidden="true" className="motion-safe:animate-spin" />}
-        {pending ? 'Opening...' : intent === 'upgrade' ? (upgradeLabel ?? 'Upgrade to Pro') : 'Manage subscription'}
+        {pending ? 'Opening...' : (upgradeLabel ?? (intent === 'upgrade' ? 'Upgrade plan' : 'Manage subscription'))}
       </Button>
       {error && (
         <p role="alert" className="text-destructive text-sm">

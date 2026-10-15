@@ -60,6 +60,7 @@ export async function moderateListing(input: unknown): Promise<ActionMessageResu
         where: { id: review.id, status: listing.status, updatedAt: listing.updatedAt },
         data: {
           status,
+          ...(status !== 'ACTIVE' ? { featuredAt: null } : {}),
           moderationReason: 'reason' in review ? (review.reason ?? null) : null,
           moderationMessage: 'message' in review ? review.message || null : null,
           updatedAt: version

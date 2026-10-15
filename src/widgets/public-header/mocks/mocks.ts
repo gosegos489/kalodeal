@@ -4,6 +4,7 @@ import { getAccountDestination } from '@/lib/account-role'
 export const navigation = [
   { label: 'Browse', href: '/' },
   { label: 'Categories', href: '/categories' },
+  { label: 'Pricing', href: '/pricing' },
   { label: 'How it works', href: '/how-it-works' }
 ]
 

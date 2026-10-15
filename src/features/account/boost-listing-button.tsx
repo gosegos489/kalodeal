@@ -6,29 +6,37 @@ import { useId, useRef, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 import type { ListingStatus } from '@/generated/prisma/enums'
-import { bumpListing } from './bump-listing'
+import { boostListing } from './boost-listing'
 
-type BumpListingButtonProps = { listingId: string; title: string; status: ListingStatus; bumpsRemaining: number; canBump: boolean }
+type BoostListingButtonProps = {
+  listingId: string
+  title: string
+  status: ListingStatus
+  boostsRemaining: number
+  canBoost: boolean
+  unavailableReason?: string
+}
 
 const unavailableStatusReasons = {
   PENDING: 'Available after approval.',
-  CHANGES_REQUESTED: 'Submit your changes and wait for approval before bumping.',
+  CHANGES_REQUESTED: 'Submit your changes and wait for approval before boosting.',
   HIDDEN: 'Unavailable while hidden by moderation.',
-  INACTIVE: 'Unhide this listing before bumping it.',
-  REJECTED: 'Rejected listings cannot be bumped.',
-  SOLD: 'Sold listings cannot be bumped.'
+  INACTIVE: 'Unhide this listing before boosting it.',
+  REJECTED: 'Rejected listings cannot be boosted.',
+  SOLD: 'Sold listings cannot be boosted.'
 } satisfies Record<Exclude<ListingStatus, 'ACTIVE'>, string>
 
-export function BumpListingButton({ listingId, title, status, bumpsRemaining, canBump }: BumpListingButtonProps) {
+export function BoostListingButton({ listingId, title, status, boostsRemaining, canBoost, unavailableReason }: BoostListingButtonProps) {
   const router = useRouter()
   const reasonId = useId()
   const inFlight = useRef(false)
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const unavailableStatusReason = status === 'ACTIVE' ? null : unavailableStatusReasons[status]
-  const disabled = !canBump || status !== 'ACTIVE' || bumpsRemaining <= 0
-  const label = 'Bump'
-  const disabledReason = unavailableStatusReason ?? (!canBump || bumpsRemaining <= 0 ? 'No plan or bonus bumps remaining.' : null)
+  const disabled = !canBoost || status !== 'ACTIVE' || boostsRemaining <= 0
+  const label = 'Boost Listing'
+  const disabledReason =
+    unavailableReason ?? unavailableStatusReason ?? (!canBoost || boostsRemaining <= 0 ? 'No plan or bonus boosts remaining.' : null)
 
   return (
     <div className="flex w-full min-w-0 flex-col items-start gap-1" title={disabledReason ?? undefined}>
@@ -45,17 +53,17 @@ export function BumpListingButton({ listingId, title, status, bumpsRemaining, ca
           setError(null)
           startTransition(async () => {
             try {
-              const result = await bumpListing(listingId)
+              const result = await boostListing(listingId)
               if (!result.success) setError(result.message)
               toast.add({
-                title: result.success ? 'Listing bumped' : 'Could not bump listing',
+                title: result.success ? 'Listing boosted' : 'Could not boost listing',
                 description: result.message,
                 type: result.success ? 'success' : 'error'
               })
             } catch {
-              const message = 'Could not bump your listing. Please try again.'
+              const message = 'Could not boost your listing. Please try again.'
               setError(message)
-              toast.add({ title: 'Could not bump listing', description: message, type: 'error' })
+              toast.add({ title: 'Could not boost listing', description: message, type: 'error' })
             } finally {
               // Reload allowances from the server, including stale-plan or exhausted-quota failures.
               router.refresh()
@@ -65,7 +73,7 @@ export function BumpListingButton({ listingId, title, status, bumpsRemaining, ca
         }}
       >
         {pending ? <Loader2 aria-hidden="true" className="motion-safe:animate-spin" /> : <ArrowUp aria-hidden="true" />}
-        {pending ? 'Bumping...' : label}
+        {pending ? 'Boosting...' : label}
       </Button>
       <span id={reasonId} className="text-muted-foreground min-h-8 w-full text-xs leading-4 wrap-anywhere">
         {disabledReason}

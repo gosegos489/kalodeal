@@ -89,11 +89,11 @@ export function buildCollectionJsonLd({
 }
 
 export function buildListingJsonLd(
-  listing: Pick<ListingDetails, 'id' | 'title' | 'description' | 'price' | 'currency' | 'images' | 'status'>,
+  listing: Pick<ListingDetails, 'id' | 'title' | 'description' | 'price' | 'currency' | 'images' | 'status' | 'publiclyVisible'>,
   breadcrumbs: SeoBreadcrumb[],
   { includeOffer = false }: { includeOffer?: boolean } = {}
 ): JsonLd | null {
-  if (listing.status !== 'ACTIVE') return null
+  if (listing.status !== 'ACTIVE' || !listing.publiclyVisible) return null
 
   const url = getCanonicalUrl(`/listings/${listing.id}`)
   const name = toPlainText(listing.title)

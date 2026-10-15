@@ -7,7 +7,7 @@ import type { ActionResult } from '@/lib/action-result'
 import { getMutationSession } from '@/lib/auth-utils'
 import prisma from '@/lib/prisma'
 import { captureServerException } from '@/lib/sentry-server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { paymentInvoiceRequestSchema, stripeInvoiceUrlSchema } from './schema'
 
 export async function getPaymentInvoiceUrl(input: unknown): Promise<ActionResult<{ url: string }>> {
@@ -26,7 +26,7 @@ export async function getPaymentInvoiceUrl(input: unknown): Promise<ActionResult
     })
     if (!payment) return { success: false, message: 'Invoice not found.' }
 
-    const invoice = await stripe.invoices.retrieve(payment.stripeInvoiceId)
+    const invoice = await getStripe().invoices.retrieve(payment.stripeInvoiceId)
     const subscription = invoice.parent?.subscription_details?.subscription
     const subscriptionId = typeof subscription === 'string' ? subscription : subscription?.id
     if (invoice.id !== payment.stripeInvoiceId || subscriptionId !== payment.stripeSubscriptionId || invoice.livemode !== getStripeLiveMode()) {

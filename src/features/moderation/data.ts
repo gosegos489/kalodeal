@@ -10,7 +10,7 @@ export async function getModerationOverview() {
   await getSettingsPageActor(true)
   const [pendingListings, pendingNames, pendingAvatars, avatarCleanup, listings, openChatReports] = await Promise.all([
     prisma.listing.count({ where: { status: 'PENDING' } }),
-    prisma.user.count({ where: { pendingName: { not: null } } }),
+    prisma.user.count({ where: { OR: [{ pendingName: { not: null } }, { pendingBusinessName: { not: null } }] } }),
     prisma.user.count({ where: { pendingAvatarKey: { not: null } } }),
     prisma.user.count({ where: { avatarCleanupKey: { not: null } } }),
     prisma.listing.findMany({

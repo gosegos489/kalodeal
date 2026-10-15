@@ -18,7 +18,7 @@ const updateListingLimiter = new Ratelimit({
   timeout: 3000
 })
 
-const bumpListingLimiter = new Ratelimit({
+const boostListingLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(10, '1 m'),
   prefix: 'ratelimit:listing:bump',
@@ -132,8 +132,8 @@ export function checkUpdateListingRateLimit(userId: string) {
   return checkRateLimit(updateListingLimiter, `user:${userId}`)
 }
 
-export function checkBumpListingRateLimit(userId: string) {
-  return checkRateLimit(bumpListingLimiter, `user:${userId}`)
+export function checkBoostListingRateLimit(userId: string) {
+  return checkRateLimit(boostListingLimiter, `user:${userId}`)
 }
 
 export function checkListingPhotoRateLimit(userId: string) {

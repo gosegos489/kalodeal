@@ -2,7 +2,7 @@ import 'server-only'
 import { getListingImageUrl } from '@/entities/listing/listing-summary'
 import { listingIdSchema } from '@/entities/listing/schema'
 import { requireMarketplaceUser } from '@/lib/auth-utils'
-import { PLAN_LIMITS } from '@/lib/plan-limits'
+import { MAX_LISTING_PHOTOS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { getUserAccess } from '@/lib/user-access'
 import type { EditableListing } from './types'
@@ -37,7 +37,7 @@ export async function getEditableListing(id: unknown): Promise<(EditableListing 
         images: {
           select: { id: true, key: true, sortOrder: true },
           orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
-          take: PLAN_LIMITS.PRO.imagesPerListing
+          take: MAX_LISTING_PHOTOS
         }
       }
     }),

@@ -1,6 +1,6 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { listingIdSchema } from '@/entities/listing/schema'
-import { MAX_IMAGE_BYTES } from '@/features/create-listing/schema'
+import { MAX_PHOTO_REQUEST_BYTES } from '@/features/create-listing/schema'
 import { PhotoMutationError, mutateListingPhotos } from '@/features/edit-listing/photo-mutations'
 import { type PhotoMutationResult, photoMutationSchema } from '@/features/edit-listing/photo-schema'
 import { canUseMarketplace } from '@/lib/account-role'
@@ -8,7 +8,6 @@ import { getMutationSession } from '@/lib/auth-utils'
 import { cacheTags } from '@/lib/cache-tags'
 import { ListingPhotoValidationError } from '@/lib/listing-photo-storage'
 import { ListingSlotError } from '@/lib/listing-slots'
-import { PLAN_LIMITS } from '@/lib/plan-limits'
 import { checkListingPhotoRateLimit } from '@/lib/rate-limit'
 import { MultipartBodyError, readMultipartFormData } from '@/lib/read-multipart-form-data'
 import { captureServerException } from '@/lib/sentry-server'
@@ -40,12 +39,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       })
     }
 
-    const payload = await readMultipartFormData(
-      request,
-      PLAN_LIMITS.PRO.imagesPerListing * MAX_IMAGE_BYTES + 64 * 1024,
-      'Invalid photo request.',
-      'The selected photos are too large.'
-    )
+    const payload = await readMultipartFormData(request, MAX_PHOTO_REQUEST_BYTES, 'Invalid photo request.', 'The selected photos are too large.')
     // Validate every submitted field, including duplicates and operation-specific fields.
     const input: Record<string, unknown> = {}
     for (const key of new Set(payload.keys())) {

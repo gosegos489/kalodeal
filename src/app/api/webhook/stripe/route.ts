@@ -1,9 +1,10 @@
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import type Stripe from 'stripe'
 import { getStripeLiveMode } from '@/features/billing/config'
 import { BILLING_EVENTS, reconcileBillingEvent } from '@/features/billing/webhook'
+import { cacheTags } from '@/lib/cache-tags'
 import { captureServerException } from '@/lib/sentry-server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
   let event: Stripe.Event
   try {
     // The effective deployment environment provides ONE secret; do not try local and deployed secrets interchangeably.
-    event = stripe.webhooks.constructEvent(await request.text(), signature, secret)
+    event = getStripe().webhooks.constructEvent(await request.text(), signature, secret)
     if (event.livemode !== getStripeLiveMode()) return Response.json({ error: 'Invalid event mode.' }, { status: 400 })
   } catch {
     return Response.json({ error: 'Invalid signature.' }, { status: 400 })
@@ -26,6 +27,9 @@ export async function POST(request: Request) {
     // Also run on retries: a previous delivery may have committed before revalidation failed.
     revalidatePath('/account', 'layout')
     revalidatePath('/sell')
+    revalidateTag(cacheTags.listings, { expire: 0 })
+    revalidatePath('/pricing')
+    revalidatePath('/listings/[id]', 'page')
     return Response.json({ received: true })
   } catch (error) {
     await captureServerException(error, { feature: 'stripe-webhook', operation: 'reconcile', eventId: event.id, eventType: event.type })

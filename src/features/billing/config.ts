@@ -1,11 +1,34 @@
 import 'server-only'
-import { stripe } from '@/lib/stripe'
+import { PAID_PLANS, PLAN_LIMITS, type PaidPlan } from '@/lib/plan-limits'
+import { getStripe } from '@/lib/stripe'
 import { isSafePortalConfiguration } from './subscription-state'
 
-export function getProPriceId() {
-  const priceId = process.env.STRIPE_PRO_PRICE_ID
-  if (!priceId || !/^price_[A-Za-z0-9]+$/.test(priceId)) throw new Error('PRO price is not configured.')
-  return priceId
+const priceVariables = { PLUS: 'STRIPE_PLUS_PRICE_ID', PRO: 'STRIPE_PRO_PRICE_ID', BUSINESS: 'STRIPE_BUSINESS_PRICE_ID' } as const
+
+export function getPlanPriceId(plan: PaidPlan) {
+  const id = process.env[priceVariables[plan]]
+  if (!id || !/^price_[A-Za-z0-9]+$/.test(id)) throw new Error(`${plan} price is not configured.`)
+  return id
+}
+
+// Explicit compatibility for deployed Pro subscriptions. Never modify their prices.
+export function getRecognizedPrices(): Partial<Record<string, PaidPlan>> {
+  const prices: Partial<Record<string, PaidPlan>> = {}
+  function add(id: string, plan: PaidPlan) {
+    if (!/^price_[A-Za-z0-9]+$/.test(id) || (prices[id] && prices[id] !== plan)) throw new Error('Invalid or ambiguous Stripe price configuration.')
+    prices[id] = plan
+  }
+  for (const plan of PAID_PLANS) {
+    const id = process.env[priceVariables[plan]]
+    if (id) add(id, plan)
+  }
+  for (const id of (process.env.STRIPE_LEGACY_PRO_PRICE_IDS ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean))
+    add(id, 'PRO')
+  if (!Object.keys(prices).length) throw new Error('No Stripe prices are configured.')
+  return prices
 }
 
 export function getBillingOrigin() {
@@ -22,8 +45,9 @@ export function getStripeLiveMode() {
   throw new Error('Stripe mode is not configured.')
 }
 
-export async function getProPrice() {
-  const price = await stripe.prices.retrieve(getProPriceId())
+export async function getPlanPrice(plan: PaidPlan) {
+  getRecognizedPrices()
+  const price = await getStripe().prices.retrieve(getPlanPriceId(plan))
   if (
     !price.active ||
     price.livemode !== getStripeLiveMode() ||
@@ -31,31 +55,37 @@ export async function getProPrice() {
     price.recurring?.interval !== 'month' ||
     price.recurring.interval_count !== 1 ||
     price.recurring.usage_type !== 'licensed' ||
-    price.unit_amount === null ||
-    price.unit_amount <= 0
+    price.currency !== 'eur' ||
+    price.unit_amount !== PLAN_LIMITS[plan].price
   )
-    throw new Error('An active monthly PRO price is required.')
-  return { ...price, unit_amount: price.unit_amount }
+    throw new Error('The configured monthly price does not match this plan.')
+  return price
 }
 
 export async function getPortalConfiguration() {
-  // Inspect an explicitly configured portal or the Dashboard default; never mutate settings here.
+  const prices = getRecognizedPrices()
   const configurationId = process.env.STRIPE_PORTAL_CONFIGURATION_ID
   if (configurationId) {
-    const configuration = await stripe.billingPortal.configurations.retrieve(configurationId)
-    return configuration.livemode === getStripeLiveMode() && isSafePortalConfiguration(configuration) ? configuration : null
+    const configuration = await getStripe().billingPortal.configurations.retrieve(configurationId)
+    return configuration.livemode === getStripeLiveMode() && isSafePortalConfiguration(configuration, prices) ? configuration : null
   }
-  for await (const configuration of stripe.billingPortal.configurations.list({ is_default: true, limit: 1 })) {
-    if (configuration.livemode === getStripeLiveMode() && isSafePortalConfiguration(configuration)) return configuration
+  for await (const configuration of getStripe().billingPortal.configurations.list({ is_default: true, limit: 1 })) {
+    const full = await getStripe().billingPortal.configurations.retrieve(configuration.id)
+    if (full.livemode === getStripeLiveMode() && isSafePortalConfiguration(full, prices)) return full
   }
   return null
 }
 
 export async function getBillingAvailability() {
-  try {
-    const price = await getProPrice()
-    return { price: { amount: price.unit_amount, currency: price.currency } }
-  } catch {
-    return { price: null }
-  }
+  const results = await Promise.all(
+    PAID_PLANS.map(async (plan) => {
+      try {
+        await getPlanPrice(plan)
+        return [plan, true] as const
+      } catch {
+        return [plan, false] as const
+      }
+    })
+  )
+  return Object.fromEntries(results)
 }

@@ -37,8 +37,26 @@ export function listingModerationWhere(params: ModerationSearchParams): Prisma.L
 
 export function profileModerationWhere(query?: string | string[]): Prisma.UserWhereInput {
   const text = getModerationQuery(query)
-  const search = text ? { OR: [userSearchWhere(text), { pendingName: { contains: text, mode: 'insensitive' as const } }] } : {}
+  const search = text
+    ? {
+        OR: [
+          userSearchWhere(text),
+          { pendingName: { contains: text, mode: 'insensitive' as const } },
+          { pendingBusinessName: { contains: text, mode: 'insensitive' as const } }
+        ]
+      }
+    : {}
   return {
-    AND: [{ OR: [{ pendingName: { not: null } }, { pendingAvatarKey: { not: null } }, { avatarCleanupKey: { not: null } }] }, search]
+    AND: [
+      {
+        OR: [
+          { pendingName: { not: null } },
+          { pendingBusinessName: { not: null } },
+          { pendingAvatarKey: { not: null } },
+          { avatarCleanupKey: { not: null } }
+        ]
+      },
+      search
+    ]
   }
 }

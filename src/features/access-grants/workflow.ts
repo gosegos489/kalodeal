@@ -4,9 +4,9 @@ import { isActivePlanGrant } from '@/lib/plan-limits'
 import { activePlanGrantWhere } from '@/lib/user-access'
 import { AccessGrantError } from './error'
 import { canManageAccessGrants } from './permission'
-import { getGrantExpiration, grantBumpsSchema, grantProSchema, revokeProSchema } from './schema'
+import { getGrantExpiration, grantBoostsSchema, grantProSchema, revokeProSchema } from './schema'
 
-// Cooperate with owner quota/bump/billing locks. Sorting avoids cross-staff deadlocks.
+// Cooperate with owner quota/boost/billing locks. Sorting avoids cross-staff deadlocks.
 async function authorizeGrant(tx: Prisma.TransactionClient, actorId: string, userId: string) {
   for (const id of [...new Set([actorId, userId])].sort()) {
     await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${id} FOR UPDATE`
@@ -42,7 +42,7 @@ export async function grantProAccess(tx: Prisma.TransactionClient, actorId: stri
   const existing = await tx.planGrant.findFirst({ where: activePlanGrantWhere(data.userId, now), select: { id: true } })
   if (existing) throw new AccessGrantError('This user already has active complimentary PRO access. Revoke it before issuing a replacement.')
   await tx.planGrant.create({
-    data: { userId: data.userId, plan: 'PRO', startsAt: now, endsAt, grantedById: actorId, reason: data.reason || null, bumpPeriodStart: now },
+    data: { userId: data.userId, plan: 'PRO', startsAt: now, endsAt, grantedById: actorId, reason: data.reason || null, boostPeriodStart: now },
     select: { id: true }
   })
   return { userId: data.userId, message: 'PRO access granted.' }
@@ -65,13 +65,13 @@ export async function revokeProAccess(tx: Prisma.TransactionClient, actorId: str
   return { userId: data.userId, message: 'Complimentary PRO access revoked. Paid subscriptions are unaffected.' }
 }
 
-export async function grantBonusBumps(tx: Prisma.TransactionClient, actorId: string, input: unknown) {
-  const data = parseInput(grantBumpsSchema, input)
+export async function grantBonusBoosts(tx: Prisma.TransactionClient, actorId: string, input: unknown) {
+  const data = parseInput(grantBoostsSchema, input)
   await authorizeGrant(tx, actorId, data.userId)
   const expiresAt = expiration(data, new Date())
-  await tx.bumpGrant.create({
+  await tx.boostGrant.create({
     data: { userId: data.userId, total: data.amount, remaining: data.amount, grantedById: actorId, expiresAt, reason: data.reason || null },
     select: { id: true }
   })
-  return { userId: data.userId, message: `${data.amount} bonus bumps granted.` }
+  return { userId: data.userId, message: `${data.amount} bonus boosts granted.` }
 }

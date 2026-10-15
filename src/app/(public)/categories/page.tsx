@@ -2,6 +2,8 @@ import { ChevronRight, MoveRight, Tag } from 'lucide-react'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Suspense } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { getCategorySummaries } from '@/entities/category/get-category-tree'
 import { CategoryCard } from '@/entities/category/ui/CategoryCard'
 import { buildCollectionJsonLd } from '@/lib/json-ld'
@@ -15,7 +17,7 @@ export const metadata: Metadata = buildMetadata({
   path: '/categories'
 })
 
-export default async function CategoriesPage() {
+async function CategoriesContent() {
   const categories = await getCategorySummaries()
   const listingsCount = categories.reduce((total, category) => total + category.listingCount, 0)
 
@@ -115,5 +117,19 @@ export default async function CategoriesPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function CategoriesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container py-10" role="status" aria-label="Loading categories">
+          <Skeleton className="h-96 rounded-xl" />
+        </div>
+      }
+    >
+      <CategoriesContent />
+    </Suspense>
   )
 }

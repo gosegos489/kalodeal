@@ -9,7 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [categories, privacy, terms] = await Promise.all([getPublicCategories(), getLegal('PRIVACY_POLICY'), getLegal('TERMS_OF_USE')])
 
   return [
-    ...['/', '/categories', '/how-it-works', '/safety', '/contact-us'].map((path) => ({ url: getCanonicalUrl(path) })),
+    ...['/', '/categories', '/pricing', '/how-it-works', '/safety', '/contact-us'].map((path) => ({ url: getCanonicalUrl(path) })),
     ...categories.map(({ category }) => ({ url: getCanonicalUrl(getCategoryPath(category.slug)) })),
     ...(privacy ? [{ url: getCanonicalUrl('/legal/privacy-policy'), lastModified: privacy.updatedAt }] : []),
     ...(terms ? [{ url: getCanonicalUrl('/legal/terms-of-use'), lastModified: terms.updatedAt }] : [])

@@ -5,7 +5,7 @@ import { getSellerName } from '@/entities/user/public-profile'
 import { getSettingsPageActor } from '@/features/account/settings/server'
 import type { Prisma } from '@/generated/prisma/client'
 import { getPagination } from '@/lib/pagination'
-import { PLAN_LIMITS } from '@/lib/plan-limits'
+import { MAX_LISTING_PHOTOS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { type ModerationSearchParams, listingModerationWhere } from '../shared/search'
 
@@ -62,7 +62,7 @@ export async function getModerationListing(id: unknown) {
       images: {
         select: { id: true, key: true },
         orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
-        take: PLAN_LIMITS.PRO.imagesPerListing
+        take: MAX_LISTING_PHOTOS
       }
     }
   })

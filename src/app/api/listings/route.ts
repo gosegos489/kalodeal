@@ -1,6 +1,6 @@
 import { revalidateTag } from 'next/cache'
 import { randomUUID } from 'node:crypto'
-import { MAX_IMAGE_BYTES, createListingSchema } from '@/features/create-listing/schema'
+import { MAX_PHOTO_REQUEST_BYTES, createListingSchema } from '@/features/create-listing/schema'
 import type { CreateListingResult } from '@/features/create-listing/types'
 import { canUseMarketplace } from '@/lib/account-role'
 import { isActiveMarketplaceUser } from '@/lib/active-user'
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     })
   }
 
-  const maxBodyBytes = PLAN_LIMITS.PRO.imagesPerListing * MAX_IMAGE_BYTES + 1024 * 1024
+  const maxBodyBytes = MAX_PHOTO_REQUEST_BYTES
   let payload: FormData
   try {
     payload = await readMultipartFormData(request, maxBodyBytes, 'Invalid listing data.', 'The selected photos are too large.')

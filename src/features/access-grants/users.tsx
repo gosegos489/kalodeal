@@ -15,7 +15,7 @@ export async function AccessGrantUsers(params: ModerationSearchParams) {
         <h2 id="access-grants-heading" className="text-2xl font-semibold">
           Access grants
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm">Find an account to grant complimentary Pro access or bonus bumps.</p>
+        <p className="text-muted-foreground mt-1 text-sm">Find an account to grant complimentary Pro access or bonus boosts.</p>
       </div>
       <ModerationSearch kind="users" />
       <p role="status" className="text-muted-foreground text-sm">

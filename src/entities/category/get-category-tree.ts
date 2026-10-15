@@ -1,9 +1,32 @@
 import { cacheLife, cacheTag } from 'next/cache'
 import { cache } from 'react'
+import { publicListingEligibilitySql } from '@/entities/listing/public-eligibility'
+import { Prisma } from '@/generated/prisma/client'
 import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'
 
 export async function getCategoryTree() {
+  const [categories, counts] = await Promise.all([
+    getCachedCategoryTree(),
+    prisma.$queryRaw<{ categoryId: string; count: number }[]>(Prisma.sql`
+      SELECT eligible_listing."categoryId", COUNT(*)::int AS count FROM listing eligible_listing
+      WHERE eligible_listing.status = 'ACTIVE' AND ${publicListingEligibilitySql()}
+      GROUP BY eligible_listing."categoryId"
+    `)
+  ])
+  const byCategory = new Map(counts.map(({ categoryId, count }) => [categoryId, count]))
+  return categories.map((category) => ({
+    ...category,
+    _count: { listings: byCategory.get(category.id) ?? 0 },
+    children: category.children.map((child) => ({
+      ...child,
+      _count: { listings: byCategory.get(child.id) ?? 0 },
+      children: child.children.map((grandchild) => ({ ...grandchild, _count: { listings: byCategory.get(grandchild.id) ?? 0 } }))
+    }))
+  }))
+}
+
+async function getCachedCategoryTree() {
   'use cache'
 
   cacheTag(cacheTags.categories)

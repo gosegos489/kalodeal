@@ -1,6 +1,7 @@
 import { CheckCircle2 } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { LoginForm } from '@/features/auth'
 
 export const metadata: Metadata = { title: 'Sign In', description: 'Sign in to your Kalodeal account to manage listings, favorites, and messages.' }
@@ -40,7 +41,9 @@ export default function LoginPage() {
             <p className="text-muted-foreground text-sm">Enter your email and password to access your KaloDeal account.</p>
           </div>
 
-          <LoginForm />
+          <Suspense fallback={<p role="status">Loading sign-in form...</p>}>
+            <LoginForm />
+          </Suspense>
 
           <div className="flex flex-col items-center justify-center gap-2 text-center text-sm">
             <Link href="/forgot-password" className="text-primary w-fit font-medium">

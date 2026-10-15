@@ -2,6 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ import { loginSchema } from '../schemas/login'
 import type { LoginInput } from '../types/auth'
 
 export default function LoginForm() {
+  const returnTo = useSearchParams().get('returnTo')
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' }
@@ -21,7 +23,7 @@ export default function LoginForm() {
   const isSubmitting = form.formState.isSubmitting
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      const { error } = await login(data)
+      const { error } = await login(data, returnTo ?? undefined)
       if (error) toast.add({ title: 'Login failed', description: getLoginErrorMessage(error), type: 'error' })
     } catch {
       toast.add({ title: 'Login failed', description: 'Could not sign in. Please try again.', type: 'error' })

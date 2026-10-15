@@ -4,6 +4,7 @@ export const footerLinks = [
     links: [
       ['Browse listings', '/'],
       ['Categories', '/categories'],
+      ['Pricing', '/pricing'],
       ['Post a listing', '/sell'],
       ['Saved items', '/account/favorites']
     ]

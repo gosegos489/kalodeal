@@ -16,10 +16,7 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 async function AccountSubscription({ searchParams }: Props) {
   const account = await getAccount()
   const params = await searchParams
-  const billing = await getBillingAvailability()
-  const price = billing.price
-    ? new Intl.NumberFormat('en', { style: 'currency', currency: billing.price.currency }).format(billing.price.amount / 100)
-    : null
+  const available = await getBillingAvailability()
 
   return (
     <div className="flex flex-col gap-6">
@@ -27,7 +24,7 @@ async function AccountSubscription({ searchParams }: Props) {
       {params.checkout === 'success' && (
         <Card>
           <CardContent className="flex flex-col items-start gap-3" role="status">
-            {account.paidPlan === 'PRO' ? <p>Your paid Pro plan is active.</p> : <CheckoutPending />}
+            {account.paidPlan !== 'FREE' ? <p>Your paid plan is active.</p> : <CheckoutPending />}
           </CardContent>
         </Card>
       )}
@@ -42,13 +39,13 @@ async function AccountSubscription({ searchParams }: Props) {
             <h2>My plan</h2>
           </CardTitle>
           <CardDescription>
-            {account.plan === 'PRO'
+            {account.plan !== 'FREE'
               ? 'For active sellers. List more items and track buyer interest.'
               : 'For occasional sellers. Start with the essentials.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-start gap-6">
-          <Badge>{account.plan === 'PRO' ? 'Pro plan' : 'Free plan'}</Badge>
+          <Badge>{account.limits.name} plan</Badge>
           <dl className="grid w-full gap-4 sm:grid-cols-2">
             <div>
               <dt className="text-muted-foreground text-sm">Used listing slots</dt>
@@ -61,35 +58,52 @@ async function AccountSubscription({ searchParams }: Props) {
               <dd className="mt-1 text-lg font-semibold">{account.limits.imagesPerListing}</dd>
             </div>
             <div>
-              <dt className="text-muted-foreground text-sm">Advanced analytics</dt>
-              <dd className="mt-1 text-lg font-semibold">{account.limits.advancedStats ? 'Included' : 'Pro only'}</dd>
+              <dt className="text-muted-foreground text-sm">Listing analytics</dt>
+              <dd className="mt-1 text-lg font-semibold">{account.limits.analyticsLevel}</dd>
             </div>
             <div>
-              <dt className="text-muted-foreground text-sm">Monthly listing bumps</dt>
+              <dt className="text-muted-foreground text-sm">Monthly listing boosts</dt>
               <dd className="mt-1 text-lg font-semibold">
-                {account.plan === 'PRO' ? (
+                {account.monthlyBoosts > 0 ? (
                   <>
-                    {account.limits.monthlyBumps} total{' '}
-                    <span className="text-muted-foreground text-sm">· {account.planBumpsRemaining} remaining</span>
+                    {account.monthlyBoosts} total{' '}
+                    <span className="text-muted-foreground text-sm">
+                      · {account.planBoostsUsed} used · {account.planBoostsRemaining} remaining
+                    </span>
                   </>
                 ) : (
-                  <span className="text-muted-foreground text-sm font-normal">Available with Pro access</span>
+                  <span className="text-muted-foreground text-sm font-normal">Available on paid plans</span>
                 )}
               </dd>
             </div>
             <div>
-              <dt className="text-muted-foreground text-sm">Bonus bumps</dt>
-              <dd className="mt-1 text-lg font-semibold">{account.bonusBumpsRemaining} remaining</dd>
+              <dt className="text-muted-foreground text-sm">Bonus boosts</dt>
+              <dd className="mt-1 text-lg font-semibold">{account.bonusBoostsRemaining} remaining</dd>
             </div>
-            {account.bumpPeriodEndsAt && (
+            {account.boostPeriodEndsAt && (
               <div>
-                <dt className="text-muted-foreground text-sm">Current plan bump window ends</dt>
+                <dt className="text-muted-foreground text-sm">Current plan boost window ends</dt>
                 <dd className="mt-1 font-medium">
-                  {new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(account.bumpPeriodEndsAt)} UTC
+                  {new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(account.boostPeriodEndsAt)} UTC
+                </dd>
+              </div>
+            )}
+            {account.limits.featuredSlots > 0 && (
+              <div>
+                <dt className="text-muted-foreground text-sm">Featured Listing slots</dt>
+                <dd className="mt-1 text-lg font-semibold">
+                  {account.featuredUsed} / {account.limits.featuredSlots} used · {Math.max(0, account.limits.featuredSlots - account.featuredUsed)}{' '}
+                  remaining
                 </dd>
               </div>
             )}
           </dl>
+          {account.listingSlotCount > account.limits.activeListings && (
+            <p role="status" className="text-muted-foreground text-sm">
+              Your account is over the current listing limit. The oldest reserved slots remain eligible for publication. Excess listings are visible
+              only to you; hide other listings or upgrade to make room. Listings and photos are retained.
+            </p>
+          )}
           {account.complimentaryGrant && (
             <div className="bg-muted w-full rounded-lg p-4" role="status">
               <p className="font-medium">Complimentary Pro access</p>
@@ -101,8 +115,8 @@ async function AccountSubscription({ searchParams }: Props) {
                   )}{' '}
                   UTC
                 </time>
-                . Complimentary bumps renew every 30 days during this access, without carryover.
-                {account.paidPlan === 'PRO' && ' Your paid subscription supplies the plan bump allowance while it is active.'}
+                . Complimentary boosts renew every 30 days during this access, without carryover.
+                {account.planBoostSource === 'paid' && ' Your paid subscription supplies the plan boost allowance while it is active.'}
               </p>
             </div>
           )}
@@ -111,21 +125,23 @@ async function AccountSubscription({ searchParams }: Props) {
               <div>
                 <dt className="text-muted-foreground text-sm">Status</dt>
                 <dd className="mt-1 font-medium">
-                  {account.paidPlan === 'PRO'
-                    ? account.subscription.status === 'CANCELED'
-                      ? 'Canceling'
-                      : 'Active'
-                    : account.subscription.status === 'PAST_DUE'
-                      ? 'Payment past due'
-                      : account.subscription.currentPeriodEnd.getTime() > 0
-                        ? 'Expired'
-                        : 'Awaiting payment'}
+                  {['past_due', 'unpaid'].includes(account.subscription.stripeStatus ?? '')
+                    ? 'Payment past due'
+                    : account.paidPlan !== 'FREE'
+                      ? account.subscription.status === 'CANCELED'
+                        ? 'Canceling'
+                        : 'Active'
+                      : account.subscription.status === 'PAST_DUE'
+                        ? 'Payment past due'
+                        : account.subscription.currentPeriodEnd.getTime() > 0
+                          ? 'Expired'
+                          : 'Awaiting payment'}
                 </dd>
               </div>
               {account.subscription.currentPeriodEnd.getTime() > 0 && (
                 <div>
                   <dt className="text-muted-foreground text-sm">
-                    {account.paidPlan === 'PRO'
+                    {account.paidPlan !== 'FREE'
                       ? account.subscription.status === 'CANCELED'
                         ? 'Access remains active until'
                         : 'Renews on'
@@ -143,18 +159,33 @@ async function AccountSubscription({ searchParams }: Props) {
               )}
             </dl>
           )}
-          {account.paidPlan === 'PRO' && account.subscription?.status === 'CANCELED' && (
-            <p className="text-muted-foreground text-sm">Pro remains available until the paid period ends. Your subscription will not renew.</p>
+          {account.paidPlan !== 'FREE' && account.subscription?.status === 'CANCELED' && (
+            <p className="text-muted-foreground text-sm">
+              Your paid plan remains available until the paid period ends. Your subscription will not renew.
+            </p>
+          )}
+          {account.subscription?.hasStripeSubscription && (
+            <p className="text-muted-foreground text-sm">
+              Your current billing amount and any scheduled plan change are shown in Stripe billing. Existing subscription prices are retained.
+            </p>
           )}
           {account.subscription?.hasStripeSubscription && <BillingButton intent="manage" />}
-          {account.limits.advancedStats && (
+          {account.limits.analyticsLevel !== 'none' && (
             <Button nativeButton={false} variant="outline" render={<Link href="/account/analytics" />}>
               Analytics
             </Button>
           )}
         </CardContent>
       </Card>
-      <PlanComparison currentPlan={account.plan} paidPlan={account.paidPlan} price={price} />
+      <Button nativeButton={false} variant="outline" render={<Link href="/pricing" />}>
+        Compare all plans
+      </Button>
+      <PlanComparison
+        currentPlan={account.plan}
+        paidPlan={account.paidPlan}
+        available={available}
+        hasSubscription={!!account.subscription?.hasStripeSubscription && account.subscription.status !== 'EXPIRED'}
+      />
     </div>
   )
 }

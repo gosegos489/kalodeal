@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from 'next/cache'
 import 'server-only'
 import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'
+import { getPublicListingIds } from './public-eligibility'
 
 export const LISTING_SITEMAP_SIZE = 10000
 
@@ -15,6 +16,12 @@ export async function getListingSitemapIds() {
 }
 
 export async function getListingSitemapPage(page: number) {
+  const listings = await getCachedListingSitemapPage(page)
+  const visible = await getPublicListingIds(listings.map(({ id }) => id))
+  return listings.filter(({ id }) => visible.has(id))
+}
+
+async function getCachedListingSitemapPage(page: number) {
   'use cache'
   cacheTag(cacheTags.listings)
   cacheLife('hours')

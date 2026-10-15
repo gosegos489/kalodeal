@@ -23,7 +23,18 @@ export async function AvatarModerationQueue({ page, q, embedded = false }: { pag
   const pagination = getPagination({ pageParam: page, totalItems })
   const users = await prisma.user.findMany({
     where,
-    select: { id: true, name: true, pendingName: true, updatedAt: true, email: true, image: true, pendingAvatarKey: true, avatarCleanupKey: true },
+    select: {
+      id: true,
+      name: true,
+      pendingName: true,
+      businessName: true,
+      pendingBusinessName: true,
+      updatedAt: true,
+      email: true,
+      image: true,
+      pendingAvatarKey: true,
+      avatarCleanupKey: true
+    },
     orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
     skip: pagination.skip,
     take: pagination.take
@@ -68,6 +79,19 @@ export async function AvatarModerationQueue({ page, q, embedded = false }: { pag
                     </>
                   )}
                 </div>
+                {user.pendingBusinessName && (
+                  <div className="flex flex-col gap-3 border-b pb-4">
+                    <p className="text-muted-foreground text-xs">Business name · approved: {user.businessName ?? 'None'}</p>
+                    <AwaitingModeration />
+                    <p className="text-sm wrap-anywhere">{user.pendingBusinessName}</p>
+                    <p className="text-muted-foreground text-xs">Display name only; not a verified business identity.</p>
+                    <ProfileModerationControls
+                      userId={user.id}
+                      version={nameModerationVersion(user.pendingBusinessName, user.updatedAt)}
+                      kind="business-name"
+                    />
+                  </div>
+                )}
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm font-medium">Profile photo</p>
                   {pending && <AwaitingModeration />}

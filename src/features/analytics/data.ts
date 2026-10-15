@@ -7,7 +7,8 @@ import { getAnalyticsDateRange, getAnalyticsPeriod } from './period'
 export async function getAnalytics(periodParam: unknown, pageParam?: string | string[]) {
   // Re-authenticate and check server entitlements in the query entry point, independently of page/navigation props.
   const account = await getAccount()
-  if (!account.limits.advancedStats) return { eligible: false as const }
+  if (account.limits.analyticsLevel === 'none') return { eligible: false as const }
+  const advanced = account.limits.analyticsLevel === 'advanced'
   const userId = account.user.id
   const period = getAnalyticsPeriod(periodParam)
   const day = getAnalyticsDateRange(period)
@@ -21,17 +22,17 @@ export async function getAnalytics(periodParam: unknown, pageParam?: string | st
         id: true,
         title: true,
         status: true,
-        phoneReveals: true,
+        phoneReveals: advanced,
         stats: { select: { views: true } },
-        _count: { select: { favorites: true } }
+        _count: advanced ? { select: { favorites: true } } : false
       },
       orderBy: [{ sortDate: 'desc' }, { id: 'desc' }],
       skip: pagination.skip,
       take: pagination.take
     }),
     prisma.listing.groupBy({ by: ['status'], where, _count: { _all: true } }),
-    prisma.favorite.count({ where: { listing: { userId } } }),
-    prisma.listing.aggregate({ where, _sum: { phoneReveals: true } }),
+    advanced ? prisma.favorite.count({ where: { listing: { userId } } }) : Promise.resolve(null),
+    advanced ? prisma.listing.aggregate({ where, _sum: { phoneReveals: true } }) : Promise.resolve(null),
     prisma.listingStats.aggregate({ where: { listing: { userId } }, _sum: { views: true } }),
     day ? prisma.listingDailyView.count({ where: { listing: { userId }, day } }) : Promise.resolve(null)
   ])
@@ -47,13 +48,14 @@ export async function getAnalytics(periodParam: unknown, pageParam?: string | st
   const countsByStatus = new Map(statuses.map((item) => [item.status, item._count._all]))
   return {
     eligible: true as const,
+    advanced,
     period,
     ...pagination,
     overview: {
       totalViews: lifetimeViews._sum.views ?? 0,
       periodViews,
       favorites,
-      phoneReveals: phones._sum.phoneReveals ?? 0,
+      phoneReveals: advanced ? (phones?._sum.phoneReveals ?? 0) : null,
       active: countsByStatus.get('ACTIVE') ?? 0,
       pending: countsByStatus.get('PENDING') ?? 0,
       sold: countsByStatus.get('SOLD') ?? 0
@@ -62,9 +64,9 @@ export async function getAnalytics(periodParam: unknown, pageParam?: string | st
       id: listing.id,
       title: listing.title,
       status: listing.status,
-      phoneReveals: listing.phoneReveals,
+      phoneReveals: advanced ? listing.phoneReveals : null,
       views: day ? (viewsByListing.get(listing.id) ?? 0) : (listing.stats?.views ?? 0),
-      favorites: listing._count.favorites
+      favorites: advanced ? listing._count.favorites : null
     }))
   }
 }

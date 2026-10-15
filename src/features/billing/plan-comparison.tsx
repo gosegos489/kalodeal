@@ -1,133 +1,129 @@
+import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
+import { LISTING_PLANS, type ListingPlan, PLAN_LIMITS, formatPlanPrice } from '@/lib/plan-limits'
 import { BillingButton } from './billing-button'
 
-type PlanComparisonProps = { currentPlan: ListingPlan; paidPlan: ListingPlan; price: string | null }
+type Props = {
+  currentPlan: ListingPlan
+  paidPlan: ListingPlan
+  authenticated?: boolean
+  marketplaceAllowed?: boolean
+  hasSubscription?: boolean
+  available: Partial<Record<ListingPlan, boolean>>
+}
+const descriptions = {
+  FREE: 'For occasional sellers',
+  PLUS: 'For regular sellers',
+  PRO: 'For active sellers',
+  BUSINESS: 'For businesses and professional sellers'
+}
 
-export function PlanComparison({ currentPlan, paidPlan, price }: PlanComparisonProps) {
-  const free = PLAN_LIMITS.FREE
-  const pro = PLAN_LIMITS.PRO
-  const features = [
-    { label: 'Active listings', free: free.activeListings, pro: pro.activeListings },
-    { label: 'Photos per listing', free: free.imagesPerListing, pro: pro.imagesPerListing },
-    { label: 'Monthly bumps', free: free.monthlyBumps, pro: pro.monthlyBumps },
-    { label: 'Advanced analytics', free: free.advancedStats ? 'Yes' : 'No', pro: pro.advancedStats ? 'Yes' : 'No' }
-  ]
-
+export function PlanComparison({
+  currentPlan,
+  paidPlan,
+  authenticated = true,
+  marketplaceAllowed = true,
+  hasSubscription = false,
+  available
+}: Props) {
   return (
-    <section aria-labelledby="plan-comparison-heading" className="flex min-w-0 flex-col gap-4">
-      <h2 id="plan-comparison-heading" className="text-xl font-semibold">
-        Choose the plan that fits how you sell
-      </h2>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex flex-wrap items-center justify-between gap-2">
-              <h3>Free</h3>
-              {currentPlan === 'FREE' && <Badge variant="outline">Your plan</Badge>}
-            </CardTitle>
-            <CardDescription>For occasional sellers</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <p className="text-lg font-semibold">No subscription required</p>
-            <ul className="list-inside list-disc space-y-2 text-sm">
-              <li>
-                {free.activeListings} active listing{free.activeListings === 1 ? '' : 's'}
-              </li>
-              <li>{free.imagesPerListing} photos per listing</li>
-              <li>Standard listing placement</li>
-              <li>Basic account tools</li>
-            </ul>
-          </CardContent>
-        </Card>
-        <Card className="ring-primary/40">
-          <CardHeader>
-            <CardTitle className="flex flex-wrap items-center justify-between gap-2">
-              <h3>Pro</h3>
-              {currentPlan === 'PRO' && <Badge>{paidPlan === 'PRO' ? 'Your paid plan' : 'Complimentary access'}</Badge>}
-            </CardTitle>
-            <CardDescription>For active sellers</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-start gap-5">
-            <p className="text-2xl font-semibold">
-              {price ?? 'Monthly membership'}
-              {price && <span className="text-muted-foreground text-sm font-normal"> / month</span>}
-            </p>
-            <ul className="w-full space-y-4 text-sm">
-              <li>
-                <p className="font-medium">{pro.activeListings} active listings</p>
-                <p className="text-muted-foreground mt-1">List more items at the same time.</p>
-              </li>
-              <li>
-                <p className="font-medium">{pro.imagesPerListing} photos per listing</p>
-                <p className="text-muted-foreground mt-1">Give buyers a better view of what you&apos;re selling.</p>
-              </li>
-              <li>
-                <p className="font-medium">{pro.monthlyBumps} listing bumps every month</p>
-                <p className="text-muted-foreground mt-1">Move your active listings back toward the top of search results.</p>
-              </li>
-              {pro.advancedStats && (
-                <li>
-                  <p className="font-medium">Advanced listing analytics</p>
-                  <p className="text-muted-foreground mt-1">Track views, favorites and phone reveals to see which listings attract interest.</p>
-                </li>
-              )}
-            </ul>
-            {paidPlan === 'FREE' &&
-              (price ? (
-                <BillingButton intent="upgrade" upgradeLabel={`${currentPlan === 'PRO' ? 'Start paid Pro' : 'Upgrade to Pro'} — ${price}/month`} />
-              ) : (
-                <p className="text-muted-foreground text-sm">Upgrades are temporarily unavailable. Please try again later.</p>
-              ))}
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              Paid subscriptions can be canceled anytime. Paid Pro features remain active until the end of the paid billing period.
-            </p>
-          </CardContent>
-        </Card>
+    <section aria-label="Compare selling plans" className="flex min-w-0 flex-col gap-6">
+      <div className="grid items-stretch gap-4 md:grid-cols-2 2xl:grid-cols-4">
+        {LISTING_PLANS.map((plan) => {
+          const limits = PLAN_LIMITS[plan]
+          const isCurrent = authenticated && currentPlan === plan
+          const price = formatPlanPrice(plan)
+          return (
+            <Card key={plan} className="flex h-full flex-col">
+              <CardHeader>
+                <CardTitle className="flex flex-wrap items-center justify-between gap-2">
+                  <h2>{limits.name}</h2>
+                  {isCurrent && <Badge variant="outline">Your plan</Badge>}
+                </CardTitle>
+                <CardDescription>{descriptions[plan]}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col gap-6">
+                <p className="text-3xl font-semibold">
+                  {price}
+                  <span className="text-muted-foreground text-sm font-normal"> / month</span>
+                </p>
+                <ul className="flex flex-col gap-3 text-sm">
+                  <li>
+                    {limits.activeListings} active listing{limits.activeListings === 1 ? '' : 's'}
+                  </li>
+                  <li>{limits.imagesPerListing} photos per listing</li>
+                  <li>Basic account tools</li>
+                  <li>
+                    {limits.monthlyBoosts
+                      ? `${limits.monthlyBoosts} monthly Boosts per paid period`
+                      : 'Standard listing placement · no monthly Boosts'}
+                  </li>
+                  <li>
+                    {limits.analyticsLevel === 'none'
+                      ? 'No paid listing analytics'
+                      : limits.analyticsLevel === 'basic'
+                        ? 'Basic analytics: views'
+                        : 'Advanced analytics: views, favorites and phone reveals'}
+                  </li>
+                  {plan === 'FREE' && <li>No subscription required</li>}
+                  {plan === 'BUSINESS' && (
+                    <>
+                      <li>Includes all Pro capabilities and regular monthly Boosts</li>
+                      <li>Approved business name displayed on listings</li>
+                      <li>{limits.featuredSlots} simultaneous Featured Listings</li>
+                      <li>Persistent priority in relevant results while Business is active. No guaranteed first position.</li>
+                    </>
+                  )}
+                </ul>
+                <div className="mt-auto flex flex-col items-start gap-3 pt-2">
+                  {!marketplaceAllowed ? (
+                    <p className="text-muted-foreground text-sm">Selling plans are available to marketplace accounts.</p>
+                  ) : !authenticated ? (
+                    <Button nativeButton={false} className="h-auto whitespace-normal" render={<Link href="/login?returnTo=%2Fpricing" />}>
+                      {plan === 'FREE' ? 'Get started free' : `Upgrade to ${limits.name} — ${price}/month`}
+                    </Button>
+                  ) : plan === 'FREE' ? (
+                    currentPlan === 'FREE' ? (
+                      <Button disabled>Your plan</Button>
+                    ) : hasSubscription ? (
+                      <BillingButton intent="manage" upgradeLabel="Switch to Free at period end" />
+                    ) : (
+                      <p className="text-muted-foreground text-sm">Free applies when complimentary access ends.</p>
+                    )
+                  ) : paidPlan === plan ? (
+                    <Button disabled>Your paid plan</Button>
+                  ) : hasSubscription ? (
+                    <BillingButton intent="manage" upgradeLabel={`Change to ${limits.name}`} />
+                  ) : available[plan] ? (
+                    <BillingButton
+                      intent="upgrade"
+                      plan={plan}
+                      upgradeLabel={`${isCurrent ? `Start paid ${limits.name}` : `Upgrade to ${limits.name}`} — ${price}/month`}
+                    />
+                  ) : (
+                    <p role="status" className="text-muted-foreground text-sm">
+                      Upgrades are temporarily unavailable.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <h3>Plans at a glance</h3>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex min-w-0 flex-col gap-4">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <caption className="sr-only">Compare Free and Pro plan limits</caption>
-              <thead>
-                <tr className="text-muted-foreground border-b">
-                  <th scope="col" className="py-3 pr-3">
-                    Feature
-                  </th>
-                  <th scope="col" className="px-3 py-3 text-center">
-                    Free
-                  </th>
-                  <th scope="col" className="py-3 pl-3 text-center">
-                    Pro
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {features.map((feature) => (
-                  <tr key={feature.label} className="border-b last:border-b-0">
-                    <th scope="row" className="py-3 pr-3 font-medium">
-                      {feature.label}
-                    </th>
-                    <td className="px-3 py-3 text-center tabular-nums">{feature.free}</td>
-                    <td className="py-3 pl-3 text-center tabular-nums">{feature.pro}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="text-muted-foreground text-xs leading-relaxed">
-            Listings awaiting moderation or changes also count toward your listing limit. Plan bumps apply to active listings and renew each paid
-            billing period or every 30 days of complimentary access; unused plan bumps do not carry over. Bonus bumps have separate expiration dates.
-          </p>
-        </CardContent>
-      </Card>
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        Pending listings and requested corrections also reserve listing slots. Boost Listing raises one active listing once and uses one shared Boost.
+        Unused monthly Boosts do not carry over; bonus Boosts retain their own expiry. Featured Listing is separate and does not use Boosts. Cancel
+        through billing; paid benefits remain until the paid period ends.
+      </p>
+      {hasSubscription && (
+        <p className="text-muted-foreground text-sm">
+          Plan changes are reviewed in Stripe billing. Upgrades are invoiced with proration; downgrades and cancellation take effect at the end of the
+          paid period. Available changes depend on billing configuration.
+        </p>
+      )}
     </section>
   )
 }

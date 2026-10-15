@@ -14,6 +14,7 @@ export type ListingSummary = ListingLocation & {
 
 export type ListingDetails = Omit<ListingSummary, 'category'> & {
   status: ListingStatus
+  publiclyVisible: boolean
   category: { name: string; slug: string }
   images: { id: string; url: string }[]
   seller: { name: string; image: string | null }

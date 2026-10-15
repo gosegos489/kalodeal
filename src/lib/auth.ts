@@ -10,8 +10,8 @@ import { displayNameSchema } from '@/features/account/settings/schema'
 import { captureServerExceptionAfterResponse } from '@/lib/sentry-server'
 import ResetPasswordEmail from '../../emails/ResetPasswordEmail'
 import VerifyEmail from '../../emails/VerifyEmail'
-import { ac, adminRole, moderatorRole, userRole } from './auth-permissions'
 import { getAuthOriginOptions } from './auth-origins'
+import { ac, adminRole, moderatorRole, userRole } from './auth-permissions'
 import { authorizeAuthMutation, normalizeBanUpdate } from './auth-security'
 import prisma from './prisma'
 import { resend, resendFrom } from './resend'
@@ -73,6 +73,9 @@ export const auth = betterAuth({
 
   user: {
     additionalFields: {
+      businessName: { type: 'string', required: false, input: false, returned: false },
+      pendingBusinessName: { type: 'string', required: false, input: false, returned: false },
+      businessNameModerationMessage: { type: 'string', required: false, input: false, returned: false },
       pendingName: { type: 'string', required: false, input: false, returned: false },
       nameModerationMessage: { type: 'string', required: false, input: false, returned: false },
       avatarModerationMessage: { type: 'string', required: false, input: false, returned: false }

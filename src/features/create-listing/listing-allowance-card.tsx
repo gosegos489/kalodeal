@@ -17,7 +17,7 @@ export function ListingAllowanceCard({ plan, listingSlotCount, categoriesAvailab
     <section className="bg-card flex flex-col gap-4 rounded-2xl border p-6 shadow-xs">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-semibold">Your listing allowance</h2>
-        <span className="bg-primary/8 text-primary rounded-full px-3 py-1 text-xs font-semibold">{plan === 'PRO' ? 'Pro' : 'Free'}</span>
+        <span className="bg-primary/8 text-primary rounded-full px-3 py-1 text-xs font-semibold">{limits.name}</span>
       </div>
 
       <div className="grid grid-cols-2 divide-x rounded-xl border py-4">
@@ -34,7 +34,10 @@ export function ListingAllowanceCard({ plan, listingSlotCount, categoriesAvailab
         </div>
       </div>
 
-      <p className="text-muted-foreground text-xs">Published listings and listings awaiting moderation or changes count toward your limit.</p>
+      <p className="text-muted-foreground text-xs">
+        Published listings and listings awaiting moderation or changes count toward your limit. Upload up to 50 MB of photos at once; add remaining
+        photos in smaller batches.
+      </p>
 
       <div className="flex flex-col gap-3 text-sm">
         {limitReached ? (
@@ -59,7 +62,7 @@ export function ListingAllowanceCard({ plan, listingSlotCount, categoriesAvailab
       </div>
 
       <Link href="/account/subscription" className="text-primary inline-flex items-center gap-1.5 text-sm font-medium">
-        {plan === 'PRO' ? 'Manage your plan' : 'Explore Pro'} <ArrowRight className="size-3.5" />
+        {plan !== 'FREE' ? 'Manage your plan' : 'Explore plans'} <ArrowRight className="size-3.5" />
       </Link>
     </section>
   )

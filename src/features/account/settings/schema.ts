@@ -12,6 +12,7 @@ export const displayNameSchema = z
   .refine((value) => !/[<>]/u.test(value), 'Use a plain text display name.')
 
 export const profileSchema = z.object({ name: displayNameSchema })
+export const businessNameSchema = z.object({ businessName: displayNameSchema })
 export const avatarFileSchema = listingImageSchema
 export const passwordChangeSchema = z
   .object({
@@ -41,6 +42,7 @@ export const avatarModerationSchema = avatarReferenceSchema.and(moderationDecisi
 
 export const nameModerationSchema = z
   .object({
+    kind: z.enum(['name', 'business-name']).default('name'),
     userId: z.string().min(1).max(128),
     version: z.string().regex(/^[a-f0-9]{64}$/)
   })

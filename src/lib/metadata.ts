@@ -125,11 +125,13 @@ export function buildMetadata({
   }
 }
 
-export function buildListingMetadata(listing: Pick<ListingDetails, 'id' | 'title' | 'description' | 'coverUrl' | 'status'> | null): Metadata {
+export function buildListingMetadata(
+  listing: Pick<ListingDetails, 'id' | 'title' | 'description' | 'coverUrl' | 'status' | 'publiclyVisible'> | null
+): Metadata {
   if (!listing) {
     return { ...privateMetadata, title: 'Listing Not Found', description: 'This listing could not be found.', alternates: { canonical: null } }
   }
-  if (listing.status !== 'ACTIVE') {
+  if (listing.status !== 'ACTIVE' || !listing.publiclyVisible) {
     return {
       ...privateMetadata,
       title: 'Private listing',

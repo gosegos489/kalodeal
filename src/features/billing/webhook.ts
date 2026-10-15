@@ -1,10 +1,10 @@
 import 'server-only'
 import type Stripe from 'stripe'
 import prisma from '@/lib/prisma'
-import { stripe } from '@/lib/stripe'
-import { getProPriceId } from './config'
+import { getStripe } from '@/lib/stripe'
+import { getRecognizedPrices } from './config'
 import { recordSubscriptionPayment } from './subscription-payments'
-import { getSubscriptionUpdate, hasProPrice, isOpenSubscription } from './subscription-state'
+import { getSubscriptionUpdate, hasPlanPrice, isOpenSubscription } from './subscription-state'
 
 export const BILLING_EVENTS = new Set([
   'checkout.session.completed',
@@ -37,7 +37,7 @@ export async function reconcileBillingEvent(event: Stripe.Event) {
   // The persisted customer binding is authoritative. Never grant access using event metadata or email.
   const owner = await prisma.subscription.findUnique({ where: { stripeCustomerId: customerId }, select: { userId: true } })
   if (!owner) return false
-  const priceId = getProPriceId()
+  const prices = getRecognizedPrices()
 
   return prisma.$transaction(
     async (tx) => {
@@ -50,15 +50,15 @@ export async function reconcileBillingEvent(event: Stripe.Event) {
       if (event.type === 'invoice.paid') {
         // Replayed events processed before the payment ledger existed may fill its
         // missing snapshot. The unique invoice still makes this operation idempotent.
-        await recordSubscriptionPayment(tx, event.data.object.id, owner.userId, customerId, priceId, event.livemode)
+        await recordSubscriptionPayment(tx, event.data.object.id, owner.userId, customerId, prices, event.livemode)
       }
       if (processed) return false
 
       // Retrieve AFTER acquiring the lock. Two out-of-order handlers cannot overwrite a newer snapshot.
       // Inspect the customer's current subscriptions so events for a previous subscription cannot replace its successor.
-      const subscriptions = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 100, expand: ['data.latest_invoice'] })
+      const subscriptions = await getStripe().subscriptions.list({ customer: customerId, status: 'all', limit: 100, expand: ['data.latest_invoice'] })
       if (subscriptions.has_more) throw new Error('Too many subscriptions to reconcile safely.')
-      const candidates = subscriptions.data.filter((subscription) => hasProPrice(subscription, priceId))
+      const candidates = subscriptions.data.filter((subscription) => hasPlanPrice(subscription, prices))
       candidates.sort(
         (a, b) =>
           Number(b.status === 'active') - Number(a.status === 'active') ||
@@ -68,12 +68,12 @@ export async function reconcileBillingEvent(event: Stripe.Event) {
       )
       let current = candidates[0]
       if (!current && previous.stripeSubscriptionId) {
-        current = await stripe.subscriptions.retrieve(previous.stripeSubscriptionId, { expand: ['latest_invoice'] })
+        current = await getStripe().subscriptions.retrieve(previous.stripeSubscriptionId, { expand: ['latest_invoice'] })
       }
       if (current) {
         const currentCustomer = typeof current.customer === 'string' ? current.customer : current.customer.id
         if (currentCustomer !== customerId || current.livemode !== event.livemode) throw new Error('Subscription customer or mode mismatch.')
-        await tx.subscription.update({ where: { userId: owner.userId }, data: getSubscriptionUpdate(current, previous, priceId) })
+        await tx.subscription.update({ where: { userId: owner.userId }, data: getSubscriptionUpdate(current, previous, prices) })
       }
       await tx.stripeWebhookEvent.create({ data: { id: event.id, type: event.type, stripeCreatedAt: new Date(event.created * 1000) } })
       return true

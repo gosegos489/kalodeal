@@ -1,4 +1,6 @@
 import type Stripe from 'stripe'
+import { PLAN_LIMITS } from '@/lib/plan-limits'
+import type { RecognizedPrices } from './subscription-state'
 
 function getId(value: string | { id: string } | null | undefined) {
   return typeof value === 'string' ? value : value?.id
@@ -8,7 +10,7 @@ function isPositiveAmount(amount: number | null) {
   return amount !== null && Number.isSafeInteger(amount) && amount > 0 && amount <= 2147483647
 }
 
-export function getSubscriptionInvoiceSnapshot(invoice: Stripe.Invoice, customerId: string, priceId: string, livemode: boolean) {
+export function getSubscriptionInvoiceSnapshot(invoice: Stripe.Invoice, customerId: string, prices: RecognizedPrices, livemode: boolean) {
   const subscriptionId = getId(invoice.parent?.subscription_details?.subscription)
   const paidAt = invoice.status_transitions.paid_at
   if (
@@ -16,7 +18,7 @@ export function getSubscriptionInvoiceSnapshot(invoice: Stripe.Invoice, customer
     invoice.livemode !== livemode ||
     getId(invoice.customer) !== customerId ||
     !subscriptionId ||
-    !['subscription_create', 'subscription_cycle'].includes(invoice.billing_reason ?? '') ||
+    !['subscription_create', 'subscription_cycle', 'subscription_update'].includes(invoice.billing_reason ?? '') ||
     !isPositiveAmount(invoice.total) ||
     !isPositiveAmount(invoice.amount_due) ||
     !isPositiveAmount(invoice.amount_paid) ||
@@ -31,15 +33,16 @@ export function getSubscriptionInvoiceSnapshot(invoice: Stripe.Invoice, customer
     !invoice.lines.data.length ||
     !invoice.lines.data.every((line) => {
       const details = line.parent?.subscription_item_details
-      return (
-        getId(line.pricing?.price_details?.price) === priceId && details?.subscription === subscriptionId && !details.proration && line.quantity === 1
-      )
+      return !!prices[getId(line.pricing?.price_details?.price) ?? ''] && details?.subscription === subscriptionId && line.quantity === 1
     })
   )
     return null
 
+  const paidLine = invoice.lines.data.find((line) => line.amount > 0)
+  const plan = prices[getId(paidLine?.pricing?.price_details?.price) ?? '']
+  if (!plan) return null
   return {
-    description: invoice.billing_reason === 'subscription_create' ? 'Kalodeal Pro subscription' : 'Kalodeal Pro subscription renewal',
+    description: `Kalodeal ${PLAN_LIMITS[plan].name} subscription${invoice.billing_reason === 'subscription_cycle' ? ' renewal' : invoice.billing_reason === 'subscription_update' ? ' plan change' : ''}`,
     amount: invoice.amount_paid,
     currency: invoice.currency.toUpperCase(),
     stripeInvoiceId: invoice.id,

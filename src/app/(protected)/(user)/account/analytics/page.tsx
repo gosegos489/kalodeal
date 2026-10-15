@@ -22,13 +22,13 @@ async function AccountAnalytics({ searchParams }: Props) {
         <CardHeader>
           <LockKeyhole aria-hidden="true" className="text-primary mb-3 size-6" />
           <CardTitle>
-            <h2>Analytics is a Pro feature</h2>
+            <h2>Analytics starts with Plus</h2>
           </CardTitle>
-          <CardDescription>Track views, favorites and phone reveals to understand buyer interest with Pro.</CardDescription>
+          <CardDescription>Track views with Plus, and add favorites and phone reveals with Pro or Business.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button nativeButton={false} render={<Link href="/account/subscription" />}>
-            Explore Pro
+          <Button nativeButton={false} render={<Link href="/pricing" />}>
+            Compare plans
           </Button>
         </CardContent>
       </Card>
@@ -38,8 +38,12 @@ async function AccountAnalytics({ searchParams }: Props) {
   const overview = analytics.overview
   const stats = [
     { label: 'Total views', value: overview.totalViews },
-    { label: 'Favorites', value: overview.favorites },
-    { label: 'Phone reveals', value: overview.phoneReveals },
+    ...(analytics.advanced
+      ? [
+          { label: 'Favorites', value: overview.favorites ?? 0 },
+          { label: 'Phone reveals', value: overview.phoneReveals ?? 0 }
+        ]
+      : []),
     { label: 'Active listings', value: overview.active },
     { label: 'Pending listings', value: overview.pending },
     { label: 'Sold listings', value: overview.sold }
@@ -52,8 +56,8 @@ async function AccountAnalytics({ searchParams }: Props) {
           Overview
         </h2>
         <p className="text-muted-foreground mt-2 text-sm">
-          Views and phone reveals are all-time totals. Favorites and listing statuses show current counts. Phone reveals are actions, not unique
-          contacts.
+          Views are all-time totals. Listing statuses show current counts.
+          {analytics.advanced && ' Favorites show current counts; phone reveals are all-time actions, not unique contacts.'}
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -113,12 +117,16 @@ async function AccountAnalytics({ searchParams }: Props) {
                       <th scope="col" className="p-3">
                         {analytics.period === 'all' ? 'Views (all time)' : `Views (${analytics.period} days)`}
                       </th>
-                      <th scope="col" className="p-3">
-                        Favorites (current)
-                      </th>
-                      <th scope="col" className="p-3">
-                        Phone reveals (all time)
-                      </th>
+                      {analytics.advanced && (
+                        <>
+                          <th scope="col" className="p-3">
+                            Favorites (current)
+                          </th>
+                          <th scope="col" className="p-3">
+                            Phone reveals (all time)
+                          </th>
+                        </>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -133,8 +141,12 @@ async function AccountAnalytics({ searchParams }: Props) {
                           <ListingStatusBadge status={listing.status} />
                         </td>
                         <td className="p-3 tabular-nums">{listing.views}</td>
-                        <td className="p-3 tabular-nums">{listing.favorites}</td>
-                        <td className="p-3 tabular-nums">{listing.phoneReveals}</td>
+                        {analytics.advanced && (
+                          <>
+                            <td className="p-3 tabular-nums">{listing.favorites}</td>
+                            <td className="p-3 tabular-nums">{listing.phoneReveals}</td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>

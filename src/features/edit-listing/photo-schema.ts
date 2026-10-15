@@ -1,16 +1,16 @@
 import z from 'zod'
 import { listingImageSchema } from '@/features/create-listing/schema'
 import { ListingStatus, SubscriptionPlan } from '@/generated/prisma/enums'
-import { PLAN_LIMITS } from '@/lib/plan-limits'
+import { MAX_LISTING_PHOTOS } from '@/lib/plan-limits'
 
 const imageIdSchema = z.string().cuid()
 const reference = { updatedAt: z.iso.datetime() }
 
 export const photoMutationSchema = z.discriminatedUnion('operation', [
-  z.object({ ...reference, operation: z.literal('add'), images: z.array(listingImageSchema).min(1).max(PLAN_LIMITS.PRO.imagesPerListing) }).strict(),
+  z.object({ ...reference, operation: z.literal('add'), images: z.array(listingImageSchema).min(1).max(MAX_LISTING_PHOTOS) }).strict(),
   z.object({ ...reference, operation: z.literal('replace'), imageId: imageIdSchema, images: z.tuple([listingImageSchema]) }).strict(),
   z.object({ ...reference, operation: z.literal('delete'), imageId: imageIdSchema }).strict(),
-  z.object({ ...reference, operation: z.literal('reorder'), imageIds: z.array(imageIdSchema).min(1).max(PLAN_LIMITS.PRO.imagesPerListing) }).strict()
+  z.object({ ...reference, operation: z.literal('reorder'), imageIds: z.array(imageIdSchema).min(1).max(MAX_LISTING_PHOTOS) }).strict()
 ])
 
 export const listingPhotoStateSchema = z.object({

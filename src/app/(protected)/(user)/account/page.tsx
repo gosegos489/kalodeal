@@ -40,14 +40,20 @@ async function AccountOverview() {
         <Card>
           <CardHeader>
             <CardTitle>Current plan</CardTitle>
-            <CardDescription>{account.plan === 'PRO' ? 'For active sellers' : 'For occasional sellers'}</CardDescription>
+            <CardDescription>{account.plan !== 'FREE' ? 'For regular and professional sellers' : 'For occasional sellers'}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-start gap-4">
-            <Badge>{account.plan === 'PRO' ? 'Pro' : 'Free'}</Badge>
+            <Badge>{account.limits.name}</Badge>
             <ul className="text-muted-foreground space-y-1 text-sm">
               <li>Up to {account.limits.imagesPerListing} photos per listing.</li>
-              <li>{account.limits.monthlyBumps > 0 ? `${account.limits.monthlyBumps} listing bumps each month.` : 'Standard listing placement.'}</li>
-              <li>{account.limits.advancedStats ? 'Advanced listing analytics included.' : 'Basic account tools included.'}</li>
+              <li>
+                {account.limits.monthlyBoosts > 0 ? `${account.limits.monthlyBoosts} listing boosts each month.` : 'Standard listing placement.'}
+              </li>
+              <li>
+                {account.limits.analyticsLevel === 'none'
+                  ? 'Basic account tools included.'
+                  : `${account.limits.analyticsLevel} listing analytics included.`}
+              </li>
             </ul>
             <Button nativeButton={false} variant="outline" render={<Link href="/account/subscription" />}>
               View my plan

@@ -3,16 +3,22 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ListingRow } from '@/entities/listing/ui/listing-row'
 import { dayjs } from '@/lib/dayjs'
-import { BumpListingButton } from './bump-listing-button'
+import { BoostListingButton } from './boost-listing-button'
 import type { getMyListings } from './data'
 import { DeleteListingButton } from './delete-listing-button'
+import { FeaturedListingButton } from './featured-listing-button'
 import { ListingModerationFeedback } from './listing-moderation-feedback'
 import { ListingOwnerActions } from './listing-owner-actions'
 import { ListingStatusBadge } from './listing-status-badge'
 
-type MyListingRowProps = { listing: Awaited<ReturnType<typeof getMyListings>>['listings'][number]; bumpsRemaining: number; canBump: boolean }
+type MyListingRowProps = {
+  listing: Awaited<ReturnType<typeof getMyListings>>['listings'][number]
+  boostsRemaining: number
+  canBoost: boolean
+  canFeature: boolean
+}
 
-export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowProps) {
+export function MyListingRow({ listing, boostsRemaining, canBoost, canFeature }: MyListingRowProps) {
   const href = `/listings/${listing.id}`
 
   return (
@@ -25,14 +31,19 @@ export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowP
             {listing.category.name}
           </span>
           <time dateTime={listing.createdAt.toISOString()}>{dayjs.utc(listing.createdAt).format('D MMM YYYY')}</time>
-          {listing.bumpedAt && (
+          {listing.boostedAt && (
             <span className="basis-full">
-              Last bumped: <time dateTime={listing.bumpedAt.toISOString()}>{dayjs.utc(listing.bumpedAt).format('D MMM YYYY, HH:mm [UTC]')}</time>
+              Last boosted: <time dateTime={listing.boostedAt.toISOString()}>{dayjs.utc(listing.boostedAt).format('D MMM YYYY, HH:mm [UTC]')}</time>
             </span>
           )}
         </>
       }
-      status={<ListingStatusBadge status={listing.status} />}
+      status={
+        <div className="flex flex-col gap-1">
+          <ListingStatusBadge status={listing.status} />
+          {listing.planLimited && <span className="text-muted-foreground text-xs">Not public: plan limit</span>}
+        </div>
+      }
       actionsClassName="xl:self-start"
       feedback={
         ['CHANGES_REQUESTED', 'HIDDEN', 'REJECTED'].includes(listing.status) ? (
@@ -60,7 +71,20 @@ export function MyListingRow({ listing, bumpsRemaining, canBump }: MyListingRowP
             </Button>
             <DeleteListingButton listingId={listing.id} title={listing.title} />
           </div>
-          <BumpListingButton listingId={listing.id} title={listing.title} status={listing.status} bumpsRemaining={bumpsRemaining} canBump={canBump} />
+          <BoostListingButton
+            listingId={listing.id}
+            title={listing.title}
+            status={listing.status}
+            boostsRemaining={boostsRemaining}
+            canBoost={canBoost && !listing.planLimited}
+            unavailableReason={listing.planLimited ? 'This listing exceeds your current plan allowance.' : undefined}
+          />
+          <FeaturedListingButton
+            id={listing.id}
+            title={listing.title}
+            selected={listing.featured}
+            eligible={canFeature && listing.status === 'ACTIVE' && !listing.planLimited}
+          />
           <ListingOwnerActions key={listing.updatedAt} id={listing.id} title={listing.title} status={listing.status} updatedAt={listing.updatedAt} />
         </div>
       }

@@ -1,6 +1,8 @@
 enum SubscriptionPlan {
   FREE
+  PLUS
   PRO
+  BUSINESS
 }
 
 enum SubscriptionStatus {
@@ -49,10 +51,11 @@ model Subscription {
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
 
-  bumpUsed Int @default(0)
+  boostsUsed Int @default(0) @map("bumpUsed")
 
   stripeCustomerId     String? @unique
   stripeSubscriptionId String? @unique
+  stripeStatus         String?
   checkoutSessionId    String? @unique
   checkoutAttempt      Int     @default(0)
 

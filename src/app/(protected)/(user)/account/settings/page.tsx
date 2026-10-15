@@ -2,18 +2,23 @@ import { Suspense } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getApprovedAvatarUrl, pendingAvatarUrl } from '@/features/account/settings/avatar-reference'
+import { BusinessNameForm } from '@/features/account/settings/business-name-form'
 import { ProfileForm } from '@/features/account/settings/profile-form'
 import { SecurityForm } from '@/features/account/settings/security-form'
 import { getSettingsPageActor } from '@/features/account/settings/server'
 import prisma from '@/lib/prisma'
+import { getUserAccess } from '@/lib/user-access'
 
 async function SettingsForms() {
   const actor = await getSettingsPageActor()
-  const [user, credentials] = await Promise.all([
+  const [user, credentials, access] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: actor.id },
       select: {
         name: true,
+        businessName: true,
+        pendingBusinessName: true,
+        businessNameModerationMessage: true,
         pendingName: true,
         nameModerationMessage: true,
         avatarModerationMessage: true,
@@ -23,7 +28,8 @@ async function SettingsForms() {
         avatarCleanupKey: true
       }
     }),
-    prisma.account.count({ where: { userId: actor.id, providerId: 'credential', password: { not: null } } })
+    prisma.account.count({ where: { userId: actor.id, providerId: 'credential', password: { not: null } } }),
+    getUserAccess(prisma, actor.id)
   ])
   return (
     <div className="grid items-stretch gap-6 xl:grid-cols-2">
@@ -42,6 +48,20 @@ async function SettingsForms() {
             image={user.pendingAvatarKey ? pendingAvatarUrl(actor.id, user.pendingAvatarKey) : getApprovedAvatarUrl(actor.id, user.image)}
             pending={!!user.pendingAvatarKey}
             cleanupPending={!!user.avatarCleanupKey}
+          />
+        </CardContent>
+      </Card>
+      <Card id="business" className="min-w-0 scroll-mt-24 gap-6 py-6">
+        <CardHeader>
+          <CardTitle>Business name</CardTitle>
+          <CardDescription>Your moderated business display name.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BusinessNameForm
+            name={user.businessName}
+            pendingName={user.pendingBusinessName}
+            feedback={user.businessNameModerationMessage}
+            eligible={access.plan === 'BUSINESS'}
           />
         </CardContent>
       </Card>

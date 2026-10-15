@@ -1,14 +1,15 @@
 import 'server-only'
 import type { Prisma } from '@/generated/prisma/client'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { getSubscriptionInvoiceSnapshot, hasStripePaymentProof } from './payment-state'
+import type { RecognizedPrices } from './subscription-state'
 
 export async function recordSubscriptionPayment(
   tx: Prisma.TransactionClient,
   invoiceId: string,
   userId: string,
   customerId: string,
-  priceId: string,
+  prices: RecognizedPrices,
   livemode: boolean
 ) {
   const existing = await tx.subscriptionPayment.findUnique({ where: { stripeInvoiceId: invoiceId }, select: { userId: true } })
@@ -19,17 +20,17 @@ export async function recordSubscriptionPayment(
 
   // Read the event's invoice, not latest_invoice: delayed initial/renewal events are
   // separate payments even when the customer's subscription has since changed.
-  const invoice = await stripe.invoices.retrieve(invoiceId, { expand: ['amount_paid_off_stripe'] })
+  const invoice = await getStripe().invoices.retrieve(invoiceId, { expand: ['amount_paid_off_stripe'] })
   if (invoice.id !== invoiceId || invoice.livemode !== livemode) throw new Error('Invoice identity or mode mismatch.')
   if (invoice.amount_paid_off_stripe === undefined) throw new Error('Invoice payment provenance is unavailable.')
   if (invoice.lines.has_more) {
-    invoice.lines = await stripe.invoices.listLineItems(invoiceId, { limit: 100 })
+    invoice.lines = await getStripe().invoices.listLineItems(invoiceId, { limit: 100 })
     if (invoice.lines.has_more) throw new Error('Too many invoice lines to verify safely.')
   }
-  const snapshot = getSubscriptionInvoiceSnapshot(invoice, customerId, priceId, livemode)
+  const snapshot = getSubscriptionInvoiceSnapshot(invoice, customerId, prices, livemode)
   if (!snapshot) return
 
-  const payments = await stripe.invoicePayments.list({
+  const payments = await getStripe().invoicePayments.list({
     invoice: invoice.id,
     status: 'paid',
     limit: 100,

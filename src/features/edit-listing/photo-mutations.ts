@@ -77,7 +77,7 @@ export async function mutateListingPhotos(userId: string, listingId: string, mut
     }
 
     saved = await prisma.$transaction(async (tx) => {
-      // Match creation/bump's lock order. The listing lock also coordinates deletion,
+      // Match creation/boost's lock order. The listing lock also coordinates deletion,
       // moderation and ordinary edits, which may not acquire the user lock.
       await tx.$queryRaw`SELECT id FROM "user" WHERE id = ${userId} FOR UPDATE`
       if (!(await isActiveMarketplaceUser(tx, userId))) throw new PhotoMutationError('This account is unavailable.', 403)
@@ -98,6 +98,7 @@ export async function mutateListingPhotos(userId: string, listingId: string, mut
         where: { ...where, updatedAt: listing.updatedAt, status: listing.status },
         data: {
           status,
+          ...(status !== 'ACTIVE' ? { featuredAt: null } : {}),
           ...(status === 'PENDING' ? { moderationReason: null, moderationMessage: null } : {}),
           updatedAt: new Date(Math.max(Date.now(), listing.updatedAt.getTime() + 1))
         }

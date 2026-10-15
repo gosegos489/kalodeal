@@ -8,8 +8,8 @@ import { getAuthHeaders } from '@/lib/auth-utils'
 import { checkPasswordChangeRateLimit } from '@/lib/rate-limit'
 import { captureServerException } from '@/lib/sentry-server'
 import { AvatarError } from './avatar-lifecycle'
-import { reviewProfileName, submitProfileName } from './name-moderation'
-import { avatarModerationSchema, nameModerationSchema, passwordChangeSchema, profileSchema } from './schema'
+import { reviewProfileName, submitBusinessName, submitProfileName } from './name-moderation'
+import { avatarModerationSchema, businessNameSchema, nameModerationSchema, passwordChangeSchema, profileSchema } from './schema'
 import { avatars, getMarketplaceSettingsActor, getSettingsActor } from './server'
 
 function refreshProfile(publicChanged = false) {
@@ -42,6 +42,24 @@ export async function saveProfile(input: unknown): Promise<ActionMessageResult> 
   } catch (error) {
     return failure(error)
   }
+}
+
+export async function saveBusinessName(input: unknown): Promise<ActionMessageResult> {
+  const parsed = businessNameSchema.safeParse(input)
+  if (!parsed.success) return { success: false, message: parsed.error.issues[0].message }
+  let pending: boolean
+  try {
+    pending = await submitBusinessName(parsed.data)
+  } catch (error) {
+    return failure(error)
+  }
+  const message = pending ? 'Your business name has been sent for moderation.' : 'Business name saved.'
+  try {
+    refreshProfile(parsed.data.businessName === '')
+  } catch {
+    return { success: true, message: `${message} Reload to see the update.` }
+  }
+  return { success: true, message }
 }
 
 export async function changeAccountPassword(input: unknown): Promise<ActionMessageResult> {

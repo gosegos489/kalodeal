@@ -36,7 +36,7 @@ export async function getAccessGrantUsers(params: ModerationSearchParams) {
   return getModerationUsers(params)
 }
 
-export type GrantHistoryParams = { proPage?: string | string[]; bumpsPage?: string | string[] }
+export type GrantHistoryParams = { proPage?: string | string[]; boostsPage?: string | string[] }
 
 export async function getAccessGrantUser(userId: unknown, params: GrantHistoryParams = {}) {
   await requireAccessGrantManager()
@@ -45,15 +45,15 @@ export async function getAccessGrantUser(userId: unknown, params: GrantHistoryPa
   const user = await prisma.user.findUnique({ where: { id: parsed.data }, select: userSelect })
   if (!user) return null
   const where = { userId: user.id }
-  const [access, proTotal, bumpsTotal] = await Promise.all([
+  const [access, proTotal, boostsTotal] = await Promise.all([
     getUserAccess(prisma, user.id),
     prisma.planGrant.count({ where }),
-    prisma.bumpGrant.count({ where })
+    prisma.boostGrant.count({ where })
   ])
   const proPagination = getPagination({ totalItems: proTotal, pageParam: params.proPage })
-  const bumpsPagination = getPagination({ totalItems: bumpsTotal, pageParam: params.bumpsPage })
+  const boostsPagination = getPagination({ totalItems: boostsTotal, pageParam: params.boostsPage })
   const issuer = { select: { email: true } } as const
-  const [proGrants, bumpGrants] = await Promise.all([
+  const [proGrants, boostGrants] = await Promise.all([
     prisma.planGrant.findMany({
       where,
       select: { id: true, plan: true, startsAt: true, endsAt: true, revokedAt: true, createdAt: true, reason: true, grantedBy: issuer },
@@ -61,13 +61,13 @@ export async function getAccessGrantUser(userId: unknown, params: GrantHistoryPa
       skip: proPagination.skip,
       take: proPagination.take
     }),
-    prisma.bumpGrant.findMany({
+    prisma.boostGrant.findMany({
       where,
       select: { id: true, total: true, remaining: true, expiresAt: true, createdAt: true, reason: true, grantedBy: issuer },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      skip: bumpsPagination.skip,
-      take: bumpsPagination.take
+      skip: boostsPagination.skip,
+      take: boostsPagination.take
     })
   ])
-  return { user: displayUser(user), access, proGrants, bumpGrants, proPagination, bumpsPagination, now: new Date() }
+  return { user: displayUser(user), access, proGrants, boostGrants, proPagination, boostsPagination, now: new Date() }
 }

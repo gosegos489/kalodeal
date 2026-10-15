@@ -1,16 +1,19 @@
 model User {
-  id                      String   @id
-  name                    String
-  pendingName             String?
-  nameModerationMessage   String?
-  email                   String
-  emailVerified           Boolean  @default(false)
-  image                   String?
-  pendingAvatarKey        String?
-  avatarCleanupKey        String?
-  avatarModerationMessage String?
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                            String   @id
+  name                          String
+  pendingName                   String?
+  nameModerationMessage         String?
+  businessName                  String?  @db.VarChar(64)
+  pendingBusinessName           String?  @db.VarChar(64)
+  businessNameModerationMessage String?
+  email                         String
+  emailVerified                 Boolean  @default(false)
+  image                         String?
+  pendingAvatarKey              String?
+  avatarCleanupKey              String?
+  avatarModerationMessage       String?
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
 
   role       String?
   banned     Boolean?  @default(false)
@@ -23,10 +26,10 @@ model User {
   subscription         Subscription?
   subscriptionPayments SubscriptionPayment[]
 
-  planGrants       PlanGrant[] @relation("PlanGrantRecipient")
-  issuedPlanGrants PlanGrant[] @relation("PlanGrantIssuer")
-  bumpGrants       BumpGrant[] @relation("BumpGrantRecipient")
-  issuedBumpGrants BumpGrant[] @relation("BumpGrantIssuer")
+  planGrants        PlanGrant[] @relation("PlanGrantRecipient")
+  issuedPlanGrants  PlanGrant[] @relation("PlanGrantIssuer")
+  boostGrants       BoostGrant[] @relation("BoostGrantRecipient")
+  issuedBoostGrants BoostGrant[] @relation("BoostGrantIssuer")
 
   favorites Favorite[]
   listings  Listing[]

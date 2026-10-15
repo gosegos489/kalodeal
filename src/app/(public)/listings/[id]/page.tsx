@@ -40,7 +40,7 @@ async function ListingDetails({ params }: Props) {
   const listing = await getListing(id)
   if (!listing) notFound()
 
-  const category = listing.status === 'ACTIVE' ? await getPublicCategory(listing.category.slug) : null
+  const category = listing.publiclyVisible ? await getPublicCategory(listing.category.slug) : null
   const breadcrumbs = [
     ...(category ? getCategoryBreadcrumbs(category.category, category.ancestors) : [{ label: 'Home', href: '/' }]),
     { label: listing.title, href: `/listings/${listing.id}` }
@@ -53,8 +53,13 @@ async function ListingDetails({ params }: Props) {
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      {listing.isOwner && listing.status === 'ACTIVE' && !listing.publiclyVisible && (
+        <p role="status" className="text-muted-foreground text-sm">
+          This listing exceeds your current plan allowance and is visible only to you. Hide other listings or upgrade your plan to make it public.
+        </p>
+      )}
       <JsonLd data={buildListingJsonLd(listing, breadcrumbs, { includeOffer: Boolean(category) && !isJobListing })} />
-      {listing.status === 'ACTIVE' && !listing.isOwner && <ListingViewTracker listingId={listing.id} />}
+      {listing.publiclyVisible && !listing.isOwner && <ListingViewTracker listingId={listing.id} />}
       <BreadCrumbs
         items={[
           { label: 'Home', href: '/' },
@@ -71,14 +76,14 @@ async function ListingDetails({ params }: Props) {
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-muted-foreground text-xs">{listing.category.name}</p>
-                <Badge variant={listing.status === 'ACTIVE' ? 'default' : 'secondary'} className="capitalize">
+                <Badge variant={listing.publiclyVisible ? 'default' : 'secondary'} className="capitalize">
                   {listingStatusLabels[listing.status]}
                 </Badge>
               </div>
               <p className="text-primary text-3xl font-semibold">{formatListingPrice(listing.price, listing.currency)}</p>
               <h1 className="text-2xl font-semibold wrap-break-word">{listing.title}</h1>
               <div className="flex items-center gap-3">
-                {listing.canUseMarketplace && listing.status === 'ACTIVE' && (
+                {listing.canUseMarketplace && listing.publiclyVisible && (
                   <FavoriteButton
                     listingId={listing.id}
                     title={listing.title}

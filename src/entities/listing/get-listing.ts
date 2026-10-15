@@ -4,9 +4,10 @@ import { getSellerName } from '@/entities/user/public-profile'
 import { getApprovedAvatarUrl } from '@/features/account/settings/avatar-reference'
 import { canUseMarketplace } from '@/lib/account-role'
 import { getSession } from '@/lib/auth-utils'
-import { PLAN_LIMITS } from '@/lib/plan-limits'
+import { MAX_LISTING_PHOTOS, getPaidListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { getListingImageUrl, listingSummarySelect, toListingSummary } from './listing-summary'
+import { getPublicListingIds } from './public-eligibility'
 import { listingIdSchema } from './schema'
 import type { ListingDetails } from './types'
 
@@ -23,12 +24,19 @@ const getListingRow = cache(async (id: string, userId: string | null) => {
       messengerUrl: true,
       _count: { select: { favorites: true } },
       favorites: { where: { userId: userId ?? '' }, select: { id: true }, take: 1 },
-      user: { select: { name: true, image: true } },
+      user: {
+        select: {
+          name: true,
+          image: true,
+          businessName: true,
+          subscription: { select: { plan: true, status: true, currentPeriodStart: true, currentPeriodEnd: true } }
+        }
+      },
       category: { select: { name: true, slug: true } },
       images: {
         select: { id: true, key: true },
         orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
-        take: PLAN_LIMITS.PRO.imagesPerListing
+        take: MAX_LISTING_PHOTOS
       }
     }
   })
@@ -44,17 +52,19 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
 
   const { userId, user, phone, facebookUrl, messengerUrl, status, favorites, _count, ...summary } = listing
   const isOwner = session?.user.id === userId
-  if (status !== 'ACTIVE' && !isOwner) return null
+  const publiclyVisible = status === 'ACTIVE' && (await getPublicListingIds([listing.id])).has(listing.id)
+  if (!publiclyVisible && !isOwner) return null
 
   return {
     ...toListingSummary(summary),
     category: listing.category,
     status,
+    publiclyVisible,
     facebookUrl,
     messengerUrl,
     maskedPhone: phone ? `${phone.trim().startsWith('+') ? '+' : ''}${phone.replace(/\D/g, '').slice(0, 3)} ••••••` : null,
     seller: {
-      name: getSellerName(user.name),
+      name: getPaidListingPlan(user.subscription) === 'BUSINESS' && user.businessName ? user.businessName : getSellerName(user.name),
       image: getApprovedAvatarUrl(userId, user.image)
     },
     isOwner,
