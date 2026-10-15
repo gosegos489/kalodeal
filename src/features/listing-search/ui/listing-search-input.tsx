@@ -24,7 +24,7 @@ export function ListingSearchInput({ query, isPending, placeholder, hero, onQuer
         value={query}
         maxLength={LISTING_QUERY_MAX_LENGTH}
         placeholder={placeholder}
-        className={cn('px-9 py-5', hero && 'h-12 border-0 bg-transparent shadow-none')}
+        className={cn('h-12 px-9', hero && 'bg-background shadow-none')}
         onChange={(event) => onQueryChange(event.target.value)}
       />
       {isPending ? (

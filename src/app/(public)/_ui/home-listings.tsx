@@ -1,32 +1,23 @@
-import { ArrowRight, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { getListings } from '@/entities/listing/get-listings'
+import { getRecentListings } from '@/entities/listing/get-recent-listings'
 import { ListingCard } from '@/entities/listing/ui/listing-card'
 import { getFavoriteState } from '@/features/favorites/data'
 import { type HomePageProps, getBrowseContext } from '../_lib/browse-context'
 
 export async function HomeListings({ searchParams }: HomePageProps) {
-  const { filters, category, location, invalidFilters } = await getBrowseContext(searchParams)
-  const listings = invalidFilters ? [] : await getListings(filters)
+  const { filters, location, invalidFilters } = await getBrowseContext(searchParams)
+  const filtered = Boolean(filters.query || filters.category || filters.district || filters.area || invalidFilters)
+  const listings = invalidFilters ? [] : filtered ? await getListings(filters) : await getRecentListings()
   const favoriteState = await getFavoriteState(listings.map(({ id }) => id))
-  const filtered = Boolean(filters.query || filters.category || filters.district || invalidFilters)
-  const title = filters.query
-    ? `Results for “${filters.query}”`
-    : filters.category
-      ? `Listings in ${category?.category.name || filters.category.replaceAll('-', ' ')}`
-      : location
-        ? `Listings in ${location}`
-        : invalidFilters
-          ? 'Check your search filters'
-          : 'Fresh on Kalodeal'
 
   return (
     <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 id="listings-heading" className="text-xl font-semibold sm:text-2xl">
-            {title}
+            {filtered ? 'Search Results' : 'Recently Added'}
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
             {filtered
@@ -35,11 +26,6 @@ export async function HomeListings({ searchParams }: HomePageProps) {
           </p>
           {location && (filters.query || filters.category) && <p className="text-muted-foreground mt-1 text-sm">{location}</p>}
         </div>
-        {filtered && (
-          <Button nativeButton={false} variant="outline" render={<Link href="/" scroll={false} />}>
-            Clear filters
-          </Button>
-        )}
       </div>
       {listings.length ? (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
@@ -68,9 +54,9 @@ export async function HomeListings({ searchParams }: HomePageProps) {
                 : 'Give something you no longer need a new home.'}
           </p>
           {filtered ? (
-            <Button nativeButton={false} variant="outline" render={<Link href="/" scroll={false} />}>
-              Browse all listings <ArrowRight />
-            </Button>
+            <a href="#search-filters" className="text-primary text-sm font-medium underline underline-offset-4">
+              Adjust or clear filters above
+            </a>
           ) : favoriteState.canUseMarketplace ? (
             <Link href="/sell" className="text-primary text-sm font-medium underline underline-offset-4">
               Post a listing

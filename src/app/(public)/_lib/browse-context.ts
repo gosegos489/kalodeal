@@ -9,7 +9,13 @@ export type HomePageProps = { searchParams: Promise<Record<string, string | stri
 
 export const getBrowseContext = cache(async (searchParams: HomePageProps['searchParams']) => {
   const raw = await searchParams
-  const result = listingFiltersSchema.safeParse({ query: raw.q, category: raw.category, district: raw.district, area: raw.area })
+  const optionalValue = (value: string | string[] | undefined) => (typeof value === 'string' && !value.trim() ? undefined : value)
+  const result = listingFiltersSchema.safeParse({
+    query: optionalValue(raw.q),
+    category: optionalValue(raw.category),
+    district: optionalValue(raw.district),
+    area: optionalValue(raw.area)
+  })
   const filters = result.success ? result.data : {}
   const category = filters.category ? await getPublicCategory(filters.category) : null
   const isSearch = 'q' in raw || Object.keys(raw).some((key) => key !== 'category') || !result.success || ('category' in raw && !category)

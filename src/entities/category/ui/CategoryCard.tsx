@@ -1,32 +1,31 @@
-import { ArrowUpRight, Tag } from 'lucide-react'
-import Image from 'next/image'
+import { ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
-import type { CategorySummary } from '../get-category-tree'
+import { CategoryIcon } from './category-icon'
 
-export function CategoryCard({ headingLevel = 3, ...category }: CategorySummary & { headingLevel?: 2 | 3 }) {
+type CategoryCardProps = { name: string; slug: string; image: string | null; description: string | null; listingCount?: number; headingLevel?: 2 | 3 }
+
+export function CategoryCard({ headingLevel = 3, ...category }: CategoryCardProps) {
   const Heading = headingLevel === 2 ? 'h2' : 'h3'
   return (
     <Link
       href={`/?category=${category.slug}`}
-      className="focus-visible:ring-ring/50 bg-muted/20 hover:bg-muted/50 flex h-36 flex-col gap-3 p-4 transition-colors outline-none focus-visible:ring-3"
+      className="focus-visible:ring-ring/50 bg-muted/20 hover:bg-primary/5 group flex h-full min-h-36 min-w-0 flex-col gap-3 p-4 transition-colors outline-none focus-visible:ring-3"
     >
       <span className="flex items-center justify-between">
-        <span className="bg-muted text-muted-foreground flex size-9.5 items-center justify-center rounded-lg">
-          {category.image ? (
-            <Image src={category.image} alt="" width={20} height={20} className="size-5 object-contain" />
-          ) : (
-            <Tag className="size-5" strokeWidth={1.8} aria-hidden="true" />
-          )}
+        <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-xl">
+          <CategoryIcon value={category.image} size={24} />
         </span>
         <ArrowUpRight className="text-muted-foreground/60 size-4" aria-hidden="true" />
       </span>
 
       <div className="flex min-w-0 flex-col gap-0.5">
-        <Heading className="truncate text-[15px] font-semibold">{category.name}</Heading>
+        <Heading className="text-[15px] font-semibold wrap-anywhere">{category.name}</Heading>
         <span className="text-muted-foreground truncate text-xs">{category.description || 'Explore local listings'}</span>
-        <span className="text-muted-foreground text-[11px] font-medium">
-          {`${category.listingCount} ${category.slug === 'jobs' ? 'openings' : 'listings'}`}
-        </span>
+        {category.listingCount !== undefined && (
+          <span className="text-muted-foreground text-[11px] font-medium">
+            {`${category.listingCount} ${category.slug === 'jobs' ? 'openings' : 'listings'}`}
+          </span>
+        )}
       </div>
     </Link>
   )

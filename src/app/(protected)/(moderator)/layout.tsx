@@ -7,9 +7,9 @@ import { requireModerator } from '@/lib/auth-utils'
 export const metadata: Metadata = { robots: { index: false, follow: false } }
 
 async function ModeratorGuard({ children }: { children: React.ReactNode }) {
-  await requireModerator()
+  const session = await requireModerator()
 
-  return <ModeratorShell>{children}</ModeratorShell>
+  return <ModeratorShell isAdmin={session.user.role === 'admin'}>{children}</ModeratorShell>
 }
 
 export default function ModeratorLayout({ children }: { children: React.ReactNode }) {

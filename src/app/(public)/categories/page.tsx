@@ -1,11 +1,11 @@
-import { ChevronRight, MoveRight, Tag } from 'lucide-react'
+import { ChevronRight, MoveRight } from 'lucide-react'
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getCategorySummaries } from '@/entities/category/get-category-tree'
 import { CategoryCard } from '@/entities/category/ui/CategoryCard'
+import { CategoryIcon } from '@/entities/category/ui/category-icon'
 import { buildCollectionJsonLd } from '@/lib/json-ld'
 import { buildMetadata } from '@/lib/metadata'
 import { BreadCrumbs } from '@/shared/ui/BreadCrumbs'
@@ -71,11 +71,7 @@ async function CategoriesContent() {
                               className="hover:text-primary focus-visible:ring-ring/50 flex w-fit items-center gap-1 rounded-sm text-sm font-medium outline-none focus-visible:ring-2"
                             >
                               <span className="bg-muted text-muted-foreground flex size-5 shrink-0 items-center justify-center rounded">
-                                {child.image ? (
-                                  <Image src={child.image} alt="" width={12} height={12} className="size-3 object-contain" />
-                                ) : (
-                                  <Tag className="size-3" aria-hidden="true" />
-                                )}
+                                <CategoryIcon value={child.image} size={12} />
                               </span>
                               <h3 className="truncate">{child.name}</h3>
                               <ChevronRight className="text-muted-foreground size-3.5 shrink-0" aria-hidden="true" />
@@ -89,11 +85,7 @@ async function CategoriesContent() {
                                     href={`/?category=${grandchild.slug}`}
                                     className="text-muted-foreground hover:text-primary flex w-fit items-center gap-1 text-xs"
                                   >
-                                    {grandchild.image ? (
-                                      <Image src={grandchild.image} alt="" width={10} height={10} className="size-2.5 shrink-0 object-contain" />
-                                    ) : (
-                                      <Tag className="size-2.5 shrink-0" aria-hidden="true" />
-                                    )}
+                                    <CategoryIcon value={grandchild.image} size={10} />
                                     {grandchild.name}
                                   </Link>
                                 ))}

@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { getCategorySummaries } from '@/entities/category/get-category-tree'
+import { getHomepageCategories } from '@/entities/category/get-homepage-categories'
 import { buildMetadata } from '@/lib/metadata'
 import { type HomePageProps, getBrowseContext } from './_lib/browse-context'
 import { HomeCategories } from './_ui/home-categories'
-import { HomeCategoryFeeds } from './_ui/home-category-feeds'
 import { HomeHero } from './_ui/home-hero'
 import { HomeListings } from './_ui/home-listings'
 import { HeroLoading, HomeLoading, ListingsLoading } from './_ui/home-loading'
@@ -15,10 +14,11 @@ export async function generateMetadata({ searchParams }: HomePageProps): Promise
 }
 
 async function HomeContent({ searchParams }: HomePageProps) {
-  const categories = await getCategorySummaries()
+  const categories = await getHomepageCategories()
 
   return (
     <div className="flex min-w-0 flex-col gap-12 sm:gap-16">
+      <HomeCategories categories={categories} />
       <Suspense fallback={<HeroLoading />}>
         <HomeHero searchParams={searchParams} categories={categories} />
       </Suspense>
@@ -27,10 +27,6 @@ async function HomeContent({ searchParams }: HomePageProps) {
           <HomeListings searchParams={searchParams} />
         </Suspense>
       </section>
-      <HomeCategories categories={categories} />
-      <Suspense fallback={<ListingsLoading />}>
-        <HomeCategoryFeeds searchParams={searchParams} />
-      </Suspense>
     </div>
   )
 }

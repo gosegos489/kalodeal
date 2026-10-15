@@ -10,10 +10,11 @@ type ListingSearchSelectProps = {
 
 export function ListingSearchSelect({ categories, value, onValueChange }: ListingSearchSelectProps) {
   const items = [{ value: '', label: 'All categories' }, ...categories.map(({ slug, name }) => ({ value: slug, label: name }))]
+  if (value && !items.some((item) => item.value === value)) items.push({ value, label: value })
 
   return (
     <Select value={value} onValueChange={onValueChange} items={items}>
-      <SelectTrigger aria-label="Listing category" className="w-full min-w-0 data-[size=default]:h-12 sm:w-64 sm:shrink-0">
+      <SelectTrigger aria-label="Listing category" className="w-full min-w-0 data-[size=default]:h-12">
         <SelectValue className="min-w-0 overflow-hidden" />
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false}>

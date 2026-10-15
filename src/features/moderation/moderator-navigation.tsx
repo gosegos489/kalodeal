@@ -1,6 +1,6 @@
 'use client'
 
-import { Flag, Gift, Images, LayoutDashboard, List, Mail, Users } from 'lucide-react'
+import { Flag, Gift, Images, LayoutDashboard, List, Mail, Tags, Users } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LogoutButton } from '@/features/auth/logout-button'
@@ -13,32 +13,35 @@ export const moderatorNavigation = [
   { label: 'Users', href: '/moderator/users', icon: Users },
   { label: 'Access grants', href: '/moderator/access-grants', icon: Gift },
   { label: 'Contact requests', href: '/moderator/contact', icon: Mail },
-  { label: 'Chat reports', href: '/moderator/chat-reports', icon: Flag }
+  { label: 'Chat reports', href: '/moderator/chat-reports', icon: Flag },
+  { label: 'Category icons', href: '/moderator/categories', icon: Tags, adminOnly: true }
 ]
 
-export function ModeratorNavigation() {
+export function ModeratorNavigation({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname()
 
   return (
     <nav aria-label="Moderator navigation" className="grid min-w-0 gap-1 p-2 sm:grid-cols-2 lg:grid-cols-1">
-      {moderatorNavigation.map(({ label, href, icon: Icon }) => {
-        const active = pathname === href || (href !== '/moderator' && pathname.startsWith(`${href}/`))
+      {moderatorNavigation
+        .filter((item) => !item.adminOnly || isAdmin)
+        .map(({ label, href, icon: Icon }) => {
+          const active = pathname === href || (href !== '/moderator' && pathname.startsWith(`${href}/`))
 
-        return (
-          <Link
-            key={href}
-            href={href}
-            aria-current={active ? 'page' : undefined}
-            className={cn(
-              'focus-visible:ring-ring flex min-w-0 items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors outline-none focus-visible:ring-2',
-              active ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-            )}
-          >
-            <Icon aria-hidden="true" className="size-4 shrink-0" />
-            {label}
-          </Link>
-        )
-      })}
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? 'page' : undefined}
+              className={cn(
+                'focus-visible:ring-ring flex min-w-0 items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors outline-none focus-visible:ring-2',
+                active ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <Icon aria-hidden="true" className="size-4 shrink-0" />
+              {label}
+            </Link>
+          )
+        })}
       <LogoutButton />
     </nav>
   )

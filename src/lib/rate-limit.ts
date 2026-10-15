@@ -46,6 +46,13 @@ const avatarUploadLimiter = new Ratelimit({
   timeout: 3000
 })
 
+const categoryIconLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(20, '10 m'),
+  prefix: 'ratelimit:category:icon',
+  timeout: 3000
+})
+
 const passwordChangeLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(5, '1 m'),
@@ -149,6 +156,10 @@ export function checkListingPhotoRateLimit(userId: string) {
 
 export function checkAvatarUploadRateLimit(userId: string) {
   return checkRateLimit(avatarUploadLimiter, `user:${userId}`)
+}
+
+export function checkCategoryIconRateLimit(userId: string) {
+  return checkRateLimit(categoryIconLimiter, `user:${userId}`)
 }
 
 export function checkPasswordChangeRateLimit(userId: string) {

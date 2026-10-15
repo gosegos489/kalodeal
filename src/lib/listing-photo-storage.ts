@@ -1,9 +1,9 @@
-import { DeleteObjectsCommand, PutObjectCommand } from '@aws-sdk/client-s3'
+import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { randomUUID } from 'node:crypto'
 import 'server-only'
 import { MAX_PHOTO_BATCH_BYTES, listingImageSchema } from '@/features/create-listing/schema'
 import { matchesImageType } from '@/lib/image-validation'
-import { captureServerException } from '@/lib/sentry-server'
+import { deleteR2Objects } from '@/lib/r2-object-cleanup'
 
 export class ListingPhotoValidationError extends Error {}
 
@@ -42,25 +42,6 @@ export async function uploadListingPhotos(
   }
 }
 
-export async function deleteListingPhotoObjects(keys: string[]): Promise<boolean> {
-  if (!keys.length) return true
-  let pending = [...new Set(keys)]
-  // R2 can return HTTP 200 with per-object errors. Retry only failed keys.
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const { r2, R2_BUCKET_NAME } = await import('@/lib/r2')
-      const result = await r2.send(new DeleteObjectsCommand({ Bucket: R2_BUCKET_NAME, Delete: { Objects: pending.map((Key) => ({ Key })) } }), {
-        abortSignal: AbortSignal.timeout(5000)
-      })
-      if (!result.Errors?.length) return true
-      const failed = new Set(result.Errors.map((error) => error.Key))
-      if (!failed.has(undefined)) pending = pending.filter((key) => failed.has(key))
-      if (!pending.length) return true
-    } catch {
-      // Deletion is idempotent; retry all outstanding keys after transport errors.
-    }
-  }
-  await captureServerException(new Error('Listing photo cleanup failed after retries'), { feature: 'listing-photos', operation: 'cleanup' })
-  console.error('Could not clean up listing photo objects after retries.')
-  return false
+export function deleteListingPhotoObjects(keys: string[]): Promise<boolean> {
+  return deleteR2Objects(keys, 'listing-photos')
 }
