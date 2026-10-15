@@ -3,7 +3,7 @@ import { sentryErrorOptions } from '@/lib/sentry-privacy'
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN
 
-if (dsn) {
+if (process.env.NODE_ENV === 'production' && dsn) {
   init({
     ...sentryErrorOptions,
     dsn,

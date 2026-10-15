@@ -14,6 +14,7 @@ import { formatListingPrice } from '@/entities/listing/format-price'
 import { getListing } from '@/entities/listing/get-listing'
 import { listingStatusLabels } from '@/entities/listing/lifecycle'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
+import { formatLocation } from '@/entities/location/catalog'
 import { getSellerInitials } from '@/entities/user/public-profile'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
 import { ListingViewTracker } from '@/features/listing-views/listing-view-tracker'
@@ -198,6 +199,10 @@ async function ListingDetails({ params }: Props) {
                 <div className="space-y-1">
                   <dt className="text-muted-foreground">Status</dt>
                   <dd>{listingStatusLabels[listing.status]}</dd>
+                </div>
+                <div className="space-y-1">
+                  <dt className="text-muted-foreground">Location</dt>
+                  <dd>{formatLocation(listing) ?? 'Not specified'}</dd>
                 </div>
                 <div className="space-y-1">
                   <dt className="text-muted-foreground">Published</dt>

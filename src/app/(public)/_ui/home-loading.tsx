@@ -5,7 +5,7 @@ export function HeroLoading() {
     <div role="status" aria-label="Loading search" className="max-w-5xl">
       <Skeleton className="h-12 w-full max-w-xl" />
       <Skeleton className="mt-3 h-6 w-full max-w-2xl" />
-      <Skeleton className="mt-6 h-48 w-full rounded-2xl sm:mt-8 sm:h-20" />
+      <Skeleton className="mt-6 h-80 w-full rounded-2xl sm:mt-8 sm:h-36" />
     </div>
   )
 }

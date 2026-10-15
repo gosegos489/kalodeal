@@ -14,6 +14,7 @@ import type { EditableListing } from '@/features/edit-listing/types'
 import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
 import { ListingAllowanceCard } from './listing-allowance-card'
 import { ListingAttachments } from './listing-attachments'
+import { ListingLocationFields } from './listing-location-fields'
 import { ListingTipsCard } from './listing-tips-card'
 import { PublishListingCard } from './publish-listing-card'
 import type { ListingCategoryOption } from './types'
@@ -106,6 +107,8 @@ export function ListingForm(props: ListingFormProps) {
                 </Field>
               )}
             />
+
+            <ListingLocationFields form={form} disabled={disabled} missingLocation={!!listing && !listing.values.district} />
 
             <Controller
               name="description"

@@ -22,6 +22,8 @@ export function useListingForm(plan: ListingPlan, listing?: EditableListing) {
     defaultValues: {
       title: '',
       categoryId: '',
+      district: '',
+      area: '',
       description: '',
       price: '',
       currency: DEFAULT_LISTING_CURRENCY,

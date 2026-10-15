@@ -60,6 +60,8 @@ export async function POST(request: Request) {
   const parsed = createListingSchema(plan).safeParse({
     title: payload.get('title'),
     categoryId: payload.get('categoryId'),
+    district: payload.get('district'),
+    area: payload.get('area'),
     description: payload.get('description'),
     price: payload.get('price') ?? '',
     currency: payload.get('currency'),

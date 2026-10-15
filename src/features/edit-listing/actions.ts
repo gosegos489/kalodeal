@@ -54,6 +54,8 @@ export async function updateListing(id: unknown, input: unknown, expectedUpdated
           price: true,
           currency: true,
           categoryId: true,
+          district: true,
+          area: true,
           phone: true,
           youtube: true,
           facebookUrl: true,
@@ -67,12 +69,7 @@ export async function updateListing(id: unknown, input: unknown, expectedUpdated
         return { message: 'This listing has changed. Reload the page before editing it again.' }
       }
       const samePrice = listing.price === null ? data.price === null : data.price !== null && listing.price.equals(data.price)
-      const contentChanged =
-        !samePrice ||
-        listingDetailsSchema
-          .omit({ price: true })
-          .keyof()
-          .options.some((key) => listing[key] !== data[key])
+      const contentChanged = !samePrice || listingDetailsSchema.keyof().options.some((key) => key !== 'price' && listing[key] !== data[key])
       const resubmitting = needsListingResubmission(listing.status)
       if (!contentChanged && !resubmitting) {
         return { id: listing.id, previousCategoryId: listing.categoryId, categoryId: listing.categoryId, status: listing.status, changed: false }

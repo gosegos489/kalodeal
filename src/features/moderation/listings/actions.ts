@@ -26,10 +26,22 @@ export async function moderateListing(input: unknown): Promise<ActionMessageResu
       if (!moderator || hasActiveBan(moderator) || (moderator.role !== 'moderator' && moderator.role !== 'admin')) {
         return { message: 'Moderator access is required.' }
       }
-      const listing = await tx.listing.findUnique({ where: { id: review.id }, select: { status: true, updatedAt: true, categoryId: true } })
+      const listing = await tx.listing.findUnique({
+        where: { id: review.id },
+        select: { status: true, updatedAt: true, categoryId: true, district: true, area: true }
+      })
       if (!listing) return { message: 'This listing is no longer available.' }
       if (listing.updatedAt.toISOString() !== review.updatedAt) return { message: 'This listing has changed. Reload it before making a decision.' }
       const version = new Date(Math.max(Date.now(), listing.updatedAt.getTime() + 1))
+      if (review.decision === 'change-location') {
+        if (listing.district === review.district && listing.area === review.area) return { categories: [listing.categoryId] }
+        const updated = await tx.listing.updateMany({
+          where: { id: review.id, status: listing.status, updatedAt: listing.updatedAt },
+          data: { district: review.district, area: review.area, updatedAt: version }
+        })
+        if (updated.count !== 1) return { message: 'This listing has changed. Reload it before correcting its location.' }
+        return { categories: [listing.categoryId] }
+      }
       if (review.decision === 'change-category') {
         if (listing.status !== 'PENDING') return { message: 'Category correction is available for listings awaiting approval.' }
         const category = await tx.category.findFirst({ where: { id: review.categoryId, isActive: true }, select: { id: true } })
@@ -69,7 +81,8 @@ export async function moderateListing(input: unknown): Promise<ActionMessageResu
     'request-changes': 'Changes requested. The owner can read your feedback in My listings.',
     reject: 'Listing rejected. It remains unavailable to buyers.',
     hide: 'Listing hidden by moderation. The owner can edit and submit it for review.',
-    'change-category': 'Category saved. The listing is still awaiting approval; review it before approving.'
+    'change-category': 'Category saved. The listing is still awaiting approval; review it before approving.',
+    'change-location': 'Location saved. The listing status is unchanged. Review the updated version before making another decision.'
   }
   const message = messages[parsed.data.decision]
   try {

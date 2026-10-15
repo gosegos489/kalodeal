@@ -1,9 +1,10 @@
-import { ImageIcon } from 'lucide-react'
+import { ImageIcon, MapPin } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { formatListingPrice } from '@/entities/listing/format-price'
 import { listingStatusLabels } from '@/entities/listing/lifecycle'
+import { formatLocation } from '@/entities/location/catalog'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
 import type { ListingStatus } from '@/generated/prisma/enums'
 import { dayjs } from '@/lib/dayjs'
@@ -31,6 +32,7 @@ export function ListingCard({
   imageSizes = '(max-width: 639px) calc(100vw - 32px), (max-width: 767px) calc((100vw - 48px) / 2), (max-width: 1279px) calc((100vw - 64px) / 3), calc((100vw - 80px) / 4)'
 }: ListingCardProps) {
   const href = `/listings/${listing.id}`
+  const location = formatLocation(listing)
 
   return (
     <article className="bg-card flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border shadow-xs">
@@ -78,6 +80,12 @@ export function ListingCard({
           <p className="text-primary text-lg font-semibold">{formatListingPrice(listing.price, listing.currency)}</p>
           <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{listing.description}</p>
         </Link>
+        {location && (
+          <p className="text-muted-foreground flex items-start gap-1.5 text-xs">
+            <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
+            {location}
+          </p>
+        )}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs">
           <time dateTime={listing.createdAt.toISOString()} className="text-muted-foreground">
             {dayjs.utc(listing.createdAt).format('D MMM YYYY')}

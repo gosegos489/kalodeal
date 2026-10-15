@@ -7,15 +7,19 @@ import { getFavoriteState } from '@/features/favorites/data'
 import { type HomePageProps, getBrowseContext } from '../_lib/browse-context'
 
 export async function HomeListings({ searchParams }: HomePageProps) {
-  const { filters, category } = await getBrowseContext(searchParams)
-  const listings = await getListings(filters)
+  const { filters, category, location, invalidFilters } = await getBrowseContext(searchParams)
+  const listings = invalidFilters ? [] : await getListings(filters)
   const favoriteState = await getFavoriteState(listings.map(({ id }) => id))
-  const filtered = Boolean(filters.query || filters.category)
+  const filtered = Boolean(filters.query || filters.category || filters.district || invalidFilters)
   const title = filters.query
     ? `Results for “${filters.query}”`
     : filters.category
       ? `Listings in ${category?.category.name || filters.category.replaceAll('-', ' ')}`
-      : 'Fresh on Kalodeal'
+      : location
+        ? `Listings in ${location}`
+        : invalidFilters
+          ? 'Check your search filters'
+          : 'Fresh on Kalodeal'
 
   return (
     <>
@@ -29,6 +33,7 @@ export async function HomeListings({ searchParams }: HomePageProps) {
               ? `${listings.length} ${listings.length === 1 ? 'listing' : 'listings'} shown`
               : 'Discover the latest listings from our community.'}
           </p>
+          {location && (filters.query || filters.category) && <p className="text-muted-foreground mt-1 text-sm">{location}</p>}
         </div>
         {filtered && (
           <Button nativeButton={false} variant="outline" render={<Link href="/" scroll={false} />}>
@@ -56,7 +61,11 @@ export async function HomeListings({ searchParams }: HomePageProps) {
           <Search aria-hidden="true" className="text-muted-foreground size-8" strokeWidth={1.5} />
           <h3 className="text-lg font-semibold">{filtered ? 'No listings match your search' : 'Be the first to share a great find'}</h3>
           <p className="text-muted-foreground max-w-sm text-sm">
-            {filtered ? 'Try a different keyword or explore another category.' : 'Give something you no longer need a new home.'}
+            {invalidFilters
+              ? 'Some search filters are invalid. Choose a district and an area within it, or clear the filters.'
+              : filtered
+                ? 'Try a different keyword, category or location.'
+                : 'Give something you no longer need a new home.'}
           </p>
           {filtered ? (
             <Button nativeButton={false} variant="outline" render={<Link href="/" scroll={false} />}>

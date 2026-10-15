@@ -8,6 +8,8 @@ export const listingSummarySelect = {
   description: true,
   price: true,
   currency: true,
+  district: true,
+  area: true,
   createdAt: true,
   category: { select: { name: true } },
   images: {

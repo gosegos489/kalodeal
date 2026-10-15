@@ -25,6 +25,11 @@ model Listing {
   facebookUrl  String?
   messengerUrl String?
 
+  // Nullable for existing listings; application writes require a catalogue pair.
+  // The migration also enforces valid district/area pairs with a CHECK constraint.
+  district String?
+  area     String?
+
   status ListingStatus @default(PENDING)
 
   moderationReason  String?
@@ -53,6 +58,8 @@ model Listing {
   @@index([userId, status])
   @@index([categoryId])
   @@index([status, sortDate])
+  @@index([status, district, sortDate, id])
+  @@index([status, district, area, sortDate, id])
   @@map("listing")
 }
 

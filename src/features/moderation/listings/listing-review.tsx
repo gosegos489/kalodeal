@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatListingPrice } from '@/entities/listing/format-price'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
+import { formatLocation } from '@/entities/location/catalog'
 import { ListingModerationFeedback } from '@/features/account/listing-moderation-feedback'
 import { ListingStatusBadge } from '@/features/account/listing-status-badge'
 import { getListingCategoryOptions } from '@/features/create-listing/get-category-options'
@@ -34,6 +35,7 @@ export async function ListingReview({ id }: { id: string }) {
     { label: 'Seller', value: listing.seller.name },
     { label: 'Seller email', value: listing.seller.email },
     { label: 'Category', value: listing.category.name },
+    { label: 'Location', value: formatLocation(listing) ?? 'Not specified' },
     { label: 'Price', value: formatListingPrice(listing.price, listing.currency) },
     { label: 'Phone', value: listing.phone },
     { label: 'YouTube', value: listing.youtube },
@@ -80,22 +82,16 @@ export async function ListingReview({ id }: { id: string }) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {listing.status === 'PENDING' || listing.status === 'ACTIVE' ? (
-                <ListingModerationControls
-                  key={listing.id}
-                  id={listing.id}
-                  updatedAt={listing.updatedAt}
-                  status={listing.status}
-                  categoryId={listing.category.id}
-                  categories={categories}
-                />
-              ) : (
-                <p role="status" className="text-muted-foreground text-sm">
-                  {listing.status === 'CHANGES_REQUESTED' || listing.status === 'HIDDEN'
-                    ? 'Waiting for the owner to edit and submit this listing for review.'
-                    : 'No moderation decision is available for this listing.'}
-                </p>
-              )}
+              <ListingModerationControls
+                key={listing.id}
+                id={listing.id}
+                updatedAt={listing.updatedAt}
+                status={listing.status}
+                categoryId={listing.category.id}
+                categories={categories}
+                district={listing.district}
+                area={listing.area}
+              />
             </CardContent>
           </Card>
           <Card className="min-w-0">

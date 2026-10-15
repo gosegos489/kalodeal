@@ -5,8 +5,12 @@ import { getMainCategoryFeeds } from '@/entities/listing/get-main-category-feeds
 import { ListingCard } from '@/entities/listing/ui/listing-card'
 import { ListingCarousel } from '@/entities/listing/ui/listing-carousel'
 import { getFavoriteState } from '@/features/favorites/data'
+import { type HomePageProps, getBrowseContext } from '../_lib/browse-context'
 
-export async function HomeCategoryFeeds() {
+export async function HomeCategoryFeeds({ searchParams }: HomePageProps) {
+  const { filters, invalidFilters } = await getBrowseContext(searchParams)
+  // General category feeds must not look like matches for a location search.
+  if (filters.district || invalidFilters) return null
   const feeds = await getMainCategoryFeeds()
   const favoriteState = await getFavoriteState(feeds.flatMap(({ listings }) => listings.map(({ id }) => id)))
   return feeds.map((feed) => <CategoryFeed key={feed.category.id} feed={feed} favoriteState={favoriteState} />)

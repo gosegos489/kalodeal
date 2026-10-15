@@ -29,7 +29,7 @@ async function HomeContent({ searchParams }: HomePageProps) {
       </section>
       <HomeCategories categories={categories} />
       <Suspense fallback={<ListingsLoading />}>
-        <HomeCategoryFeeds />
+        <HomeCategoryFeeds searchParams={searchParams} />
       </Suspense>
     </div>
   )

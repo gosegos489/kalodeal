@@ -18,7 +18,7 @@ export function HomeHero({ searchParams, categories }: HomePageProps & { categor
 
   return (
     <BrowseIntro searchParams={searchParams}>
-      <Suspense fallback={<Skeleton className="h-48 w-full rounded-2xl sm:h-20" />}>
+      <Suspense fallback={<Skeleton className="h-80 w-full rounded-2xl sm:h-36" />}>
         <ListingSearch variant="hero" placeholder="What are you looking for?" categories={searchCategories} />
       </Suspense>
     </BrowseIntro>
@@ -26,7 +26,7 @@ export function HomeHero({ searchParams, categories }: HomePageProps & { categor
 }
 
 async function BrowseIntro({ searchParams, children }: HomePageProps & { children: React.ReactNode }) {
-  const { category, filters, title, description, path, isSearch } = await getBrowseContext(searchParams)
+  const { category, filters, location, title, description, path, isSearch } = await getBrowseContext(searchParams)
   const breadcrumbs = category ? getCategoryBreadcrumbs(category.category, category.ancestors) : []
 
   return (
@@ -36,7 +36,10 @@ async function BrowseIntro({ searchParams, children }: HomePageProps & { childre
       {category && (
         <BreadCrumbs items={breadcrumbs.map((item, index) => ({ ...item, ...(index === breadcrumbs.length - 1 && { href: undefined }) }))} />
       )}
-      <HeroSection title={filters.query || category ? title : undefined} description={category || filters.query ? description : undefined}>
+      <HeroSection
+        title={filters.query || category || location ? title : undefined}
+        description={category || filters.query || location ? description : undefined}
+      >
         {children}
       </HeroSection>
     </>

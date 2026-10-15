@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
 import type { ListingModerationDecision } from '@/entities/listing/lifecycle'
+import { isAreaInDistrict } from '@/entities/location/catalog'
+import { AreaSelect, DistrictSelect } from '@/entities/location/ui/location-selects'
 import type { ListingCategoryOption } from '@/features/create-listing/types'
 import type { ListingStatus } from '@/generated/prisma/enums'
 import type { ActionMessageResult } from '@/lib/action-result'
@@ -16,20 +18,24 @@ import { moderateListing } from './actions'
 import { listingModerationReasons, listingModerationSchema } from './schema'
 
 type Reason = (typeof listingModerationReasons)[number]['value']
-type Decision = ListingModerationDecision | 'change-category'
+type Decision = ListingModerationDecision | 'change-category' | 'change-location'
 
 export function ListingModerationControls({
   id,
   updatedAt,
   status,
   categoryId,
-  categories
+  categories,
+  district,
+  area
 }: {
   id: string
   updatedAt: string
   status: ListingStatus
   categoryId: string
   categories: ListingCategoryOption[]
+  district: string | null
+  area: string | null
 }) {
   const router = useRouter()
   const fieldId = useId()
@@ -40,11 +46,13 @@ export function ListingModerationControls({
   const [message, setMessage] = useState('')
   const [reason, setReason] = useState<Reason | null>(null)
   const [category, setCategory] = useState(categoryId)
+  const [location, setLocation] = useState({ district: district ?? '', area: area ?? '' })
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ActionMessageResult | null>(null)
   const busy = pendingDecision !== null
   const decided = result?.success === true
   const changed = reviewedVersion !== updatedAt
+  const locationChanged = location.district !== (district ?? '') || location.area !== (area ?? '')
 
   async function submit(decision: Decision) {
     if (inFlight.current || decided || changed) return
@@ -52,7 +60,13 @@ export function ListingModerationControls({
       id,
       updatedAt: reviewedVersion,
       decision,
-      ...(decision === 'change-category' ? { categoryId: category } : decision === 'approve' ? {} : { message, ...(reason ? { reason } : {}) })
+      ...(decision === 'change-location'
+        ? location
+        : decision === 'change-category'
+          ? { categoryId: category }
+          : decision === 'approve'
+            ? {}
+            : { message, ...(reason ? { reason } : {}) })
     }
     const parsed = listingModerationSchema.safeParse(input)
     if (!parsed.success) {
@@ -93,6 +107,7 @@ export function ListingModerationControls({
           onClick={() => {
             setReviewedVersion(updatedAt)
             setCategory(categoryId)
+            setLocation({ district: district ?? '', area: area ?? '' })
             setFeedbackDecision(null)
             setMessage('')
             setReason(null)
@@ -111,14 +126,16 @@ export function ListingModerationControls({
       <p className="text-muted-foreground text-sm">
         {status === 'PENDING'
           ? 'Approve this version, request corrections, or reject it permanently.'
-          : 'Hide this published listing and explain the reason to its owner.'}
+          : status === 'ACTIVE'
+            ? 'Hide this published listing and explain the reason to its owner.'
+            : 'You can correct the location. No status decision is available for this listing.'}
       </p>
       <div className="flex flex-wrap gap-2">
         {status === 'PENDING' ? (
           <>
             <Button
               type="button"
-              disabled={busy || decided || category !== categoryId}
+              disabled={busy || decided || category !== categoryId || locationChanged}
               aria-busy={pendingDecision === 'approve'}
               onClick={() => void submit('approve')}
             >
@@ -156,7 +173,7 @@ export function ListingModerationControls({
               <X aria-hidden="true" /> Reject
             </Button>
           </>
-        ) : (
+        ) : status === 'ACTIVE' ? (
           <Button
             type="button"
             variant="outline"
@@ -170,7 +187,7 @@ export function ListingModerationControls({
           >
             <EyeOff aria-hidden="true" /> Hide listing
           </Button>
-        )}
+        ) : null}
       </div>
       {feedbackDecision && (
         <form
@@ -289,13 +306,53 @@ export function ListingModerationControls({
             {pendingDecision === 'change-category' && <LoaderCircle aria-hidden="true" className="motion-safe:animate-spin" />}
             {pendingDecision === 'change-category' ? 'Saving category...' : 'Save category'}
           </Button>
-          {error && !feedbackDecision && (
-            <p role="alert" className="text-destructive text-sm">
-              {error}
-            </p>
-          )}
         </form>
       )}
+      <form
+        className="flex flex-col gap-3 border-t pt-4"
+        onSubmit={(event) => {
+          event.preventDefault()
+          void submit('change-location')
+        }}
+      >
+        <Field>
+          <FieldLabel htmlFor={`${fieldId}-district`}>Correct district</FieldLabel>
+          <DistrictSelect
+            id={`${fieldId}-district`}
+            value={location.district}
+            onValueChange={(value) => {
+              setLocation((current) => ({ district: value, area: isAreaInDistrict(value, current.area) ? current.area : '' }))
+              setError(null)
+            }}
+            disabled={busy || decided}
+          />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor={`${fieldId}-area`}>Correct area</FieldLabel>
+          <AreaSelect
+            key={location.district}
+            id={`${fieldId}-area`}
+            district={location.district}
+            value={location.area}
+            onValueChange={(value) => {
+              setLocation((current) => ({ ...current, area: value }))
+              setError(null)
+            }}
+            disabled={busy || decided}
+          />
+          <FieldDescription>Saving corrects only the location and keeps the current status and owner feedback.</FieldDescription>
+          {locationChanged && status === 'PENDING' && <p className="text-muted-foreground text-xs">Save the selected location before approving.</p>}
+        </Field>
+        <Button type="submit" variant="outline" disabled={busy || decided || !locationChanged || !isAreaInDistrict(location.district, location.area)}>
+          {pendingDecision === 'change-location' && <LoaderCircle aria-hidden="true" className="motion-safe:animate-spin" />}
+          {pendingDecision === 'change-location' ? 'Saving location...' : 'Save location'}
+        </Button>
+        {error && !feedbackDecision && (
+          <p role="alert" className="text-destructive text-sm">
+            {error}
+          </p>
+        )}
+      </form>
       {result && (
         <p role={result.success ? 'status' : 'alert'} className={result.success ? 'text-sm' : 'text-destructive text-sm'}>
           {result.message}

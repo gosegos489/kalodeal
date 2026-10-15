@@ -2,12 +2,13 @@ import { ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { formatLocation } from '@/entities/location/catalog'
 import { cn } from '@/lib/utils'
 import { formatListingPrice } from '../format-price'
 import type { ListingSummary } from '../types'
 
 type ListingRowProps = {
-  listing: Pick<ListingSummary, 'id' | 'title' | 'price' | 'currency' | 'coverUrl'>
+  listing: Pick<ListingSummary, 'id' | 'title' | 'price' | 'currency' | 'coverUrl' | 'district' | 'area'>
   href: string | null
   metadata: ReactNode
   status: ReactNode
@@ -18,6 +19,7 @@ type ListingRowProps = {
 }
 
 export function ListingRow({ listing, href, metadata, status, actions, actionsClassName, feedback, cornerAction }: ListingRowProps) {
+  const location = formatLocation(listing)
   const thumbnailClassName =
     'bg-muted focus-visible:ring-ring relative row-span-2 size-16 overflow-hidden rounded-lg outline-none focus-visible:ring-2 xl:row-span-1'
   const thumbnail = listing.coverUrl ? (
@@ -60,6 +62,7 @@ export function ListingRow({ listing, href, metadata, status, actions, actionsCl
           <span className="text-foreground font-medium">{formatListingPrice(listing.price, listing.currency)}</span>
           {metadata}
         </div>
+        {location && <p className="text-muted-foreground text-xs wrap-anywhere">{location}</p>}
       </div>
       <div className="col-start-2 xl:col-start-auto">{status}</div>
       <div className={cn('col-span-2 min-w-0 border-t pt-3 xl:col-span-1 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-4', actionsClassName)}>

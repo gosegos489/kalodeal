@@ -1,6 +1,7 @@
+import type { ListingLocation } from '@/entities/location/catalog'
 import type { ListingCurrency, ListingStatus } from '@/generated/prisma/enums'
 
-export type ListingSummary = {
+export type ListingSummary = ListingLocation & {
   id: string
   title: string
   description: string
