@@ -24,6 +24,7 @@ export const historyResultSchema = z.discriminatedUnion('success', [
     success: z.literal(true),
     data: z.object({
       hasMore: z.boolean(),
+      otherReadSequence: sequenceSchema,
       messages: z
         .array(
           z.object({

@@ -19,7 +19,7 @@ function refreshProfile(publicChanged = false) {
   if (publicChanged) updateTag(cacheTags.sellers)
   revalidatePath('/account/settings')
   revalidatePath('/admin')
-  revalidatePath('/moderator')
+  revalidatePath('/moderator', 'layout')
   revalidatePath('/moderator/avatars')
   if (publicChanged) {
     revalidatePath('/sellers/[id]', 'page')

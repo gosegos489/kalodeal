@@ -1,5 +1,6 @@
 import 'server-only'
-import { getSettingsPageActor } from '@/features/account/settings/server'
+import { cache } from 'react'
+import { getSettingsActor, getSettingsPageActor } from '@/features/account/settings/server'
 import { Prisma } from '@/generated/prisma/client'
 import prisma from '@/lib/prisma'
 import { moderationListingSelect, toModerationListing } from './listings/data'
@@ -7,10 +8,19 @@ import { moderationListingSelect, toModerationListing } from './listings/data'
 export { getListingModerationQueue, getModerationListing } from './listings/data'
 export { getModerationUsers } from './users/data'
 
+export const getModerationQueueCounts = cache(async () => {
+  await getSettingsActor(true)
+  const [pendingListings, pendingAvatars] = await Promise.all([
+    prisma.listing.count({ where: { status: 'PENDING' } }),
+    prisma.user.count({ where: { pendingAvatarKey: { not: null } } })
+  ])
+  return { pendingListings, pendingAvatars }
+})
+
 export async function getModerationOverview() {
   await getSettingsPageActor(true)
-  const [pendingListings, pendingNames, pendingAvatars, avatarCleanup, listings, openChatReports] = await Promise.all([
-    prisma.listing.count({ where: { status: 'PENDING' } }),
+  const [counts, pendingNames, avatarCleanup, listings, openChatReports] = await Promise.all([
+    getModerationQueueCounts(),
     prisma.user.count({
       where: {
         OR: [
@@ -20,7 +30,6 @@ export async function getModerationOverview() {
         ]
       }
     }),
-    prisma.user.count({ where: { pendingAvatarKey: { not: null } } }),
     prisma.user.count({ where: { avatarCleanupKey: { not: null } } }),
     prisma.listing.findMany({
       where: { status: 'PENDING' },
@@ -31,5 +40,5 @@ export async function getModerationOverview() {
     prisma.chatReport.count({ where: { status: 'OPEN' } })
   ])
 
-  return { pendingListings, pendingNames, pendingAvatars, avatarCleanup, openChatReports, recentListings: listings.map(toModerationListing) }
+  return { ...counts, pendingNames, avatarCleanup, openChatReports, recentListings: listings.map(toModerationListing) }
 }

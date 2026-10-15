@@ -4,7 +4,7 @@ import { getPublicListingIds } from '@/entities/listing/public-eligibility'
 import type { Prisma, PrismaClient } from '@/generated/prisma/client'
 import { canUseMarketplace } from '@/lib/account-role'
 import { getPagination } from '@/lib/pagination'
-import { conversationChannel, inboxChannel } from './channels'
+import { conversationChannel, inboxChannel, presenceChannel } from './channels'
 import { conversationIdSchema, createConversationSchema, historySchema, readMessagesSchema, sendMessageSchema } from './schema'
 import type { ChatMessage, MessageHistory } from './types'
 
@@ -35,16 +35,15 @@ const previewBaseSelect = {
 } as const
 const previewSelect = {
   ...previewBaseSelect,
-  buyer: { select: { name: true } },
-  seller: { select: { name: true } },
+  buyer: { select: { name: true, image: true } },
+  seller: { select: { name: true, image: true } },
   listing: {
     select: {
       title: true,
-      status: true,
-      images: { select: { key: true }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }], take: 1 }
+      status: true
     }
   },
-  messages: { select: { content: true }, orderBy: { sequence: 'desc' }, take: 1 }
+  messages: { select: { content: true, senderId: true }, orderBy: { sequence: 'desc' }, take: 1 }
 } satisfies Prisma.ConversationSelect
 
 type RateCheck = (userId: string) => Promise<{ success: true } | { success: false; message: string; status: number }>
@@ -65,8 +64,9 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
   async function userId() {
     const id = await currentUserId()
     if (!id) throw new MessagingError('Sign in to access messages.', 401)
-    const actor = await db.user.findUnique({ where: { id }, select: { role: true } })
+    const actor = await db.user.findUnique({ where: { id }, select: { role: true, banned: true, banExpires: true } })
     if (!actor || !canUseMarketplace(actor.role)) throw new MessagingError('Moderator accounts use chat reports in the moderator panel.', 403)
+    if (isMessagingBanned(actor)) throw new MessagingError('Your account is banned. Messages are unavailable.', 403)
     return id
   }
 
@@ -176,7 +176,7 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
     const viewer = await userId()
     const { conversationId, before, after } = parsed.data
     return db.$transaction(async (tx) => {
-      await participant(tx, conversationId, viewer)
+      const conversation = await participant(tx, conversationId, viewer)
       const rows = await tx.message.findMany({
         where: { conversationId, ...(before !== undefined ? { sequence: { lt: before } } : after !== undefined ? { sequence: { gt: after } } : {}) },
         orderBy: { sequence: after !== undefined ? 'asc' : 'desc' },
@@ -184,7 +184,11 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
         select: messageSelect
       })
       const messages = rows.slice(0, 50)
-      return { messages: (after === undefined ? messages.reverse() : messages).map(serializeMessage), hasMore: rows.length > 50 }
+      return {
+        messages: (after === undefined ? messages.reverse() : messages).map(serializeMessage),
+        hasMore: rows.length > 50,
+        otherReadSequence: conversation.buyerId === viewer ? conversation.sellerReadSequence : conversation.buyerReadSequence
+      }
     })
   }
 
@@ -202,7 +206,7 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
       })
       return { changed: updated.count > 0 }
     })
-    if (result.changed) await notify([inboxChannel(viewer)])
+    if (result.changed) await notify([inboxChannel(viewer), conversationChannel(parsed.data.conversationId)])
     return result
   }
 
@@ -225,7 +229,7 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
         const users = page.length
           ? await tx.user.findMany({
               where: { id: { in: [...new Set(page.flatMap((row) => [row.buyerId, row.sellerId]))] } },
-              select: { id: true, name: true }
+              select: { id: true, name: true, image: true }
             })
           : []
         const listingIds = page.flatMap((row) => (row.listingId ? [row.listingId] : []))
@@ -243,8 +247,8 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
           if (!buyer || !seller) throw new Error('Conversation participant not found')
           return {
             ...row,
-            buyer: { name: buyer.name },
-            seller: { name: seller.name },
+            buyer: { name: buyer.name, image: buyer.image },
+            seller: { name: seller.name, image: seller.image },
             listing: row.listingId ? (listingsById.get(row.listingId) ?? null) : null
           }
         })
@@ -271,7 +275,10 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
     const parsed = conversationIdSchema.safeParse(id)
     if (!parsed.success) throw new MessagingError('Conversation not found or unavailable.', 404)
     const viewer = await userId()
-    const row = await db.conversation.findFirst({ where: { id: parsed.data, ...participantWhere(viewer) }, select: previewSelect })
+    const row = await db.conversation.findFirst({
+      where: { id: parsed.data, ...participantWhere(viewer) },
+      select: { ...previewSelect, messages: false }
+    })
     if (!row) throw new MessagingError('Conversation not found or unavailable.', 404)
     const actor = await db.user.findUnique({ where: { id: viewer }, select: { banned: true, banExpires: true } })
     return { viewer, row, canSend: !!actor && !isMessagingBanned(actor), history: await getHistory({ conversationId: row.id }) }
@@ -280,14 +287,39 @@ export function createMessagingOperations({ db, currentUserId, limitSend, limitC
   async function getChannels(id?: unknown) {
     const viewer = await userId()
     const channels = [inboxChannel(viewer)]
+    const capability: Record<string, ('subscribe' | 'presence')[]> = {
+      [inboxChannel(viewer)]: ['subscribe'],
+      [presenceChannel(viewer)]: ['presence']
+    }
     if (id !== undefined) {
       const parsed = conversationIdSchema.safeParse(id)
       if (!parsed.success) throw new MessagingError('Invalid conversation.')
-      await participant(db, parsed.data, viewer)
+      const conversation = await participant(db, parsed.data, viewer)
       channels.push(conversationChannel(parsed.data))
+      capability[conversationChannel(parsed.data)] = ['subscribe']
+      const otherId = conversation.buyerId === viewer ? conversation.sellerId : conversation.buyerId
+      capability[presenceChannel(otherId)] = ['subscribe']
     }
-    return { viewer, channels }
+    return { viewer, channels, capability }
   }
 
-  return { createConversation, sendMessage, getHistory, markRead, getConversations, getConversation, getChannels }
+  async function getUnreadCount() {
+    const viewer = await userId()
+    // The badge saturates at nine. Stop scanning after nine real incoming unread
+    // messages rather than loading conversations or counting an unbounded inbox.
+    const [row] = await db.$queryRaw<{ count: number }[]>`
+      SELECT count(*)::int AS count FROM (
+        SELECT m.id FROM conversation c JOIN message m ON m."conversationId" = c.id
+        WHERE c."buyerId" = ${viewer} AND m.sequence > c."buyerReadSequence" AND m."senderId" <> ${viewer}
+        UNION ALL
+        SELECT m.id FROM conversation c JOIN message m ON m."conversationId" = c.id
+        WHERE c."sellerId" = ${viewer} AND c."buyerId" <> ${viewer}
+          AND m.sequence > c."sellerReadSequence" AND m."senderId" <> ${viewer}
+        LIMIT 9
+      ) unread
+    `
+    return { unreadCount: row?.count ?? 0 }
+  }
+
+  return { createConversation, sendMessage, getHistory, markRead, getConversations, getConversation, getChannels, getUnreadCount }
 }

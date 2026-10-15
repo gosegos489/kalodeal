@@ -1,6 +1,6 @@
 import 'server-only'
-import { getListingImageUrl } from '@/entities/listing/listing-summary'
 import { getSellerName } from '@/entities/user/public-profile'
+import { getApprovedAvatarUrl } from '@/features/account/settings/avatar-reference'
 import { publishMessagingUpdate } from '@/lib/ably'
 import { getSession } from '@/lib/auth-utils'
 import prisma from '@/lib/prisma'
@@ -32,9 +32,14 @@ export async function getMyConversations(pageParam?: string | string[]) {
     id: row.id,
     listingId: row.listingId,
     listingTitle: row.listing?.title ?? row.listingTitle,
-    coverUrl: getListingImageUrl(row.listing?.images[0]?.key),
     otherName: getSellerName(row.buyerId === viewer ? row.seller.name : row.buyer.name),
+    otherId: row.buyerId === viewer ? row.sellerId : row.buyerId,
+    otherAvatar: getApprovedAvatarUrl(
+      row.buyerId === viewer ? row.sellerId : row.buyerId,
+      row.buyerId === viewer ? row.seller.image : row.buyer.image
+    ),
     lastMessage: row.messages[0]?.content ?? null,
+    lastMessageOwn: row.messages[0]?.senderId === viewer,
     lastMessageAt: row.lastMessageAt.toISOString(),
     unreadCount: counts.get(row.id) ?? 0
   }))
@@ -49,8 +54,12 @@ export async function getMyConversation(id: unknown): Promise<ConversationDetail
     listingId: row.listingId,
     listingTitle: row.listing?.title ?? row.listingTitle,
     listingAvailable: row.listing?.status === 'ACTIVE',
-    coverUrl: getListingImageUrl(row.listing?.images[0]?.key),
     otherName: getSellerName(row.buyerId === viewer ? row.seller.name : row.buyer.name),
+    otherId: row.buyerId === viewer ? row.sellerId : row.buyerId,
+    otherAvatar: getApprovedAvatarUrl(
+      row.buyerId === viewer ? row.sellerId : row.buyerId,
+      row.buyerId === viewer ? row.seller.image : row.buyer.image
+    ),
     canSend,
     history
   }

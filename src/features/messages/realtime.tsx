@@ -1,10 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState, useSyncExternalStore } from 'react'
-import { ChatProvider, useMessagingRealtime } from '@/app/chat-provider'
-import { inboxChannel } from './channels'
-import { type RealtimeAvailability, getRealtimeAvailability, subscribeToRealtimeUpdates } from './realtime-state'
+import { useEffect, useRef, useSyncExternalStore, useTransition } from 'react'
+import { useMessaging, useMessagingRealtime } from '@/app/chat-provider'
+import { type RealtimeAvailability, getRealtimeAvailability } from './realtime-state'
+import { ConversationPresence } from './use-participant-presence'
 
 export function useRealtimeStatus(subscriptionState: RealtimeAvailability) {
   const realtime = useMessagingRealtime()
@@ -23,50 +23,43 @@ export function useRealtimeStatus(subscriptionState: RealtimeAvailability) {
   )
 }
 
-function InboxRefresh({ userId }: { userId: string }) {
-  const realtime = useMessagingRealtime()
-  const [subscriptionState, setSubscriptionState] = useState<RealtimeAvailability>('initializing')
-  const status = useRealtimeStatus(subscriptionState)
+export function MessagesRealtime({ children, conversationId, otherId }: { children: React.ReactNode; conversationId?: string; otherId?: string }) {
+  const { realtime, revision, selectConversation, refreshInbox, inboxStatus } = useMessaging()
   const router = useRouter()
+  const status = useRealtimeStatus(inboxStatus)
+  const [pending, startTransition] = useTransition()
+  const previousRevision = useRef(revision)
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined
-    let disposed = false
-    function refresh() {
-      if (disposed || document.visibilityState !== 'visible' || timer) return
-      timer = setTimeout(() => {
-        timer = undefined
-        if (!disposed) router.refresh()
-      }, 300)
-    }
-    const channel = realtime?.channels.get(inboxChannel(userId))
-    const unsubscribe = channel ? subscribeToRealtimeUpdates(channel, refresh, setSubscriptionState) : undefined
-    realtime?.connection.on('connected', refresh)
-    const interval = setInterval(refresh, 30000)
-    window.addEventListener('focus', refresh)
-    document.addEventListener('visibilitychange', refresh)
-    return () => {
-      disposed = true
-      if (timer) clearTimeout(timer)
-      clearInterval(interval)
-      unsubscribe?.()
-      realtime?.connection.off('connected', refresh)
-      window.removeEventListener('focus', refresh)
-      document.removeEventListener('visibilitychange', refresh)
-    }
-  }, [realtime, router, userId])
-  return status !== 'unavailable' ? null : (
-    <p role="status" className="bg-muted rounded-lg px-4 py-2 text-xs">
-      Realtime updates are temporarily unavailable. Messages remain available and refresh automatically.
-    </p>
-  )
-}
+    selectConversation(conversationId)
+    refreshInbox()
+    return () => selectConversation(undefined)
+  }, [conversationId, realtime, selectConversation, refreshInbox])
 
-export function MessagesRealtime({ children, userId, conversationId }: { children: React.ReactNode; userId: string; conversationId?: string }) {
-  return (
-    <ChatProvider key={conversationId ?? 'inbox'} conversationId={conversationId}>
-      <InboxRefresh userId={userId} />
+  useEffect(() => {
+    if (pending || previousRevision.current === revision) return
+    const timer = setTimeout(() => {
+      previousRevision.current = revision
+      startTransition(() => router.refresh())
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [revision, pending, router])
+
+  const content = (
+    <>
+      {status === 'unavailable' && (
+        <p role="status" className="bg-muted rounded-lg px-4 py-2 text-xs">
+          Realtime updates are temporarily unavailable. Messages remain available and refresh automatically.
+        </p>
+      )}
       {children}
-    </ChatProvider>
+    </>
+  )
+  return conversationId && otherId ? (
+    <ConversationPresence key={conversationId} userId={otherId} conversationId={conversationId}>
+      {content}
+    </ConversationPresence>
+  ) : (
+    content
   )
 }

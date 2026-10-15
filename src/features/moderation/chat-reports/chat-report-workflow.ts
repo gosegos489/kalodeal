@@ -124,6 +124,16 @@ export function createChatReportOperations({ db, currentUserId, moderatorActor, 
     const parsed = moderatorHistorySchema.safeParse(input)
     if (!parsed.success) throw new ChatReportError('Invalid message history request.')
     const { conversationId, before } = parsed.data
+    const conversation = await db.conversation.findUnique({
+      where: { id: conversationId },
+      select: {
+        buyerReadSequence: true,
+        sellerReadSequence: true,
+        buyer: { select: { id: true, name: true, image: true } },
+        seller: { select: { id: true, name: true, image: true } }
+      }
+    })
+    if (!conversation) throw new ChatReportError('Conversation not found.', 404)
     const rows = await db.message.findMany({
       where: { conversationId, ...(before === undefined ? {} : { sequence: { lt: before } }) },
       select: { id: true, content: true, sequence: true, createdAt: true, sender: { select: { id: true, name: true } } },
@@ -131,7 +141,7 @@ export function createChatReportOperations({ db, currentUserId, moderatorActor, 
       take: 51
     })
     const messages = rows.slice(0, 50).reverse()
-    return { messages, hasMore: rows.length > 50, nextBefore: messages[0]?.sequence }
+    return { conversation, messages, hasMore: rows.length > 50, nextBefore: messages[0]?.sequence }
   }
 
   async function resolveReport(input: unknown) {

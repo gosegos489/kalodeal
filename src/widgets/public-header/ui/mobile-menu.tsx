@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { UnreadMessagesBadge } from '@/features/messages/unread-badge'
 import { getHeaderAccountNavigation, mobileNavigation } from '../mocks/mocks'
 import { NavigationLinks } from './header-navigation'
 
@@ -25,8 +26,9 @@ export default function MobileMenu({ isAuth, currentYear, role }: Props) {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         render={
-          <Button variant="ghost" size="icon" className="size-10 md:hidden" aria-label="Open navigation menu">
+          <Button variant="ghost" size="icon" className="relative size-10 md:hidden" aria-label="Open navigation menu">
             <Menu className="size-5" />
+            {isAuth && role !== 'moderator' && <UnreadMessagesBadge className="absolute -top-1 -right-1 text-[10px]" />}
           </Button>
         }
       />
@@ -77,6 +79,7 @@ export default function MobileMenu({ isAuth, currentYear, role }: Props) {
                         >
                           <item.icon className="size-5" strokeWidth={2} />
                           {item.label}
+                          {item.href === '/account/messages' && <UnreadMessagesBadge className="ml-auto" />}
                         </Link>
                       </li>
                     )

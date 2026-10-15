@@ -6,15 +6,17 @@ export type ChatMessage = {
   createdAt: string
 }
 
-export type MessageHistory = { messages: ChatMessage[]; hasMore: boolean }
+export type MessageHistory = { messages: ChatMessage[]; hasMore: boolean; otherReadSequence: number }
 
 export type ConversationPreview = {
   id: string
   listingId: string | null
   listingTitle: string
-  coverUrl: string | null
   otherName: string
+  otherId: string
+  otherAvatar: string | null
   lastMessage: string | null
+  lastMessageOwn: boolean
   lastMessageAt: string
   unreadCount: number
 }
@@ -25,8 +27,9 @@ export type ConversationDetails = {
   listingId: string | null
   listingTitle: string
   listingAvailable: boolean
-  coverUrl: string | null
   otherName: string
+  otherId: string
+  otherAvatar: string | null
   canSend: boolean
   history: MessageHistory
 }

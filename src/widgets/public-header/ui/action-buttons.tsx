@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
+import { UnreadMessagesBadge } from '@/features/messages/unread-badge'
 import { canUseMarketplace } from '@/lib/account-role'
 import { getHeaderAccountNavigation } from '../mocks/mocks'
 
@@ -16,10 +17,11 @@ export default function ActionButtons({ isAuth, role }: Props) {
           <Link
             key={item.href}
             href={item.href}
-            aria-label={item.label}
-            className="text-foreground hover:bg-muted hidden size-10 items-center justify-center rounded-lg transition-colors sm:inline-flex"
+            className="text-foreground hover:bg-muted relative hidden size-10 items-center justify-center rounded-lg transition-colors sm:inline-flex"
           >
             <item.icon className="size-5" strokeWidth={2} />
+            <span className="sr-only">{item.label}</span>
+            {item.href === '/account/messages' && <UnreadMessagesBadge className="absolute -top-1 -right-2 text-[10px]" />}
           </Link>
         ))
       ) : (

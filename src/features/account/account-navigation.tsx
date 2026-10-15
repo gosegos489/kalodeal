@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { LogoutButton } from '@/features/auth/logout-button'
+import { UnreadMessagesBadge } from '@/features/messages/unread-badge'
 import { cn } from '@/lib/utils'
 
 const navigation = [
@@ -46,6 +47,7 @@ function AccountNavigationLinks({ pathname, onNavigate }: { pathname: string; on
           >
             <Icon aria-hidden="true" className="size-4 shrink-0" />
             {label}
+            {href === '/account/messages' && <UnreadMessagesBadge className="ml-auto" />}
             {href === '/account/analytics' && (
               <Badge variant="outline" className="ml-auto">
                 Plus+
@@ -83,6 +85,7 @@ function MobileAccountMenu({ pathname }: { pathname: string }) {
           >
             <Icon aria-hidden="true" className="text-primary size-4" />
             <span className="min-w-0 whitespace-normal">{currentItem.label}</span>
+            {currentItem.href === '/account/messages' && <UnreadMessagesBadge />}
             {currentItem.href === '/account/analytics' && <Badge variant="outline">Plus+</Badge>}
             <ChevronDown aria-hidden="true" className="text-muted-foreground ml-auto size-4" />
           </Button>

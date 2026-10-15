@@ -8,9 +8,8 @@ function getApiKey() {
   return apiKey
 }
 
-export function createAblyToken({ userId, rooms }: { userId: string; rooms: string[] }) {
+export function createAblyToken({ userId, capability }: { userId: string; capability: Record<string, ('subscribe' | 'presence')[]> }) {
   const [keyName, keySecret] = getApiKey().split(':')
-  const capability = Object.fromEntries(rooms.map((room) => [room, ['subscribe']]))
 
   return jwt.sign(
     {

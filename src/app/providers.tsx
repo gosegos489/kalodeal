@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider, environmentManager } from '@tanstack/
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import type { ReactNode } from 'react'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { ChatProvider } from './chat-provider'
 
 function makeQueryClient() {
   return new QueryClient()
@@ -33,7 +34,9 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <NuqsAdapter>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>{children}</TooltipProvider>
+        <TooltipProvider>
+          <ChatProvider>{children}</ChatProvider>
+        </TooltipProvider>
       </QueryClientProvider>
     </NuqsAdapter>
   )
