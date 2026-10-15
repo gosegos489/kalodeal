@@ -1,0 +1,152 @@
+enum PropertyType {
+  HOUSE
+  APARTMENT
+  COMMERCIAL
+  LAND
+  ROOM
+  OTHER
+}
+
+enum PropertyParking {
+  NONE
+  COVERED
+  UNCOVERED
+  GARAGE
+}
+
+enum PropertyFurnishing {
+  UNFURNISHED
+  PART_FURNISHED
+  FURNISHED
+}
+
+enum PropertyEnergyRating {
+  A_PLUS
+  A
+  B
+  C
+  D
+  E
+  F
+  G
+  EXEMPT
+}
+
+enum PropertyAmenity {
+  POOL
+  GARDEN
+  ELEVATOR
+  ALARM
+  FIREPLACE
+  BALCONY
+  PLAYROOM
+  ATTIC_LOFT
+  STORAGE_ROOM
+}
+
+// No price, currency, seller or location duplication. Absence of a row is valid.
+// SQL CHECKs supplement Prisma types; category applicability is validated in TS.
+model PropertyDetails {
+  listingId String  @id
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  propertyType     PropertyType
+  plotArea         Decimal?              @db.Decimal(12, 2)
+  propertyArea     Decimal?              @db.Decimal(10, 2)
+  bedrooms         Int?
+  bathrooms        Int?
+  constructionYear Int?
+  parking          PropertyParking?
+  airConditioning  Boolean?
+  furnishing       PropertyFurnishing?
+  petsAllowed      Boolean?
+  onlineViewing    Boolean?
+  energyRating     PropertyEnergyRating?
+  postalCode       String?               @db.VarChar(16)
+  amenities        PropertyAmenity[]     @default([])
+
+  @@index([propertyType, bedrooms, propertyArea, listingId])
+  @@map("property_details")
+}
+
+enum VehicleType {
+  CAR
+  MOTORCYCLE
+  VAN
+}
+
+enum VehicleFuel {
+  PETROL
+  DIESEL
+  HYBRID
+  PLUG_IN_HYBRID
+  ELECTRIC
+  LPG
+  OTHER
+}
+
+enum VehicleTransmission {
+  MANUAL
+  AUTOMATIC
+}
+
+enum VehicleBodyType {
+  HATCHBACK
+  SALOON
+  ESTATE
+  SUV
+  COUPE
+  CONVERTIBLE
+  PICKUP
+  PANEL_VAN
+  MINIBUS
+  OTHER
+}
+
+enum VehicleCondition {
+  NEW
+  USED
+  DAMAGED
+}
+
+enum VehicleColor {
+  BLACK
+  WHITE
+  SILVER
+  GREY
+  BLUE
+  RED
+  GREEN
+  BROWN
+  BEIGE
+  YELLOW
+  ORANGE
+  PURPLE
+  GOLD
+  OTHER
+}
+
+model VehicleDetails {
+  listingId String  @id
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  vehicleType    VehicleType
+  // Stable catalogue keys; "other" is an explicit user-supplied name fallback.
+  make           String?              @db.VarChar(40)
+  model          String?              @db.VarChar(60)
+  otherMake      String?              @db.VarChar(60)
+  otherModel     String?              @db.VarChar(80)
+  year           Int?
+  mileage        Int?
+  fuel           VehicleFuel?
+  transmission   VehicleTransmission?
+  bodyType       VehicleBodyType?
+  engineCapacity Int?
+  seats          Int?
+  doors          Int?
+  condition      VehicleCondition?
+  color          VehicleColor?
+
+  @@index([vehicleType, make, model, year, listingId])
+  @@map("vehicle_details")
+}

@@ -6,6 +6,7 @@ import z from 'zod'
 import { getEditedListingStatus, needsListingResubmission } from '@/entities/listing/lifecycle'
 import { listingIdSchema } from '@/entities/listing/schema'
 import { listingDetailsSchema } from '@/features/create-listing/schema'
+import { canChangeListingAttributeCategory } from '@/features/listing-attributes/server'
 import type { ListingStatus } from '@/generated/prisma/enums'
 import { canUseMarketplace } from '@/lib/account-role'
 import { isActiveMarketplaceUser } from '@/lib/active-user'
@@ -74,8 +75,15 @@ export async function updateListing(id: unknown, input: unknown, expectedUpdated
       if (!contentChanged && !resubmitting) {
         return { id: listing.id, previousCategoryId: listing.categoryId, categoryId: listing.categoryId, status: listing.status, changed: false }
       }
-      const category = await tx.category.findFirst({ where: { id: details.categoryId, isActive: true }, select: { id: true } })
+      const category = await tx.category.findFirst({ where: { id: details.categoryId, isActive: true }, select: { id: true, slug: true } })
       if (!category) return { message: 'Choose an available category.', fieldErrors: { categoryId: ['This category is no longer available.'] } }
+      if (category.id !== listing.categoryId && !(await canChangeListingAttributeCategory(tx, listing.id, category.slug, data.price))) {
+        return {
+          message:
+            'The selected category is incompatible with the saved listing attributes. Keep the current category until the attributes can be updated.',
+          fieldErrors: { categoryId: ['This category cannot retain the saved listing attributes.'] }
+        }
+      }
       const status = resubmitting ? 'PENDING' : getEditedListingStatus(listing.status)
       await checkListingSlotAvailable(tx, userId, listing.status, status)
       const updated = await tx.listing.updateMany({

@@ -5,6 +5,7 @@ import 'server-only'
 import { getModerationStatusTransition } from '@/entities/listing/lifecycle'
 import { AvatarError } from '@/features/account/settings/avatar-lifecycle'
 import { getSettingsActor } from '@/features/account/settings/server'
+import { canChangeListingAttributeCategory } from '@/features/listing-attributes/server'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { hasActiveBan } from '@/lib/ban-status'
 import { cacheTags } from '@/lib/cache-tags'
@@ -28,7 +29,7 @@ export async function moderateListing(input: unknown): Promise<ActionMessageResu
       }
       const listing = await tx.listing.findUnique({
         where: { id: review.id },
-        select: { status: true, updatedAt: true, categoryId: true, district: true, area: true }
+        select: { status: true, updatedAt: true, categoryId: true, district: true, area: true, price: true }
       })
       if (!listing) return { message: 'This listing is no longer available.' }
       if (listing.updatedAt.toISOString() !== review.updatedAt) return { message: 'This listing has changed. Reload it before making a decision.' }
@@ -44,9 +45,15 @@ export async function moderateListing(input: unknown): Promise<ActionMessageResu
       }
       if (review.decision === 'change-category') {
         if (listing.status !== 'PENDING') return { message: 'Category correction is available for listings awaiting approval.' }
-        const category = await tx.category.findFirst({ where: { id: review.categoryId, isActive: true }, select: { id: true } })
+        const category = await tx.category.findFirst({ where: { id: review.categoryId, isActive: true }, select: { id: true, slug: true } })
         if (!category) return { message: 'Choose an available category.' }
         if (listing.categoryId === category.id) return { categories: [category.id] }
+        if (!(await canChangeListingAttributeCategory(tx, review.id, category.slug, listing.price?.toString() ?? null))) {
+          return {
+            message:
+              'The selected category is incompatible with the saved listing attributes. No attributes were removed. Keep the current category until they can be updated.'
+          }
+        }
         const updated = await tx.listing.updateMany({
           where: { id: review.id, status: 'PENDING', updatedAt: listing.updatedAt },
           data: { categoryId: category.id, updatedAt: version }

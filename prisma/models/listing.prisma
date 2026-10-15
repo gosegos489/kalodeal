@@ -13,17 +13,27 @@ enum ListingStatus {
   SOLD
 }
 
+enum ListingPricePeriod {
+  DAY
+  WEEK
+  MONTH
+  YEAR
+}
+
 model Listing {
-  id           String          @id @default(cuid())
-  title        String
-  description  String
-  price        Decimal?
-  currency     ListingCurrency @default(EUR)
-  phone        String
-  phoneReveals Int             @default(0)
-  youtube      String?
-  facebookUrl  String?
-  messengerUrl String?
+  id              String              @id @default(cuid())
+  title           String
+  description     String
+  price           Decimal?
+  currency        ListingCurrency     @default(EUR)
+  priceNegotiable Boolean             @default(false)
+  // Null for one-off prices and legacy rentals whose period is still unknown.
+  pricePeriod     ListingPricePeriod?
+  phone           String
+  phoneReveals    Int                 @default(0)
+  youtube         String?
+  facebookUrl     String?
+  messengerUrl    String?
 
   // Nullable for existing listings; application writes require a catalogue pair.
   // The migration also enforces valid district/area pairs with a CHECK constraint.
@@ -43,10 +53,12 @@ model Listing {
 
   images ListingImage[]
 
-  stats         ListingStats?
-  favorites     Favorite[]
-  views         ListingDailyView[]
-  conversations Conversation[]
+  stats           ListingStats?
+  propertyDetails PropertyDetails?
+  vehicleDetails  VehicleDetails?
+  favorites       Favorite[]
+  views           ListingDailyView[]
+  conversations   Conversation[]
 
   boostedAt DateTime? @map("bumpedAt")
 
@@ -63,6 +75,7 @@ model Listing {
   @@index([status, featuredAt, id])
   @@index([categoryId])
   @@index([status, sortDate])
+  @@index([status, categoryId, currency, price, id])
   @@index([status, district, sortDate, id])
   @@index([status, district, area, sortDate, id])
   @@map("listing")
