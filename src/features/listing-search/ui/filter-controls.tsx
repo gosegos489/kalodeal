@@ -5,7 +5,8 @@ import { ComboboxSelect } from '@/components/ui/combobox'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FILTER_LABELS, type FilterUpdates, type SearchFilters, type SearchKey, filterLabel } from '../model/search-params'
+import { type FilterUpdates, type SearchFilters, type SearchKey, filterLabel } from '../model/search-params'
+import { useSearchLabels } from './use-search-labels'
 
 export type FilterControlProps = { values: SearchFilters; change: (updates: FilterUpdates) => void; disabled: boolean }
 export type FilterOption = { value: string; label: string }
@@ -17,9 +18,9 @@ export function FilterSelect({
   disabled,
   name,
   options,
-  label = FILTER_LABELS[name],
+  label: suppliedLabel,
   searchable,
-  placeholder = 'Any',
+  placeholder: suppliedPlaceholder,
   unavailable = false
 }: FilterControlProps & {
   name: SearchKey
@@ -29,11 +30,20 @@ export function FilterSelect({
   placeholder?: string
   unavailable?: boolean
 }) {
+  const { t, field, value: valueLabel } = useSearchLabels()
+  const label = suppliedLabel ?? field(name)
+  const placeholder = suppliedPlaceholder ?? t('any')
   const id = useId()
   const value = name === 'sort' && values[name] === 'RECENT' ? '' : values[name]
-  const items = [{ value: '', label: placeholder }, ...options]
+  const items = [
+    { value: '', label: placeholder },
+    ...options.map((option) => ({
+      ...option,
+      label: ['make', 'model', 'district', 'area', 'category'].includes(name) ? option.label : valueLabel(option.value)
+    }))
+  ]
   // Keep invalid incoming URL values visible and removable.
-  if (value && !items.some((item) => item.value === value)) items.push({ value, label: `Invalid: ${value.slice(0, 80)}` })
+  if (value && !items.some((item) => item.value === value)) items.push({ value, label: t('invalid', { value: value.slice(0, 80) }) })
   return (
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
@@ -45,7 +55,8 @@ export function FilterSelect({
           value={value}
           disabled={disabled || unavailable}
           placeholder={placeholder}
-          searchPlaceholder={`Search ${label.toLowerCase()}...`}
+          searchPlaceholder={t('searchOptions', { label })}
+          emptyMessage={t('noMatches')}
           onValueChange={(value) => change({ [name]: value })}
           className="h-11 lg:h-8"
         />
@@ -86,6 +97,7 @@ export function FilterRange({
   step?: number
 }) {
   const id = useId()
+  const { t, field } = useSearchLabels()
   return (
     <fieldset className="min-w-0 space-y-2" disabled={disabled}>
       <legend className="text-sm font-medium">{label}</legend>
@@ -93,7 +105,7 @@ export function FilterRange({
         {[from, to].map((name, index) => (
           <div key={name} className="min-w-0">
             <label className="sr-only" htmlFor={`${id}-${name}`}>
-              {FILTER_LABELS[name]}
+              {field(name)}
             </label>
             <Input
               id={`${id}-${name}`}
@@ -103,7 +115,7 @@ export function FilterRange({
               min={min}
               max={max}
               step={step}
-              placeholder={index ? 'To' : 'From'}
+              placeholder={index ? t('to') : t('minimum')}
               value={values[name]}
               className="h-11 lg:h-8"
               onChange={(event) => change({ [name]: event.target.value })}

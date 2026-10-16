@@ -1,15 +1,20 @@
+import { getLocale, getMessages, getTranslations } from 'next-intl/server'
 import 'server-only'
 import { cache } from 'react'
 import { getCategoryTaxonomy } from '@/entities/category/get-category-taxonomy'
 import { getPublicCategory } from '@/entities/category/get-category-tree'
-import { formatLocation } from '@/entities/location/catalog'
 import { getCategoryAttributeProfile } from '@/features/listing-attributes/rules'
 import { parseListingSearch } from '@/features/listing-search/model/search-params'
-import { getCategoryPath, seoConfig } from '@/lib/metadata'
+import { categoryName } from '@/i18n/category-name'
+import { localizedLocation } from '@/i18n/location-name'
+import { getCategoryPath } from '@/lib/metadata'
 
 export type HomePageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 
 export const getBrowseContext = cache(async (searchParams: HomePageProps['searchParams']) => {
+  const locale = await getLocale()
+  const t = await getTranslations({ locale, namespace: 'Metadata' })
+  const messages = await getMessages({ locale })
   const raw = await searchParams
   const taxonomy = await getCategoryTaxonomy()
   const selected = taxonomy.find((category) => category.slug === raw.category)
@@ -18,21 +23,22 @@ export const getBrowseContext = cache(async (searchParams: HomePageProps['search
   const filters = result.success ? result.base : {}
   const category = filters.category ? await getPublicCategory(filters.category) : null
   const isSearch = 'q' in raw || Object.keys(raw).some((key) => key !== 'category') || !result.success || ('category' in raw && !category)
-  const location = formatLocation({ district: filters.district ?? null, area: filters.area ?? null })
+  const location = localizedLocation({ district: filters.district ?? null, area: filters.area ?? null }, messages.Locations)
+  const name = category ? categoryName(category.category, messages.CategoryNames) : ''
   const title = filters.query
-    ? `Search results for “${filters.query}”`
+    ? t('searchTitle', { query: filters.query })
     : category
-      ? `${category.category.name} listings${location ? ` in ${location}` : ''}`
+      ? t('categoryTitle', { category: name })
       : location
-        ? `Listings in ${location}`
-        : 'Buy and Sell Locally'
+        ? t('locationTitle', { location })
+        : t('homeTitle')
   const description = filters.query
-    ? 'Search local listings on Kalodeal. Explore available offers and contact sellers directly.'
+    ? t('searchDescription')
     : category
-      ? `Browse ${category.category.name} listings on Kalodeal. ${category.category.description || 'Explore local offers and contact sellers directly.'}`
+      ? t('categoryDescription', { category: name })
       : location
-        ? `Browse local listings in ${location} on Kalodeal. Explore available offers and contact sellers directly.`
-        : seoConfig.description
+        ? t('locationDescription', { location })
+        : t('homeDescription')
 
   return {
     filters,

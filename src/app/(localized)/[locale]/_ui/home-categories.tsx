@@ -1,21 +1,23 @@
 import { ArrowRight } from 'lucide-react'
-import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { Button } from '@/components/ui/button'
 import type { HomepageCategory } from '@/entities/category/get-homepage-categories'
 import { CategoryCard } from '@/entities/category/ui/CategoryCard'
+import { Link } from '@/i18n/navigation'
 
-export function HomeCategories({ categories }: { categories: HomepageCategory[] }) {
+export async function HomeCategories({ categories }: { categories: HomepageCategory[] }) {
+  const t = await getTranslations('Home')
   return (
     <section aria-labelledby="categories-heading">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 id="categories-heading" className="text-xl font-semibold sm:text-2xl">
-            Browse Categories
+            {t('browseCategories')}
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm">Find your next deal, one category at a time.</p>
+          <p className="text-muted-foreground mt-1 text-sm">{t('categoryIntro')}</p>
         </div>
         <Button nativeButton={false} variant="ghost" render={<Link href="/categories" />}>
-          All categories <ArrowRight />
+          {t('allCategories')} <ArrowRight />
         </Button>
       </div>
       {categories.length ? (
@@ -27,7 +29,7 @@ export function HomeCategories({ categories }: { categories: HomepageCategory[] 
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground rounded-xl border border-dashed p-6 text-sm">Categories are currently unavailable.</p>
+        <p className="text-muted-foreground rounded-xl border border-dashed p-6 text-sm">{t('categoriesUnavailable')}</p>
       )}
     </section>
   )

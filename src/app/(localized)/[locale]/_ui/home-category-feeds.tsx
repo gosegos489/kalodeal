@@ -1,10 +1,12 @@
 import { ArrowRight } from 'lucide-react'
-import Link from 'next/link'
+import { getLocale, getMessages, getTranslations } from 'next-intl/server'
 import { Button } from '@/components/ui/button'
 import { getMainCategoryFeeds } from '@/entities/listing/get-main-category-feeds'
 import { ListingCard } from '@/entities/listing/ui/listing-card'
 import { ListingCarousel } from '@/entities/listing/ui/listing-carousel'
 import { getFavoriteState } from '@/features/favorites/data'
+import { categoryName } from '@/i18n/category-name'
+import { Link } from '@/i18n/navigation'
 import { type HomePageProps, getBrowseContext } from '../_lib/browse-context'
 
 export async function HomeCategoryFeeds({ searchParams }: HomePageProps) {
@@ -16,31 +18,35 @@ export async function HomeCategoryFeeds({ searchParams }: HomePageProps) {
   return feeds.map((feed) => <CategoryFeed key={feed.category.id} feed={feed} favoriteState={favoriteState} />)
 }
 
-function CategoryFeed({
+async function CategoryFeed({
   feed,
   favoriteState
 }: {
   feed: Awaited<ReturnType<typeof getMainCategoryFeeds>>[number]
   favoriteState: Awaited<ReturnType<typeof getFavoriteState>>
 }) {
+  const locale = await getLocale()
+  const messages = await getMessages({ locale })
+  const t = await getTranslations({ locale, namespace: 'Home' })
   const { category, listings } = feed
+  const name = categoryName(category, messages.CategoryNames)
   const headingId = `feed-${category.slug}`
   return (
     <section aria-labelledby={headingId} className="min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 id={headingId} className="text-xl font-semibold sm:text-2xl">
-            Recently added in {category.name}
+            {t('recentCategory', { category: name })}
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm">The latest listings across {category.name.toLowerCase()} and its subcategories.</p>
+          <p className="text-muted-foreground mt-1 text-sm">{t('categoryFeedIntro', { category: name })}</p>
         </div>
         <Button nativeButton={false} variant="ghost" render={<Link href={`/?category=${category.slug}#listings`} />}>
-          View all <ArrowRight />
+          {t('viewAll')} <ArrowRight />
         </Button>
       </div>
       {listings.length ? (
         <ListingCarousel
-          label={category.name}
+          label={name}
           slides={listings.map((listing) => ({
             id: listing.id,
             content: (
@@ -56,7 +62,7 @@ function CategoryFeed({
           }))}
         />
       ) : (
-        <div className="bg-card text-muted-foreground mt-5 rounded-xl border border-dashed p-6 text-sm">No listings in this category yet.</div>
+        <div className="bg-card text-muted-foreground mt-5 rounded-xl border border-dashed p-6 text-sm">{t('noCategoryListings')}</div>
       )}
     </section>
   )

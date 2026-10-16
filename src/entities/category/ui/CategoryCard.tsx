@@ -1,10 +1,15 @@
 import { ArrowUpRight } from 'lucide-react'
-import Link from 'next/link'
+import { getLocale, getMessages, getTranslations } from 'next-intl/server'
+import { categoryName } from '@/i18n/category-name'
+import { Link } from '@/i18n/navigation'
 import { CategoryIcon } from './category-icon'
 
 type CategoryCardProps = { name: string; slug: string; image: string | null; description: string | null; listingCount?: number; headingLevel?: 2 | 3 }
 
-export function CategoryCard({ headingLevel = 3, ...category }: CategoryCardProps) {
+export async function CategoryCard({ headingLevel = 3, ...category }: CategoryCardProps) {
+  const locale = await getLocale()
+  const messages = await getMessages({ locale })
+  const t = await getTranslations({ locale, namespace: 'Categories' })
   const Heading = headingLevel === 2 ? 'h2' : 'h3'
   return (
     <Link
@@ -19,11 +24,13 @@ export function CategoryCard({ headingLevel = 3, ...category }: CategoryCardProp
       </span>
 
       <div className="flex min-w-0 flex-col gap-0.5">
-        <Heading className="text-[15px] font-semibold wrap-anywhere">{category.name}</Heading>
-        <span className="text-muted-foreground truncate text-xs">{category.description || 'Explore local listings'}</span>
+        <Heading className="text-[15px] font-semibold wrap-anywhere">{categoryName(category, messages.CategoryNames)}</Heading>
+        <span className="text-muted-foreground truncate text-xs">
+          {locale === 'en' && category.description ? category.description : t('explore')}
+        </span>
         {category.listingCount !== undefined && (
           <span className="text-muted-foreground text-[11px] font-medium">
-            {`${category.listingCount} ${category.slug === 'jobs' ? 'openings' : 'listings'}`}
+            {t(category.slug === 'jobs' ? 'openings' : 'count', { count: category.listingCount })}
           </span>
         )}
       </div>

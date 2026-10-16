@@ -1,7 +1,9 @@
 'use client'
 
+import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { localizeHref, stripLocale } from '@/i18n/routing'
 import { navigation } from '../mocks/mocks'
 
 type NavigationLinksProps = {
@@ -10,7 +12,9 @@ type NavigationLinksProps = {
 }
 
 export function NavigationLinks({ mobile = false, onNavigate }: NavigationLinksProps) {
-  const pathname = usePathname()
+  const pathname = stripLocale(usePathname())
+  const locale = useLocale()
+  const t = useTranslations('Navigation')
 
   return (
     <ul className={mobile ? 'flex flex-col gap-1' : 'flex items-center gap-7 text-sm'}>
@@ -18,9 +22,9 @@ export function NavigationLinks({ mobile = false, onNavigate }: NavigationLinksP
         const isActive = item.href === '/' ? pathname === '/' : pathname === item.href || pathname.startsWith(`${item.href}/`)
 
         return (
-          <li key={item.label}>
+          <li key={t(item.label)}>
             <Link
-              href={item.href}
+              href={localizeHref(item.href, locale)}
               onClick={onNavigate}
               aria-current={isActive ? 'page' : undefined}
               className={
@@ -29,7 +33,7 @@ export function NavigationLinks({ mobile = false, onNavigate }: NavigationLinksP
                   : `hover:text-primary transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground'}`
               }
             >
-              {item.label}
+              {t(item.label)}
             </Link>
           </li>
         )

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { getLocale } from 'next-intl/server'
 import { Suspense } from 'react'
 import { getHomepageCategories } from '@/entities/category/get-homepage-categories'
 import { buildMetadata } from '@/lib/metadata'
@@ -10,7 +11,14 @@ import { HeroLoading, HomeLoading, ListingsLoading } from './_ui/home-loading'
 
 export async function generateMetadata({ searchParams }: HomePageProps): Promise<Metadata> {
   const { title, description, path, isSearch } = await getBrowseContext(searchParams)
-  return buildMetadata({ title, description, path, ...(isSearch && { robots: { index: false, follow: true } }) })
+  return buildMetadata({
+    title,
+    description,
+    path,
+    locale: await getLocale(),
+    localized: !isSearch,
+    ...(isSearch && { robots: { index: false, follow: true } })
+  })
 }
 
 async function HomeContent({ searchParams }: HomePageProps) {

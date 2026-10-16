@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
-import { privateMetadata } from '@/lib/metadata'
+import { privateMetadata, rootMetadata } from '@/lib/metadata'
+import { SiteDocument } from '@/shared/ui/site-document'
 
-export const metadata: Metadata = privateMetadata
+export const metadata: Metadata = { ...rootMetadata, ...privateMetadata }
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  return children
+  return <SiteDocument>{children}</SiteDocument>
 }

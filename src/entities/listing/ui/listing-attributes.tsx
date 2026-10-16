@@ -1,8 +1,9 @@
+import { getLocale, getMessages } from 'next-intl/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getListingAttributeSections } from '@/features/listing-attributes/display'
 import type { ListingAttributes } from '@/features/listing-attributes/schema'
 
-export function ListingAttributeDetails({
+export async function ListingAttributeDetails({
   categorySlug,
   attributes,
   staff = false
@@ -11,7 +12,9 @@ export function ListingAttributeDetails({
   attributes: ListingAttributes
   staff?: boolean
 }) {
-  const sections = getListingAttributeSections(categorySlug, attributes, staff)
+  const locale = staff ? 'en' : await getLocale()
+  const messages = await getMessages({ locale })
+  const sections = getListingAttributeSections(categorySlug, attributes, staff, { locale, ...messages.Attributes })
   if (!sections.length) return null
   return (
     <Card className="order-3 min-w-0 lg:order-0">

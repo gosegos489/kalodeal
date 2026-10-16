@@ -1,27 +1,20 @@
 export const footerLinks = [
   {
-    title: 'Marketplace',
+    title: 'marketplace',
     links: [
-      ['Browse listings', '/'],
-      ['Categories', '/categories'],
-      ['Pricing', '/pricing'],
-      ['Post a listing', '/sell'],
-      ['Saved items', '/account/favorites']
-    ]
+      ['browse', '/'],
+      ['categories', '/categories'],
+      ['pricing', '/pricing'],
+      ['postListing', '/sell'],
+      ['saved', '/account/favorites'] as const
+    ] as const
   },
   {
-    title: 'Company',
-    links: [
-      ['How it works', '/how-it-works'],
-      ['Safety', '/safety'],
-      ['Contact', '/contact-us']
-    ]
+    title: 'company',
+    links: [['howItWorks', '/how-it-works'], ['safety', '/safety'], ['contact', '/contact-us'] as const] as const
   },
   {
-    title: 'Legal',
-    links: [
-      ['Terms of use', '/legal/terms-of-use'],
-      ['Privacy policy', '/legal/privacy-policy']
-    ]
+    title: 'legal',
+    links: [['terms', '/legal/terms-of-use'], ['privacy', '/legal/privacy-policy'] as const] as const
   }
-]
+] as const

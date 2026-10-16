@@ -1,13 +1,15 @@
 import { ImageIcon, MapPin } from 'lucide-react'
+import { getLocale, getMessages, getTranslations } from 'next-intl/server'
 import Image from 'next/image'
-import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import { listingStatusLabels } from '@/entities/listing/lifecycle'
-import { formatLocation } from '@/entities/location/catalog'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
 import { formatAttributeListingPrice } from '@/features/listing-attributes/format-price'
 import type { ListingStatus } from '@/generated/prisma/enums'
-import { dayjs } from '@/lib/dayjs'
+import { categoryName } from '@/i18n/category-name'
+import { getFavoriteLabels } from '@/i18n/listing-labels'
+import { localizedLocation } from '@/i18n/location-name'
+import { Link } from '@/i18n/navigation'
+import { localizeHref } from '@/i18n/routing'
 import type { ListingSummary } from '../types'
 import { ListingCardImages } from './listing-card-images'
 
@@ -22,7 +24,7 @@ type ListingCardProps = {
   showFavorite?: boolean
 }
 
-export function ListingCard({
+export async function ListingCard({
   listing,
   eager = false,
   prefetch,
@@ -32,8 +34,12 @@ export function ListingCard({
   showFavorite = true,
   imageSizes = '(max-width: 639px) calc(100vw - 32px), (max-width: 767px) calc((100vw - 48px) / 2), (max-width: 1279px) calc((100vw - 64px) / 3), calc((100vw - 80px) / 4)'
 }: ListingCardProps) {
-  const href = `/listings/${listing.id}`
-  const location = formatLocation(listing)
+  const locale = await getLocale()
+  const messages = await getMessages({ locale })
+  const t = await getTranslations({ locale, namespace: 'Listing' })
+  const favoriteLabels = await getFavoriteLabels()
+  const href = localizeHref(`/listings/${listing.id}`, locale)
+  const location = localizedLocation(listing, messages.Locations)
 
   return (
     <article className="bg-card flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border shadow-xs">
@@ -47,12 +53,20 @@ export function ListingCard({
             sizes={imageSizes}
             eager={eager}
             prefetch={prefetch}
+            labels={{
+              view: t('viewLabel', { title: listing.title }),
+              photos: t('photos', { title: listing.title }),
+              alts: listing.imageUrls.map((_, index) => t('photoAlt', { title: listing.title, number: index + 1 })),
+              show: listing.imageUrls.map((_, index) => t('showPhoto', { number: index + 1 })),
+              status: listing.imageUrls.map((_, index) => t('photoCount', { number: index + 1, count: listing.imageUrls.length })),
+              unavailable: t('photoUnavailable')
+            }}
           />
         ) : (
           <Link
             href={href}
             prefetch={prefetch}
-            aria-label={`View listing: ${listing.title}`}
+            aria-label={t('viewLabel', { title: listing.title })}
             className="bg-muted focus-visible:ring-ring relative block aspect-4/3 shrink-0 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset"
           >
             {listing.coverUrl ? (
@@ -60,13 +74,14 @@ export function ListingCard({
             ) : (
               <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2">
                 <ImageIcon aria-hidden="true" className="size-8" strokeWidth={1.5} />
-                <span className="text-xs">No photo</span>
+                <span className="text-xs">{t('noPhoto')}</span>
               </div>
             )}
           </Link>
         )}
         {showFavorite && (
           <FavoriteButton
+            labels={favoriteLabels}
             listingId={listing.id}
             title={listing.title}
             isFavorited={isFavorited}
@@ -77,10 +92,10 @@ export function ListingCard({
       </div>
       <div className="flex flex-1 flex-col gap-2 p-4 sm:p-5">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-muted-foreground truncate text-xs">{listing.category.name}</p>
+          <p className="text-muted-foreground truncate text-xs">{categoryName(listing.category, messages.CategoryNames)}</p>
           {status && (
             <Badge variant={status === 'ACTIVE' ? 'default' : 'secondary'} className="capitalize">
-              {listingStatusLabels[status]}
+              {t(status)}
             </Badge>
           )}
         </div>
@@ -91,10 +106,16 @@ export function ListingCard({
         >
           <h3 className="group-hover:text-primary line-clamp-2 leading-snug font-semibold">{listing.title}</h3>
           <p className="text-primary text-lg font-semibold">
-            {formatAttributeListingPrice(listing.price, listing.currency, listing.category.slug ?? '', {
-              pricePeriod: listing.pricePeriod ?? null,
-              priceNegotiable: listing.priceNegotiable ?? false
-            })}
+            {formatAttributeListingPrice(
+              listing.price,
+              listing.currency,
+              listing.category.slug ?? '',
+              {
+                pricePeriod: listing.pricePeriod ?? null,
+                priceNegotiable: listing.priceNegotiable ?? false
+              },
+              { locale, labels: messages.Listing }
+            )}
           </p>
           <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{listing.description}</p>
         </Link>
@@ -106,15 +127,15 @@ export function ListingCard({
         )}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs">
           <time dateTime={listing.createdAt.toISOString()} className="text-muted-foreground">
-            {dayjs.utc(listing.createdAt).format('D MMM YYYY')}
+            {new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Nicosia' }).format(listing.createdAt)}
           </time>
           <Link
             href={href}
             prefetch={prefetch}
-            aria-label={`View listing: ${listing.title}`}
+            aria-label={t('viewLabel', { title: listing.title })}
             className="text-primary focus-visible:ring-ring rounded-sm font-medium underline underline-offset-4 outline-none focus-visible:ring-2"
           >
-            View listing
+            {t('view')}
           </Link>
         </div>
       </div>

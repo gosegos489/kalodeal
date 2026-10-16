@@ -1,23 +1,30 @@
 import { ChevronRight, MoveRight } from 'lucide-react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { getLocale, getMessages, getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
 import { getCategorySummaries } from '@/entities/category/get-category-tree'
 import { CategoryCard } from '@/entities/category/ui/CategoryCard'
 import { CategoryGridSkeleton } from '@/entities/category/ui/category-grid-skeleton'
 import { CategoryIcon } from '@/entities/category/ui/category-icon'
+import { categoryName } from '@/i18n/category-name'
+import { Link } from '@/i18n/navigation'
+import { localizeHref } from '@/i18n/routing'
 import { buildCollectionJsonLd } from '@/lib/json-ld'
 import { buildMetadata } from '@/lib/metadata'
 import { BreadCrumbs } from '@/shared/ui/BreadCrumbs'
 import { JsonLd } from '@/shared/ui/json-ld'
 
-export const metadata: Metadata = buildMetadata({
-  title: 'Categories',
-  description: 'Browse Kalodeal categories for local goods and services. Explore available listings and find your next deal.',
-  path: '/categories'
-})
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale()
+  const t = await getTranslations({ locale, namespace: 'Metadata' })
+  return buildMetadata({ title: t('categoriesTitle'), description: t('categoriesDescription'), path: '/categories', locale, localized: true })
+}
 
 async function CategoriesContent() {
+  const locale = await getLocale()
+  const messages = await getMessages({ locale })
+  const t = await getTranslations({ locale, namespace: 'Categories' })
+  const meta = await getTranslations({ locale, namespace: 'Metadata' })
   const categories = await getCategorySummaries()
   const listingsCount = categories.reduce((total, category) => total + category.listingCount, 0)
 
@@ -25,12 +32,13 @@ async function CategoriesContent() {
     <>
       <JsonLd
         data={buildCollectionJsonLd({
-          title: 'Categories',
-          description: 'Browse categories and find local goods and services on Kalodeal.',
+          title: t('categories'),
+          description: meta('categoriesDescription'),
           path: '/categories',
+          locale,
           breadcrumbs: [
-            { label: 'Home', href: '/' },
-            { label: 'Categories', href: '/categories' }
+            { label: t('home'), href: localizeHref('/', locale) },
+            { label: t('categories'), href: localizeHref('/categories', locale) }
           ]
         })}
       />
@@ -38,13 +46,11 @@ async function CategoriesContent() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex flex-col gap-4">
-            <p className="text-muted-foreground text-sm">
-              Browse <span className="text-primary">{listingsCount}</span> active listings
-            </p>
+            <p className="text-muted-foreground text-sm">{t('activeCount', { count: listingsCount })}</p>
           </div>
 
           <Link href="/" className="text-primary flex items-center gap-2 font-semibold">
-            <p>View latest listings</p> <MoveRight className="size-4" />
+            <p>{t('viewLatest')}</p> <MoveRight className="size-4" />
           </Link>
         </div>
 
@@ -56,7 +62,7 @@ async function CategoriesContent() {
                   <CategoryCard {...category} headingLevel={2} />
 
                   <div className="border-border flex min-w-0 flex-col gap-3 border-t p-4 sm:border-t-0 sm:border-l">
-                    <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Subcategories</p>
+                    <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">{t('subcategories')}</p>
 
                     {category.children.length > 0 ? (
                       <ul className="grid gap-2 sm:grid-cols-2">
@@ -69,7 +75,7 @@ async function CategoriesContent() {
                               <span className="bg-muted text-muted-foreground flex size-5 shrink-0 items-center justify-center rounded">
                                 <CategoryIcon value={child.image} size={12} />
                               </span>
-                              <h3 className="truncate">{child.name}</h3>
+                              <h3 className="truncate">{categoryName(child, messages.CategoryNames)}</h3>
                               <ChevronRight className="text-muted-foreground size-3.5 shrink-0" aria-hidden="true" />
                             </Link>
 
@@ -82,7 +88,7 @@ async function CategoriesContent() {
                                     className="text-muted-foreground hover:text-primary flex w-fit items-center gap-1 text-xs"
                                   >
                                     <CategoryIcon value={grandchild.image} size={10} />
-                                    {grandchild.name}
+                                    {categoryName(grandchild, messages.CategoryNames)}
                                   </Link>
                                 ))}
                               </div>
@@ -91,7 +97,7 @@ async function CategoriesContent() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-muted-foreground text-sm">Browse all {category.listingCount} listings in this category.</p>
+                      <p className="text-muted-foreground text-sm">{t('browseCount', { count: category.listingCount })}</p>
                     )}
                   </div>
                 </div>
@@ -100,7 +106,7 @@ async function CategoriesContent() {
           </div>
         ) : (
           <div className="border-border bg-card text-muted-foreground flex min-h-36 items-center justify-center rounded-xl border border-dashed p-6 text-center text-sm">
-            No categories available.
+            {t('empty')}
           </div>
         )}
       </div>
@@ -108,12 +114,14 @@ async function CategoriesContent() {
   )
 }
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const locale = await getLocale()
+  const t = await getTranslations({ locale, namespace: 'Categories' })
   return (
     <div className="container flex flex-col gap-4 py-10">
       <div className="flex flex-col gap-4">
-        <BreadCrumbs items={[{ label: 'Home', href: '/' }, { label: 'Categories' }]} />
-        <h1 className="text-xl font-bold md:text-3xl">Browse categories on Kalodeal</h1>
+        <BreadCrumbs items={[{ label: t('home'), href: localizeHref('/', locale) }, { label: t('categories') }]} />
+        <h1 className="text-xl font-bold md:text-3xl">{t('title')}</h1>
       </div>
       <Suspense fallback={<CategoryGridSkeleton />}>
         <CategoriesContent />

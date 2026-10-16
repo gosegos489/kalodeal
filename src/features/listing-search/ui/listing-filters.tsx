@@ -14,9 +14,11 @@ import { ActiveFilters } from './active-filters'
 import { FilterRange, FilterSelect, enumOptions } from './filter-controls'
 import type { SearchCategory } from './listing-search-select'
 import { PropertyFilters } from './property-filters'
+import { useSearchLabels } from './use-search-labels'
 import { VehicleFilters } from './vehicle-filters'
 
 export function ListingFilters({ categories, children }: { categories: SearchCategory[]; children: ReactNode }) {
+  const { t, district } = useSearchLabels()
   const search = useListingSearch()
   const [open, setOpen] = useState(false)
   // Only unapplied form edits live here. Applied filters and history belong to nuqs.
@@ -35,7 +37,7 @@ export function ListingFilters({ categories, children }: { categories: SearchCat
   const submit = form.handleSubmit(async (values) => {
     const parsed = parseListingSearch(values, getCategoryAttributeProfile(values.category))
     if (!parsed.success) {
-      form.setError('root', { message: parsed.message })
+      form.setError('root', { message: t('invalidFilters') })
       return
     }
     if (await search.applyFilters(values)) setOpen(false)
@@ -50,48 +52,46 @@ export function ListingFilters({ categories, children }: { categories: SearchCat
         {...control}
         name="category"
         searchable
-        placeholder="All categories"
+        placeholder={t('allCategories')}
         options={categories.map(({ slug, name }) => ({ value: slug, label: name }))}
       />
-      <FilterSelect {...control} name="sort" placeholder="Newest" options={enumOptions(['OLDEST', 'PRICE_LOW', 'PRICE_HIGH'])} />
+      <FilterSelect {...control} name="sort" placeholder={t('newest')} options={enumOptions(['OLDEST', 'PRICE_LOW', 'PRICE_HIGH'])} />
       <FilterSelect
         {...control}
         name="district"
-        placeholder="All Cyprus"
-        options={CYPRUS_LOCATIONS.map(({ slug, name }) => ({ value: slug, label: name }))}
+        placeholder={t('allCyprus')}
+        options={CYPRUS_LOCATIONS.map(({ slug, name }) => ({ value: slug, label: district(slug, name) }))}
       />
       <FilterSelect
         {...control}
         name="area"
         searchable
-        placeholder={values.district ? 'All areas' : 'Choose district first'}
+        placeholder={values.district ? t('allAreas') : t('districtFirst')}
         unavailable={!values.district}
         options={getAreas(values.district)}
       />
       <fieldset className="min-w-0 space-y-4 border-t pt-5" disabled={disabled}>
-        <legend className="float-left mb-4 text-sm font-semibold">Price</legend>
+        <legend className="float-left mb-4 text-sm font-semibold">{t('price')}</legend>
         <div className="clear-both space-y-4">
-          <FilterSelect {...control} name="currency" placeholder="All currencies" options={enumOptions(['EUR', 'USD'])} />
+          <FilterSelect {...control} name="currency" placeholder={t('allCurrencies')} options={enumOptions(['EUR', 'USD'])} />
           <FilterSelect
             {...control}
             name="pricePeriod"
-            placeholder={rental ? 'All rental periods' : 'All price periods'}
+            placeholder={rental ? t('allRentalPeriods') : t('allPricePeriods')}
             options={enumOptions(periods)}
           />
-          <FilterRange {...control} label="Price range" from="minPrice" to="maxPrice" max={999_999_999.99} step={0.01} />
-          <p className="text-muted-foreground text-xs leading-relaxed">
-            Price ranges and price sorting compare one currency and one period. Rentals with an unknown period are excluded from comparisons.
-          </p>
+          <FilterRange {...control} label={t('priceRange')} from="minPrice" to="maxPrice" max={999_999_999.99} step={0.01} />
+          <p className="text-muted-foreground text-xs leading-relaxed">{t('priceNote')}</p>
         </div>
       </fieldset>
-      <FilterSelect {...control} name="seller" placeholder="All sellers" options={enumOptions(['PERSONAL', 'BUSINESS'])} />
+      <FilterSelect {...control} name="seller" placeholder={t('allSellers')} options={enumOptions(['PERSONAL', 'BUSINESS'])} />
       {profile.kind === 'property' && <PropertyFilters {...control} profile={profile} />}
       {profile.kind === 'vehicle' && <VehicleFilters {...control} profile={profile} />}
     </>
   )
   const applyButton = (
     <Button type="submit" className="h-11 w-full" disabled={disabled}>
-      {disabled && <Loader2 className="size-4 animate-spin" aria-hidden="true" />} {disabled ? 'Applying...' : 'Apply filters'}
+      {disabled && <Loader2 className="size-4 animate-spin" aria-hidden="true" />} {disabled ? t('applying') : t('apply')}
     </Button>
   )
   const error = form.formState.errors.root?.message && (
@@ -103,10 +103,10 @@ export function ListingFilters({ categories, children }: { categories: SearchCat
     <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] xl:gap-8">
       <aside
         className="bg-card hidden min-w-0 flex-col rounded-2xl border lg:sticky lg:top-6 lg:flex lg:max-h-[calc(100dvh-3rem)]"
-        aria-label="Listing filters"
+        aria-label={t('filterListings')}
       >
         <h2 className="flex shrink-0 items-center gap-2 p-5 font-semibold">
-          <SlidersHorizontal aria-hidden="true" className="size-4" /> Filters
+          <SlidersHorizontal aria-hidden="true" className="size-4" /> {t('filters')}
         </h2>
         <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col" aria-busy={disabled}>
           <div className="min-h-0 space-y-4 overflow-y-auto overscroll-contain px-5 pb-5">{fields}</div>
@@ -120,12 +120,12 @@ export function ListingFilters({ categories, children }: { categories: SearchCat
         <div className="mb-4 lg:hidden">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger render={<Button variant="outline" className="h-11" />}>
-              <SlidersHorizontal aria-hidden="true" className="size-4" /> Filters
+              <SlidersHorizontal aria-hidden="true" className="size-4" /> {t('filters')}
             </SheetTrigger>
-            <SheetContent className="max-w-md data-[side=right]:w-full data-[side=right]:sm:max-w-md">
+            <SheetContent closeLabel={t('close')} className="max-w-md data-[side=right]:w-full data-[side=right]:sm:max-w-md">
               <SheetHeader>
-                <SheetTitle>Filter listings</SheetTitle>
-                <SheetDescription>Choose filters, then apply to update results and the ad count.</SheetDescription>
+                <SheetTitle>{t('filterListings')}</SheetTitle>
+                <SheetDescription>{t('filterIntro')}</SheetDescription>
               </SheetHeader>
               <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col" aria-busy={disabled}>
                 <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-5">{fields}</div>
@@ -142,7 +142,7 @@ export function ListingFilters({ categories, children }: { categories: SearchCat
                       form.clearErrors()
                     }}
                   >
-                    Clear filters
+                    {t('clearFilters')}
                   </Button>
                 </div>
               </form>

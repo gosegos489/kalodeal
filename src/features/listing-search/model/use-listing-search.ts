@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { debounce, defaultRateLimit, useQueryStates } from 'nuqs'
 import { useTransition } from 'react'
 import { toast } from '@/components/ui/toast'
@@ -8,6 +9,7 @@ import { getFilterUpdate } from './filter-updates'
 import { type FilterUpdates, SEARCH_DEFAULTS, type SearchKey, searchParsers } from './search-params'
 
 export function useListingSearch() {
+  const t = useTranslations('Search')
   const [isPending, startTransition] = useTransition()
   const [filters, setFilters] = useQueryStates(searchParsers, { shallow: false, scroll: false, startTransition })
   const { q: query, category, district: rawDistrict, area: rawArea } = filters
@@ -19,7 +21,7 @@ export function useListingSearch() {
       await setFilters(replaceAll ? values : getFilterUpdate(filters, values), { limitUrlUpdates, history })
       return true
     } catch {
-      toast.add({ type: 'error', title: 'Unable to update search', description: 'Please try again.' })
+      toast.add({ type: 'error', title: t('updateError'), description: t('retry') })
       return false
     }
   }

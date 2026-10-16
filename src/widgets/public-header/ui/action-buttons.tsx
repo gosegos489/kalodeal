@@ -1,15 +1,17 @@
 import { Plus } from 'lucide-react'
+import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
-import { UnreadMessagesBadge } from '@/features/messages/unread-badge'
 import { canUseMarketplace } from '@/lib/account-role'
 import { getHeaderAccountNavigation } from '../mocks/mocks'
+import { HeaderUnreadMessagesBadge as UnreadMessagesBadge } from './header-unread-messages-badge'
 
 type Props = {
   isAuth: boolean
   role?: string | null
 }
 
-export default function ActionButtons({ isAuth, role }: Props) {
+export default async function ActionButtons({ isAuth, role }: Props) {
+  const t = await getTranslations('Navigation')
   return (
     <div className="flex items-center gap-1 sm:gap-2">
       {isAuth ? (
@@ -20,13 +22,13 @@ export default function ActionButtons({ isAuth, role }: Props) {
             className="text-foreground hover:bg-muted relative hidden size-10 items-center justify-center rounded-lg transition-colors sm:inline-flex"
           >
             <item.icon className="size-5" strokeWidth={2} />
-            <span className="sr-only">{item.label}</span>
+            <span className="sr-only">{item.label === 'Moderator panel' ? item.label : t(item.label)}</span>
             {item.href === '/account/messages' && <UnreadMessagesBadge className="absolute -top-1 -right-2 text-[10px]" />}
           </Link>
         ))
       ) : (
         <Link href="/login" className="hover:text-primary hidden h-10 items-center px-3 text-sm font-medium transition-colors sm:inline-flex">
-          Sign in
+          {t('signIn')}
         </Link>
       )}
       {canUseMarketplace(role) ? (
@@ -35,8 +37,8 @@ export default function ActionButtons({ isAuth, role }: Props) {
           className="bg-primary text-primary-foreground hover:bg-primary/80 inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors sm:px-4"
         >
           <Plus className="size-4 shrink-0" strokeWidth={2} />
-          <span className="hidden sm:inline">Post a listing</span>
-          <span className="sm:hidden">Post</span>
+          <span className="hidden sm:inline">{t('postListing')}</span>
+          <span className="sm:hidden">{t('post')}</span>
         </Link>
       ) : (
         <Link href="/moderator" className="bg-primary text-primary-foreground inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold">

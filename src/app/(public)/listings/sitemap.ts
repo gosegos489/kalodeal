@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { getListingSitemapIds, getListingSitemapPage } from '@/entities/listing/get-listing-sitemap'
-import { getCanonicalUrl, seoConfig } from '@/lib/metadata'
+import { localizedSitemapEntries } from '@/i18n/sitemap'
+import { seoConfig } from '@/lib/metadata'
 
 export async function generateSitemaps() {
   return seoConfig.isUnderDevelopment ? [] : getListingSitemapIds()
@@ -11,5 +12,5 @@ export default async function sitemap({ id }: { id: Promise<string> }): Promise<
   if (seoConfig.isUnderDevelopment || !/^(0|[1-9]\d*)$/.test(value)) return []
 
   const listings = await getListingSitemapPage(Number(value))
-  return listings.map((listing) => ({ url: getCanonicalUrl(`/listings/${listing.id}`), lastModified: listing.updatedAt }))
+  return listings.flatMap((listing) => localizedSitemapEntries(`/listings/${listing.id}`, listing.updatedAt))
 }

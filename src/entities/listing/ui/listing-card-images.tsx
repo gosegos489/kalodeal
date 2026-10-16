@@ -6,6 +6,7 @@ import { useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 type Props = {
+  labels?: { view: string; photos: string; alts: string[]; show: string[]; status: string[]; unavailable: string }
   images: string[]
   title: string
   href: string
@@ -14,7 +15,7 @@ type Props = {
   prefetch?: false
 }
 
-export function ListingCardImages({ images, title, href, sizes, eager, prefetch }: Props) {
+export function ListingCardImages({ images, title, href, sizes, eager, prefetch, labels }: Props) {
   const [preview, setPreview] = useState({ active: 0, displayed: 0, visited: [0], loaded: [0], failed: false })
   const gesture = useRef<{ id: number; x: number; y: number } | null>(null)
   const suppressClick = useRef(false)
@@ -45,7 +46,7 @@ export function ListingCardImages({ images, title, href, sizes, eager, prefetch 
       <Link
         href={href}
         prefetch={prefetch}
-        aria-label={`View listing: ${title}`}
+        aria-label={labels?.view ?? `View listing: ${title}`}
         className="bg-muted focus-visible:ring-ring relative block aspect-4/3 touch-pan-y overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset"
         onPointerDown={(event) => {
           suppressClick.current = false
@@ -88,7 +89,7 @@ export function ListingCardImages({ images, title, href, sizes, eager, prefetch 
           <Image
             key={images[index]}
             src={images[index]}
-            alt={index === preview.displayed ? `${title} — photo ${index + 1}` : ''}
+            alt={index === preview.displayed ? (labels?.alts[index] ?? `${title} — photo ${index + 1}`) : ''}
             aria-hidden={index !== preview.displayed}
             fill
             sizes={sizes}
@@ -117,14 +118,14 @@ export function ListingCardImages({ images, title, href, sizes, eager, prefetch 
       </Link>
       <div
         role="group"
-        aria-label={`Preview photos: ${title}`}
+        aria-label={labels?.photos ?? `Preview photos: ${title}`}
         className="pointer-events-none absolute inset-x-0 bottom-0 flex bg-linear-to-t from-black/60 to-transparent px-2"
       >
         {images.map((url, index) => (
           <button
             key={url}
             type="button"
-            aria-label={`Preview photo ${index + 1} of ${images.length}: ${title}`}
+            aria-label={labels?.show[index] ?? `Preview photo ${index + 1} of ${images.length}: ${title}`}
             aria-pressed={preview.displayed === index}
             className="group/photo focus-visible:ring-ring pointer-events-auto flex h-11 min-w-0 flex-1 cursor-pointer items-center px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-inset"
             onPointerDown={(event) => event.stopPropagation()}
@@ -149,7 +150,9 @@ export function ListingCardImages({ images, title, href, sizes, eager, prefetch 
         ))}
       </div>
       <span role="status" className="sr-only">
-        {preview.failed ? 'Photo unavailable. Showing the previous photo.' : `Photo ${preview.displayed + 1} of ${images.length}`}
+        {preview.failed
+          ? (labels?.unavailable ?? 'Photo unavailable. Showing the previous photo.')
+          : (labels?.status[preview.displayed] ?? `Photo ${preview.displayed + 1} of ${images.length}`)}
       </span>
     </div>
   )

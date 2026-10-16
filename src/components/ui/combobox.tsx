@@ -15,6 +15,7 @@ type ComboboxSelectProps = {
   label: string
   placeholder: string
   searchPlaceholder?: string
+  emptyMessage?: string
   disabled?: boolean
   id?: string
   inputRef?: Ref<HTMLButtonElement>
@@ -31,6 +32,7 @@ export function ComboboxSelect({
   label,
   placeholder,
   searchPlaceholder = 'Search...',
+  emptyMessage = 'No matches found.',
   disabled,
   id,
   inputRef,
@@ -68,13 +70,8 @@ export function ComboboxSelect({
       <Combobox.Portal>
         <Combobox.Positioner sideOffset={4} align="start" className="z-50">
           <Combobox.Popup className="bg-popover text-popover-foreground ring-foreground/10 flex max-h-(--available-height) w-(--anchor-width) min-w-48 flex-col rounded-lg p-1 shadow-md ring-1">
-            <Combobox.Input
-              render={<Input />}
-              aria-label={`Search ${label.toLowerCase()}`}
-              placeholder={searchPlaceholder}
-              className="mb-1 shrink-0"
-            />
-            <Combobox.Empty className="text-muted-foreground px-2 text-sm">No matches found.</Combobox.Empty>
+            <Combobox.Input render={<Input />} aria-label={searchPlaceholder} placeholder={searchPlaceholder} className="mb-1 shrink-0" />
+            <Combobox.Empty className="text-muted-foreground px-2 text-sm">{emptyMessage}</Combobox.Empty>
             <Combobox.List className="max-h-64 min-h-0 overflow-y-auto overscroll-contain">
               {(item: Option) => (
                 <Combobox.Item

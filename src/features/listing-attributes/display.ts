@@ -1,52 +1,60 @@
-import { attributeLabel, propertyTypeLabels } from './labels'
+import messages from '@/i18n/messages/en.json'
 import { getCategoryAttributeProfile } from './rules'
 import type { ListingAttributes, PropertyAttributes, VehicleAttributes } from './schema'
 import { OTHER_VEHICLE_MAKE, OTHER_VEHICLE_MODEL, getVehicleMakes, getVehicleModels } from './vehicle-catalog'
 
 type Detail = { label: string; value: string }
 export type AttributeSection = { title: string; details: Detail[] }
-const number = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 })
-const numeric = (value: number | null | undefined, unit = '') => (value == null ? null : `${number.format(value)}${unit}`)
-const boolean = (value: boolean | null | undefined) => (value == null ? null : value ? 'Yes' : 'No')
-const label = (value: string | null | undefined) => (value ? attributeLabel(value) : null)
-const details = (rows: [string, string | null | undefined][]): Detail[] =>
-  rows.flatMap(([label, value]) => (value == null || value === '' ? [] : [{ label, value }]))
+type DisplayOptions = { locale: string; fields: Record<string, string>; values: Record<string, string> }
+const defaults: DisplayOptions = { locale: 'en-GB', ...messages.Attributes }
+function display(options: DisplayOptions) {
+  const number = new Intl.NumberFormat(options.locale, { maximumFractionDigits: 2 })
+  return {
+    numeric: (value: number | null | undefined, unit = '') => (value == null ? null : `${number.format(value)}${unit}`),
+    boolean: (value: boolean | null | undefined) => (value == null ? null : options.values[String(value)]),
+    label: (value: string | null | undefined) => (value ? (options.values[value] ?? value) : null),
+    details: (rows: [string, string | null | undefined][]): Detail[] =>
+      rows.flatMap(([key, value]) => (value == null || value === '' ? [] : [{ label: options.fields[key] ?? key, value }]))
+  }
+}
 
-function propertySections(property: PropertyAttributes): AttributeSection[] {
+function propertySections(property: PropertyAttributes, options: DisplayOptions): AttributeSection[] {
+  const { numeric, boolean, label, details } = display(options)
   return [
     {
-      title: 'Property details',
+      title: options.fields.propertyDetails,
       details: details([
-        ['Property type', propertyTypeLabels[property.propertyType]],
-        ['Bedrooms', numeric(property.bedrooms)],
-        ['Bathrooms', numeric(property.bathrooms)],
-        ['Property area', numeric(property.propertyArea, ' m²')],
-        ['Plot area', numeric(property.plotArea, ' m²')],
-        ['Construction year', property.constructionYear?.toString()],
-        ['Postal code', property.postalCode],
-        ['Energy rating', label(property.energyRating)]
+        ['propertyType', label(property.propertyType)],
+        ['bedrooms', numeric(property.bedrooms)],
+        ['bathrooms', numeric(property.bathrooms)],
+        ['propertyArea', numeric(property.propertyArea, ' m²')],
+        ['plotArea', numeric(property.plotArea, ' m²')],
+        ['constructionYear', property.constructionYear?.toString()],
+        ['postalCode', property.postalCode],
+        ['energyRating', label(property.energyRating)]
       ])
     },
     {
-      title: 'Features and amenities',
+      title: options.fields.features,
       details: details([
-        ['Parking', label(property.parking)],
-        ['Furnishing', label(property.furnishing)],
-        ['Air conditioning', boolean(property.airConditioning)],
-        ['Amenities', property.amenities.map(attributeLabel).join(', ')]
+        ['parking', label(property.parking)],
+        ['furnishing', label(property.furnishing)],
+        ['airConditioning', boolean(property.airConditioning)],
+        ['amenities', property.amenities.map(label).join(', ')]
       ])
     },
     {
-      title: 'Viewing and rental conditions',
+      title: options.fields.conditions,
       details: details([
-        ['Pets allowed', boolean(property.petsAllowed)],
-        ['Online viewing', boolean(property.onlineViewing)]
+        ['petsAllowed', boolean(property.petsAllowed)],
+        ['onlineViewing', boolean(property.onlineViewing)]
       ])
     }
   ]
 }
 
-function vehicleSection(vehicle: VehicleAttributes, staff: boolean): AttributeSection {
+function vehicleSection(vehicle: VehicleAttributes, staff: boolean, options: DisplayOptions): AttributeSection {
+  const { numeric, label, details } = display(options)
   const make =
     vehicle.make === OTHER_VEHICLE_MAKE ? vehicle.otherMake : getVehicleMakes(vehicle.vehicleType).find(({ key }) => key === vehicle.make)?.label
   const model =
@@ -54,36 +62,41 @@ function vehicleSection(vehicle: VehicleAttributes, staff: boolean): AttributeSe
       ? vehicle.otherModel
       : getVehicleModels(vehicle.make ?? '', vehicle.vehicleType).find(({ key }) => key === vehicle.model)?.label
   return {
-    title: 'Vehicle specifications',
+    title: options.fields.vehicleDetails,
     details: details([
-      ['Vehicle type', label(vehicle.vehicleType)],
-      ['Make', make ?? (staff && vehicle.make ? `${vehicle.make} (unrecognised catalogue value)` : null)],
-      ['Model', model ?? (staff && vehicle.model ? `${vehicle.model} (unrecognised catalogue value)` : null)],
-      ['Year', vehicle.year?.toString()],
-      ['Fuel', label(vehicle.fuel)],
-      ['Transmission', label(vehicle.transmission)],
-      ['Mileage', numeric(vehicle.mileage, ' km')],
-      ['Body type', label(vehicle.bodyType)],
-      ['Engine capacity', numeric(vehicle.engineCapacity, ' cm³')],
-      ['Seats', numeric(vehicle.seats)],
-      ['Doors', numeric(vehicle.doors)],
-      ['Condition', label(vehicle.condition)],
-      ['Color', label(vehicle.color)]
+      ['vehicleType', label(vehicle.vehicleType)],
+      ['make', make ?? (staff && vehicle.make ? `${vehicle.make} (unrecognised catalogue value)` : null)],
+      ['model', model ?? (staff && vehicle.model ? `${vehicle.model} (unrecognised catalogue value)` : null)],
+      ['year', vehicle.year?.toString()],
+      ['fuel', label(vehicle.fuel)],
+      ['transmission', label(vehicle.transmission)],
+      ['mileage', numeric(vehicle.mileage, ' km')],
+      ['bodyType', label(vehicle.bodyType)],
+      ['engineCapacity', numeric(vehicle.engineCapacity, ' cm³')],
+      ['seats', numeric(vehicle.seats)],
+      ['doors', numeric(vehicle.doors)],
+      ['condition', label(vehicle.condition)],
+      ['color', label(vehicle.color)]
     ])
   }
 }
 
 // Only display data is returned. Staff may inspect mismatched saved rows;
 // public pages show the section belonging to the trusted category profile.
-export function getListingAttributeSections(categorySlug: string, attributes: ListingAttributes, staff = false): AttributeSection[] {
+export function getListingAttributeSections(
+  categorySlug: string,
+  attributes: ListingAttributes,
+  staff = false,
+  options: DisplayOptions = defaults
+): AttributeSection[] {
   const profile = getCategoryAttributeProfile(categorySlug)
   return [
     ...(attributes.propertyDetails &&
     (staff || (profile.kind === 'property' && profile.propertyTypes.includes(attributes.propertyDetails.propertyType)))
-      ? propertySections(attributes.propertyDetails)
+      ? propertySections(attributes.propertyDetails, options)
       : []),
     ...(attributes.vehicleDetails && (staff || (profile.kind === 'vehicle' && profile.vehicleType === attributes.vehicleDetails.vehicleType))
-      ? [vehicleSection(attributes.vehicleDetails, staff)]
+      ? [vehicleSection(attributes.vehicleDetails, staff, options)]
       : [])
   ].filter(({ details }) => details.length > 0)
 }

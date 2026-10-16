@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ListingGridSkeleton } from '@/entities/listing/ui/listing-skeleton'
 import { ListingSearchSkeleton } from '@/features/listing-search/ui/listing-search-skeleton'
@@ -16,9 +17,10 @@ export function HeroLoading() {
 }
 
 export function HomeLoading() {
+  const t = useTranslations('Home')
   return (
     <div className="flex min-w-0 flex-col gap-12 sm:gap-16">
-      <LoadingStatus label="Loading categories" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <LoadingStatus label={t('loadingCategories')} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
         {Array.from({ length: 6 }, (_, index) => (
           <div key={index} className="bg-card flex flex-col items-center gap-3 rounded-xl border p-4">
             <Skeleton className="size-12 rounded-xl" />
@@ -34,8 +36,9 @@ export function HomeLoading() {
 }
 
 export function ListingsLoading() {
+  const t = useTranslations('Home')
   return (
-    <LoadingStatus label="Loading listings" className="grid items-start gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] xl:gap-8">
+    <LoadingStatus label={t('loadingListings')} className="grid items-start gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] xl:gap-8">
       <div aria-hidden="true" className="bg-card hidden space-y-5 rounded-2xl border p-5 lg:block">
         <Skeleton className="h-6 w-24" />
         {[0, 1, 2, 3].map((index) => (

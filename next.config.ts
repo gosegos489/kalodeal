@@ -1,5 +1,6 @@
 import { withSentryConfig } from '@sentry/nextjs/config'
 import type { NextConfig } from 'next'
+import createNextIntlPlugin from 'next-intl/plugin'
 
 const nextConfig: NextConfig = {
   // DSN is public. This build-time alias is derived from the single server env value.
@@ -8,6 +9,7 @@ const nextConfig: NextConfig = {
   // These SDK flags work with Next's compiler in both Turbopack and webpack.
   compiler: { define: { __SENTRY_DEBUG__: false, __SENTRY_TRACING__: false } },
   cacheComponents: true,
+  experimental: { globalNotFound: true },
   serverExternalPackages: ['ably'],
   images: {
     remotePatterns: [
@@ -19,10 +21,12 @@ const nextConfig: NextConfig = {
   }
 }
 
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
+
 const authToken = process.env.SENTRY_AUTH_TOKEN?.trim() || undefined
 
 const productionConfig = () =>
-  withSentryConfig(nextConfig, {
+  withSentryConfig(withNextIntl(nextConfig), {
     org: 'kalodeal',
     project: 'javascript-nextjs',
     authToken,
@@ -43,4 +47,4 @@ const productionConfig = () =>
     }
   })
 
-export default process.env.NODE_ENV === 'production' ? productionConfig() : nextConfig
+export default process.env.NODE_ENV === 'production' ? productionConfig() : withNextIntl(nextConfig)

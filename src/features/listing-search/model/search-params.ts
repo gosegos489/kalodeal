@@ -1,61 +1,12 @@
-import { parseAsString } from 'nuqs/server'
 import { listingFiltersSchema } from '@/entities/listing/schema'
 import { createListingAttributeFiltersSchema } from '@/features/listing-attributes/filters'
 import { attributeLabel } from '@/features/listing-attributes/labels'
 import { type CategoryAttributeProfile, getPropertyFields } from '@/features/listing-attributes/rules'
 import { PropertyType } from '@/generated/prisma/enums'
+import type { RawSearchParams, SearchKey } from './query-state'
 
-export const SEARCH_DEFAULTS = {
-  q: '',
-  category: '',
-  district: '',
-  area: '',
-  sort: '',
-  seller: '',
-  currency: '',
-  pricePeriod: '',
-  minPrice: '',
-  maxPrice: '',
-  propertyType: '',
-  minBedrooms: '',
-  maxBedrooms: '',
-  minBathrooms: '',
-  maxBathrooms: '',
-  minPropertyArea: '',
-  maxPropertyArea: '',
-  minPlotArea: '',
-  maxPlotArea: '',
-  minConstructionYear: '',
-  maxConstructionYear: '',
-  parking: '',
-  furnishing: '',
-  airConditioning: '',
-  petsAllowed: '',
-  amenities: '',
-  energyRating: '',
-  make: '',
-  model: '',
-  minYear: '',
-  maxYear: '',
-  minMileage: '',
-  maxMileage: '',
-  fuel: '',
-  transmission: '',
-  bodyType: '',
-  minEngineCapacity: '',
-  maxEngineCapacity: '',
-  seats: '',
-  condition: '',
-  page: ''
-}
-export type SearchFilters = typeof SEARCH_DEFAULTS
-export type SearchKey = keyof SearchFilters
-export type FilterUpdates = Partial<Record<SearchKey, string | null>>
-export type RawSearchParams = Record<string, string | string[] | undefined>
-export const searchParsers = Object.fromEntries(Object.keys(SEARCH_DEFAULTS).map((key) => [key, parseAsString.withDefault('')])) as Record<
-  SearchKey,
-  ReturnType<typeof parseAsString.withDefault>
->
+export { SEARCH_DEFAULTS, searchParsers } from './query-state'
+export type { FilterUpdates, RawSearchParams, SearchFilters, SearchKey } from './query-state'
 
 export const PROPERTY_FILTER_KEYS = [
   'propertyType',

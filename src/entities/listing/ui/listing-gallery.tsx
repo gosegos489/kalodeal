@@ -12,9 +12,23 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ListingDetails } from '../types'
 
-type Props = { title: string; images: ListingDetails['images'] }
+type Props = {
+  title: string
+  images: ListingDetails['images']
+  labels?: {
+    noPhotos: string
+    choose: string
+    status: string[]
+    photos: string
+    photo: string
+    previous: string
+    next: string
+    show: string[]
+    alts: string[]
+  }
+}
 
-export function ListingGallery({ title, images }: Props) {
+export function ListingGallery({ title, images, labels }: Props) {
   const swiperRef = useRef<SwiperInstance | null>(null)
   const [activeIndex, setActiveIndex] = useState(0)
 
@@ -22,13 +36,13 @@ export function ListingGallery({ title, images }: Props) {
     return (
       <div className="bg-muted text-muted-foreground flex aspect-4/3 flex-col items-center justify-center gap-3 rounded-2xl border">
         <ImageIcon aria-hidden="true" className="size-12" strokeWidth={1.5} />
-        <p className="text-sm">No photos available</p>
+        <p className="text-sm">{labels?.noPhotos ?? 'No photos available'}</p>
       </div>
     )
   }
 
   return (
-    <section aria-label={`${title} photos`} className="min-w-0 space-y-3">
+    <section aria-label={labels?.photos ?? `${title} photos`} className="min-w-0 space-y-3">
       <div className="relative">
         <Swiper
           modules={[A11y, Keyboard]}
@@ -43,7 +57,11 @@ export function ListingGallery({ title, images }: Props) {
           onBeforeInit={(swiper) => {
             if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) swiper.params.speed = 0
           }}
-          a11y={{ containerMessage: `${title} photos`, itemRoleDescriptionMessage: 'Photo', slideLabelMessage: '{{index}} of {{slidesLength}}' }}
+          a11y={{
+            containerMessage: labels?.photos ?? `${title} photos`,
+            itemRoleDescriptionMessage: labels?.photo ?? 'Photo',
+            slideLabelMessage: '{{index}} of {{slidesLength}}'
+          }}
           className="bg-muted overflow-hidden rounded-2xl border"
         >
           {images.map((image, index) => (
@@ -51,7 +69,7 @@ export function ListingGallery({ title, images }: Props) {
               <div className="relative aspect-4/3">
                 <Image
                   src={image.url}
-                  alt={`${title} — photo ${index + 1}`}
+                  alt={labels?.alts[index] ?? `${title} — photo ${index + 1}`}
                   fill
                   sizes="(max-width: 1023px) calc(100vw - 32px), (max-width: 1279px) calc(100vw - 424px), 856px"
                   loading={index === 0 ? 'eager' : 'lazy'}
@@ -68,7 +86,7 @@ export function ListingGallery({ title, images }: Props) {
               variant="outline"
               size="icon"
               className="bg-background/80 hover:bg-background pointer-events-auto size-11 rounded-full shadow-sm backdrop-blur-sm"
-              aria-label="Previous photo"
+              aria-label={labels?.previous ?? 'Previous photo'}
               onClick={() => swiperRef.current?.slidePrev()}
             >
               <ChevronLeft aria-hidden="true" />
@@ -78,7 +96,7 @@ export function ListingGallery({ title, images }: Props) {
               variant="outline"
               size="icon"
               className="bg-background/80 hover:bg-background pointer-events-auto size-11 rounded-full shadow-sm backdrop-blur-sm"
-              aria-label="Next photo"
+              aria-label={labels?.next ?? 'Next photo'}
               onClick={() => swiperRef.current?.slideNext()}
             >
               <ChevronRight aria-hidden="true" />
@@ -89,14 +107,14 @@ export function ListingGallery({ title, images }: Props) {
       {images.length > 1 && (
         <>
           <p aria-live="polite" aria-atomic="true" className="text-muted-foreground text-xs">
-            Photo {activeIndex + 1} of {images.length}
+            {labels?.status[activeIndex] ?? `Photo ${activeIndex + 1} of ${images.length}`}
           </p>
-          <div aria-label="Choose a photo" className="flex gap-3 overflow-x-auto p-1">
+          <div aria-label={labels?.choose ?? 'Choose a photo'} className="flex gap-3 overflow-x-auto p-1">
             {images.map((image, index) => (
               <button
                 key={image.id}
                 type="button"
-                aria-label={`Show photo ${index + 1}`}
+                aria-label={labels?.show[index] ?? `Show photo ${index + 1}`}
                 aria-pressed={activeIndex === index}
                 onClick={() => swiperRef.current?.slideTo(index)}
                 className={cn(

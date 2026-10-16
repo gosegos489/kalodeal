@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
+import { getTranslations } from 'next-intl/server'
 import 'server-only'
 import type { ListingDetails } from '@/entities/listing/types'
+import { type Locale, localizeHref } from '@/i18n/routing'
 
 const domainUrl = process.env.DOMAIN_URL
 if (!domainUrl) throw new Error('DOMAIN_URL is not defined')
@@ -92,7 +94,13 @@ export const rootMetadata: Metadata = {
   }
 }
 
+export function getLanguageAlternates(path: string) {
+  return { en: getCanonicalUrl(localizeHref(path, 'en')), el: getCanonicalUrl(localizeHref(path, 'el')), 'x-default': getCanonicalUrl(path) }
+}
+
 interface BuildMetadataParams {
+  locale?: Locale
+  localized?: boolean
   title?: string
   description?: string
   path?: string
@@ -107,27 +115,40 @@ export function buildMetadata({
   path = '/',
   image,
   imageAlt = title,
-  robots
+  robots,
+  locale = 'en',
+  localized = false
 }: BuildMetadataParams = {}): Metadata {
-  const url = getCanonicalUrl(path)
+  const url = getCanonicalUrl(localizeHref(path, locale))
   const socialTitle = formatSeoTitle(title)
   const summary = summarizeDescription(description) || seoConfig.description
-  const images = image ? [{ url: image, alt: toPlainText(imageAlt) }] : defaultOpenGraph.images
+  const images = image
+    ? [{ url: image, alt: toPlainText(imageAlt) }]
+    : defaultOpenGraph.images.map((image) => ({ ...image, alt: `${seoConfig.siteName} — ${toPlainText(title)}` }))
 
   // Next.js replaces nested metadata rather than deeply merging it. Reuse defaults here.
   return {
-    title: toPlainText(title),
+    title: { absolute: socialTitle },
     description: summary,
-    alternates: { canonical: url },
+    alternates: { canonical: url, ...(localized && { languages: getLanguageAlternates(path) }) },
     robots: seoConfig.isUnderDevelopment ? privateMetadata.robots : (robots ?? { index: true, follow: true }),
-    openGraph: { ...defaultOpenGraph, title: socialTitle, description: summary, url, images: [...images] },
+    openGraph: {
+      ...defaultOpenGraph,
+      locale: locale === 'el' ? 'el_CY' : seoConfig.locale,
+      ...(localized && { alternateLocale: locale === 'el' ? [seoConfig.locale] : ['el_CY'] }),
+      title: socialTitle,
+      description: summary,
+      url,
+      images: [...images]
+    },
     twitter: { ...defaultTwitter, title: socialTitle, description: summary, images: image ? [image] : [...defaultTwitter.images] }
   }
 }
 
-export function buildListingMetadata(
-  listing: Pick<ListingDetails, 'id' | 'title' | 'description' | 'coverUrl' | 'status' | 'publiclyVisible'> | null
-): Metadata {
+export async function buildListingMetadata(
+  listing: Pick<ListingDetails, 'id' | 'title' | 'description' | 'coverUrl' | 'status' | 'publiclyVisible'> | null,
+  locale: Locale = 'en'
+): Promise<Metadata> {
   if (!listing) {
     return { ...privateMetadata, title: 'Listing Not Found', description: 'This listing could not be found.', alternates: { canonical: null } }
   }
@@ -140,9 +161,12 @@ export function buildListingMetadata(
     }
   }
 
+  const t = await getTranslations({ locale, namespace: 'Metadata' })
   return buildMetadata({
-    title: listing.title,
-    description: listing.description,
+    title: t('listingTitle', { title: listing.title }),
+    description: t('listingDescription', { description: listing.description }),
+    locale,
+    localized: true,
     path: `/listings/${listing.id}`,
     image: listing.coverUrl,
     imageAlt: listing.title

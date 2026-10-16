@@ -1,5 +1,6 @@
 'use client'
 
+import { useMessages, useTranslations } from 'next-intl'
 import { AreaSelect, DistrictSelect } from '@/entities/location/ui/location-selects'
 import { cn } from '@/lib/utils'
 import { useListingSearch } from '../model/use-listing-search'
@@ -15,13 +16,16 @@ type ListingSearchProps = {
 }
 
 export function ListingSearch({ placeholder = 'Search listings...', className, variant = 'default', categories = [] }: ListingSearchProps) {
+  const t = useTranslations('Search')
+  const messages = useMessages()
+  const labels = { ...messages.Locations, districts: messages.Locations }
   const search = useListingSearch()
   const hero = variant === 'hero'
 
   return (
     <form
       role="search"
-      aria-label={hero ? 'Find listings' : 'Quick listing search'}
+      aria-label={t('searchListings')}
       aria-busy={search.isPending}
       className={cn('min-w-0 space-y-4', className)}
       onSubmit={(event) => {
@@ -42,16 +46,23 @@ export function ListingSearch({ placeholder = 'Search listings...', className, v
       {hero && (
         <div className="grid min-w-0 gap-3 sm:grid-cols-3">
           <div className="min-w-0 space-y-2">
-            <p className="text-sm font-medium">Category</p>
+            <p className="text-sm font-medium">{t('fields.category')}</p>
             <ListingSearchSelect categories={categories} value={search.category} onValueChange={search.setCategory} />
           </div>
           <div className="min-w-0 space-y-2">
-            <p className="text-sm font-medium">District</p>
-            <DistrictSelect value={search.district} onValueChange={search.setDistrict} allowAll className="w-full min-w-0 data-[size=default]:h-12" />
+            <p className="text-sm font-medium">{t('fields.district')}</p>
+            <DistrictSelect
+              labels={labels}
+              value={search.district}
+              onValueChange={search.setDistrict}
+              allowAll
+              className="w-full min-w-0 data-[size=default]:h-12"
+            />
           </div>
           <div className="min-w-0 space-y-2">
-            <p className="text-sm font-medium">Area</p>
+            <p className="text-sm font-medium">{t('fields.area')}</p>
             <AreaSelect
+              labels={labels}
               key={search.district}
               district={search.district}
               value={search.area}
@@ -64,7 +75,7 @@ export function ListingSearch({ placeholder = 'Search listings...', className, v
       )}
       {search.invalidLocation && (
         <p role="status" className="text-destructive text-sm">
-          This location combination is invalid. Choose a district and an area within it, or clear the filters.
+          {t('invalidLocation')}
         </p>
       )}
     </form>

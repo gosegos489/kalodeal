@@ -8,13 +8,16 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 import { revealListingPhone } from './actions'
 
+type PhoneLabels = { reveal: string; revealing: string; revealLabel: string; signIn: string; error: string; connection: string }
+
 type Props = {
+  labels?: PhoneLabels
   listingId: string
   maskedPhone: string
   isAuthenticated: boolean
 }
 
-export function RevealListingPhoneButton({ listingId, maskedPhone, isAuthenticated }: Props) {
+export function RevealListingPhoneButton({ listingId, maskedPhone, isAuthenticated, labels }: Props) {
   const router = useRouter()
   const [phone, setPhone] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -33,13 +36,17 @@ export function RevealListingPhoneButton({ listingId, maskedPhone, isAuthenticat
             return
           }
 
-          toast.add({ title: 'Could not reveal phone', description: result.message, type: 'error' })
+          toast.add({ title: labels?.error ?? 'Could not reveal phone', description: result.message, type: 'error' })
           return
         }
 
         setPhone(result.data.phone)
       } catch {
-        toast.add({ title: 'Could not reveal phone', description: 'Check your connection and try again.', type: 'error' })
+        toast.add({
+          title: labels?.error ?? 'Could not reveal phone',
+          description: labels?.connection ?? 'Check your connection and try again.',
+          type: 'error'
+        })
       } finally {
         revealing.current = false
       }
@@ -53,7 +60,7 @@ export function RevealListingPhoneButton({ listingId, maskedPhone, isAuthenticat
         variant="outline"
         size="lg"
         className="w-full"
-        aria-label={`Sign in to reveal phone number ${maskedPhone}`}
+        aria-label={labels?.signIn ?? `Sign in to reveal phone number ${maskedPhone}`}
         render={<Link href="/login" />}
       >
         <Phone aria-hidden="true" /> {maskedPhone}
@@ -78,10 +85,10 @@ export function RevealListingPhoneButton({ listingId, maskedPhone, isAuthenticat
       onClick={revealPhone}
       disabled={isPending}
       aria-busy={isPending}
-      aria-label={`Reveal phone number ${maskedPhone}`}
+      aria-label={labels?.revealLabel ?? `Reveal phone number ${maskedPhone}`}
     >
       {isPending ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Phone aria-hidden="true" />}
-      {isPending ? 'Revealing...' : `${maskedPhone} Reveal`}
+      {isPending ? (labels?.revealing ?? 'Revealing...') : `${maskedPhone} ${labels?.reveal ?? 'Reveal'}`}
     </Button>
   )
 }

@@ -8,7 +8,27 @@ import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { setListingFavorite } from './actions'
 
+export type FavoriteLabels = {
+  add: string
+  remove: string
+  signIn: string
+  removing: string
+  removeButton: string
+  error: string
+  connection: string
+}
+const defaultLabels: FavoriteLabels = {
+  add: 'Add to favorites',
+  remove: 'Remove from favorites',
+  signIn: 'Sign in to save listing',
+  removing: 'Removing...',
+  removeButton: 'Remove favorite',
+  error: 'Could not update favorites',
+  connection: 'Check your connection and try again.'
+}
+
 type FavoriteButtonProps = {
+  labels?: FavoriteLabels
   listingId: string
   title: string
   isFavorited: boolean
@@ -17,7 +37,15 @@ type FavoriteButtonProps = {
   className?: string
 }
 
-export function FavoriteButton({ listingId, title, isFavorited, isAuthenticated, removalOnly = false, className }: FavoriteButtonProps) {
+export function FavoriteButton({
+  listingId,
+  title,
+  isFavorited,
+  isAuthenticated,
+  removalOnly = false,
+  className,
+  labels = defaultLabels
+}: FavoriteButtonProps) {
   const router = useRouter()
 
   const [favorite, setFavorite] = useState(isFavorited)
@@ -47,7 +75,7 @@ export function FavoriteButton({ listingId, title, isFavorited, isAuthenticated,
           }
 
           toast.add({
-            title: 'Could not update favorites',
+            title: labels.error,
             description: result.message,
             type: 'error'
           })
@@ -56,8 +84,8 @@ export function FavoriteButton({ listingId, title, isFavorited, isAuthenticated,
         setFavorite(previousFavorite)
 
         toast.add({
-          title: 'Could not update favorites',
-          description: 'Check your connection and try again.',
+          title: labels.error,
+          description: labels.connection,
           type: 'error'
         })
       }
@@ -70,7 +98,7 @@ export function FavoriteButton({ listingId, title, isFavorited, isAuthenticated,
       variant="outline"
       size={removalOnly ? 'sm' : 'icon-lg'}
       className={cn(!removalOnly && 'bg-background/95 rounded-full shadow-xs', favorite && 'text-primary', className)}
-      aria-label={`${isAuthenticated ? (removalOnly || favorite ? 'Remove from favorites' : 'Add to favorites') : 'Sign in to save listing'}: ${title}`}
+      aria-label={`${isAuthenticated ? (removalOnly || favorite ? labels.remove : labels.add) : labels.signIn}: ${title}`}
       aria-pressed={removalOnly ? undefined : favorite}
       aria-busy={isPending}
       disabled={isPending || (removalOnly && !favorite)}
@@ -85,7 +113,7 @@ export function FavoriteButton({ listingId, title, isFavorited, isAuthenticated,
       ) : (
         <Heart aria-hidden="true" className={cn(favorite && 'fill-current')} />
       )}
-      {removalOnly && (isPending ? 'Removing...' : 'Remove favorite')}
+      {removalOnly && (isPending ? labels.removing : labels.removeButton)}
     </Button>
   )
 }
