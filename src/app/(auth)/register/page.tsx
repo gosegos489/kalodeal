@@ -1,7 +1,10 @@
 import { CheckCircle2 } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { RegisterForm } from '@/features/auth'
+import { AuthFormSkeleton } from '@/features/auth/components/auth-form-skeleton'
+import { GuestOnly } from '@/features/auth/components/guest-only'
 
 export const metadata: Metadata = { title: 'Create an Account', description: 'Create a Kalodeal account to publish listings and contact sellers.' }
 
@@ -31,22 +34,26 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div className="bg-card mx-auto flex w-full flex-col gap-6 rounded-xl border p-6 shadow-sm sm:p-8">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-2xl font-semibold">Sign up</h2>
+        <Suspense fallback={<AuthFormSkeleton variant="register" />}>
+          <GuestOnly>
+            <div className="bg-card mx-auto flex w-full flex-col gap-6 rounded-xl border p-6 shadow-sm sm:p-8">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-2xl font-semibold">Sign up</h2>
 
-            <p className="text-muted-foreground text-sm">Enter your details to create a KaloDeal account.</p>
-          </div>
+                <p className="text-muted-foreground text-sm">Enter your details to create a KaloDeal account.</p>
+              </div>
 
-          <RegisterForm />
+              <RegisterForm />
 
-          <p className="text-muted-foreground text-center text-sm">
-            Already have an account?{' '}
-            <Link href="/login" className="text-primary font-medium">
-              Sign in
-            </Link>
-          </p>
-        </div>
+              <p className="text-muted-foreground text-center text-sm">
+                Already have an account?{' '}
+                <Link href="/login" className="text-primary font-medium">
+                  Sign in
+                </Link>
+              </p>
+            </div>
+          </GuestOnly>
+        </Suspense>
       </div>
     </section>
   )

@@ -8,13 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { getPublicCategory } from '@/entities/category/get-category-tree'
 import { getListingChatLabel } from '@/entities/listing/contact-links'
 import { getListing } from '@/entities/listing/get-listing'
 import { listingStatusLabels } from '@/entities/listing/lifecycle'
 import { ListingAttributeDetails } from '@/entities/listing/ui/listing-attributes'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
+import { ListingDetailSkeleton } from '@/entities/listing/ui/listing-skeleton'
 import { formatLocation } from '@/entities/location/catalog'
 import { getSellerInitials, postingSince } from '@/entities/user/public-profile'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
@@ -243,24 +243,7 @@ async function ListingDetails({ params }: Props) {
 export default function ListingPage({ params }: Props) {
   return (
     <div className="container max-w-7xl py-8 sm:py-10">
-      <Suspense
-        fallback={
-          <div role="status" aria-label="Loading listing" className="flex flex-col gap-6">
-            <Skeleton className="h-5 w-64" />
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-              <div className="space-y-6">
-                <Skeleton className="aspect-4/3 rounded-2xl" />
-                <Skeleton className="h-40 rounded-xl" />
-              </div>
-              <div className="space-y-5">
-                <Skeleton className="h-56 rounded-xl" />
-                <Skeleton className="h-64 rounded-xl" />
-              </div>
-            </div>
-            <span className="sr-only">Loading listing...</span>
-          </div>
-        }
-      >
+      <Suspense fallback={<ListingDetailSkeleton />}>
         <ListingDetails params={params} />
       </Suspense>
     </div>

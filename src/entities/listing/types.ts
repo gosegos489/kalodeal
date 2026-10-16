@@ -13,6 +13,7 @@ export type ListingSummary = ListingLocation & {
   createdAt: Date
   category: { name: string; slug?: string }
   coverUrl: string | null
+  imageUrls: string[]
 }
 
 export type ListingDetails = Omit<ListingSummary, 'category'> &

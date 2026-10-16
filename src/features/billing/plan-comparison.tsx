@@ -2,8 +2,10 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { LISTING_PLANS, type ListingPlan, PLAN_LIMITS, formatPlanPrice } from '@/lib/plan-limits'
+import { LISTING_PLANS, type ListingPlan, PLAN_LIMITS, type PaidPlan, formatPlanPrice } from '@/lib/plan-limits'
+import { cn } from '@/lib/utils'
 import { BillingButton } from './billing-button'
+import { pricingCtaClassName } from './pricing-cta'
 
 type Props = {
   currentPlan: ListingPlan
@@ -12,6 +14,7 @@ type Props = {
   marketplaceAllowed?: boolean
   hasSubscription?: boolean
   available: Partial<Record<ListingPlan, boolean>>
+  selectedPlan?: PaidPlan
 }
 const descriptions = {
   FREE: 'For occasional sellers',
@@ -26,21 +29,24 @@ export function PlanComparison({
   authenticated = true,
   marketplaceAllowed = true,
   hasSubscription = false,
-  available
+  available,
+  selectedPlan
 }: Props) {
   return (
     <section aria-label="Compare selling plans" className="flex min-w-0 flex-col gap-6">
-      <div className="grid items-stretch gap-4 md:grid-cols-2 2xl:grid-cols-4">
+      <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-4">
         {LISTING_PLANS.map((plan) => {
           const limits = PLAN_LIMITS[plan]
           const isCurrent = authenticated && currentPlan === plan
           const price = formatPlanPrice(plan)
+          const isSelected = selectedPlan === plan
           return (
-            <Card key={plan} className="flex h-full flex-col">
+            <Card key={plan} className={cn('flex h-full flex-col', isSelected && 'ring-primary ring-2')}>
               <CardHeader>
                 <CardTitle className="flex flex-wrap items-center justify-between gap-2">
                   <h2>{limits.name}</h2>
                   {isCurrent && <Badge variant="outline">Your plan</Badge>}
+                  {isSelected && !isCurrent && <Badge variant="outline">Selected plan</Badge>}
                 </CardTitle>
                 <CardDescription>{descriptions[plan]}</CardDescription>
               </CardHeader>
@@ -77,35 +83,51 @@ export function PlanComparison({
                     </>
                   )}
                 </ul>
-                <div className="mt-auto flex flex-col items-start gap-3 pt-2">
+                <div className="mt-auto flex w-full flex-col items-stretch gap-3 pt-2">
                   {!marketplaceAllowed ? (
                     <p className="text-muted-foreground text-sm">Selling plans are available to marketplace accounts.</p>
+                  ) : plan !== 'FREE' && !available[plan] && paidPlan !== plan ? (
+                    <div role="status" className="flex flex-col gap-2">
+                      <Button disabled className={pricingCtaClassName}>
+                        Currently unavailable
+                      </Button>
+                      <p className="sr-only">This plan is temporarily unavailable. Please try again later.</p>
+                    </div>
                   ) : !authenticated ? (
-                    <Button nativeButton={false} className="h-auto whitespace-normal" render={<Link href="/login?returnTo=%2Fpricing" />}>
+                    <Button
+                      nativeButton={false}
+                      className={pricingCtaClassName}
+                      render={<Link href={`/login?returnTo=${encodeURIComponent(plan === 'FREE' ? '/pricing' : `/pricing?plan=${plan}`)}`} />}
+                    >
                       {plan === 'FREE' ? 'Get started free' : `Upgrade to ${limits.name} — ${price}/month`}
                     </Button>
                   ) : plan === 'FREE' ? (
                     currentPlan === 'FREE' ? (
-                      <Button disabled>Your plan</Button>
+                      <Button disabled className={pricingCtaClassName}>
+                        Your plan
+                      </Button>
                     ) : hasSubscription ? (
-                      <BillingButton intent="manage" upgradeLabel="Switch to Free at period end" />
+                      <BillingButton intent="manage" className={pricingCtaClassName} upgradeLabel="Switch to Free at period end" />
                     ) : (
                       <p className="text-muted-foreground text-sm">Free applies when complimentary access ends.</p>
                     )
                   ) : paidPlan === plan ? (
-                    <Button disabled>Your paid plan</Button>
+                    <Button disabled className={pricingCtaClassName}>
+                      Your paid plan
+                    </Button>
                   ) : hasSubscription ? (
-                    <BillingButton intent="manage" upgradeLabel={`Change to ${limits.name}`} />
+                    <BillingButton intent="manage" className={pricingCtaClassName} upgradeLabel={`Change to ${limits.name}`} />
                   ) : available[plan] ? (
                     <BillingButton
                       intent="upgrade"
+                      className={pricingCtaClassName}
                       plan={plan}
-                      upgradeLabel={`${isCurrent ? `Start paid ${limits.name}` : `Upgrade to ${limits.name}`} — ${price}/month`}
+                      upgradeLabel={`${isSelected ? `Continue with ${limits.name}` : isCurrent ? `Start paid ${limits.name}` : `Upgrade to ${limits.name}`} — ${price}/month`}
                     />
                   ) : (
-                    <p role="status" className="text-muted-foreground text-sm">
-                      Upgrades are temporarily unavailable.
-                    </p>
+                    <Button disabled className={pricingCtaClassName}>
+                      Currently unavailable
+                    </Button>
                   )}
                 </div>
               </CardContent>

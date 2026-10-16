@@ -4,7 +4,7 @@ import { ModerationLoading } from '@/features/moderation/shared/moderation-loadi
 
 export default function ModeratorPage() {
   return (
-    <Suspense fallback={<ModerationLoading />}>
+    <Suspense fallback={<ModerationLoading variant="dashboard" />}>
       <ModerationDashboard />
     </Suspense>
   )

@@ -1,7 +1,10 @@
 import { CheckCircle2 } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { ForgotPasswordForm } from '@/features/auth'
+import { AuthFormSkeleton } from '@/features/auth/components/auth-form-skeleton'
+import { GuestOnly } from '@/features/auth/components/guest-only'
 
 export const metadata: Metadata = { title: 'Forgot Password', description: 'Request a password reset link for your Kalodeal account.' }
 
@@ -37,22 +40,26 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
 
-        <div className="bg-card mx-auto flex w-full flex-col gap-6 rounded-xl border p-6 shadow-sm sm:p-8">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-2xl font-semibold">Forgot your password?</h2>
+        <Suspense fallback={<AuthFormSkeleton variant="forgot" />}>
+          <GuestOnly>
+            <div className="bg-card mx-auto flex w-full flex-col gap-6 rounded-xl border p-6 shadow-sm sm:p-8">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-2xl font-semibold">Forgot your password?</h2>
 
-            <p className="text-muted-foreground text-sm">Enter your email address and we&apos;ll send you a link to create a new password.</p>
-          </div>
+                <p className="text-muted-foreground text-sm">Enter your email address and we&apos;ll send you a link to create a new password.</p>
+              </div>
 
-          <ForgotPasswordForm />
+              <ForgotPasswordForm />
 
-          <p className="text-muted-foreground text-center text-sm">
-            Remember your password?{' '}
-            <Link href="/login" className="text-primary font-medium">
-              Sign in
-            </Link>
-          </p>
-        </div>
+              <p className="text-muted-foreground text-center text-sm">
+                Remember your password?{' '}
+                <Link href="/login" className="text-primary font-medium">
+                  Sign in
+                </Link>
+              </p>
+            </div>
+          </GuestOnly>
+        </Suspense>
       </div>
     </section>
   )

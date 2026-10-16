@@ -3,20 +3,18 @@ import { Suspense } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AccountPlanSkeleton } from '@/features/account/account-skeleton'
 import { getAccount } from '@/features/account/data'
 import { BillingButton } from '@/features/billing/billing-button'
 import { CheckoutPending } from '@/features/billing/checkout-pending'
-import { getBillingAvailability } from '@/features/billing/config'
-import { PlanComparison } from '@/features/billing/plan-comparison'
+import { formatPlanPrice } from '@/lib/plan-limits'
 import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
-import AccountLoading from '../loading'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 
 async function AccountSubscription({ searchParams }: Props) {
   const account = await getAccount()
   const params = await searchParams
-  const available = await getBillingAvailability()
 
   return (
     <div className="flex flex-col gap-6">
@@ -36,21 +34,30 @@ async function AccountSubscription({ searchParams }: Props) {
       <Card>
         <CardHeader>
           <CardTitle>
-            <h2>My plan</h2>
+            <h2>Current plan</h2>
           </CardTitle>
-          <CardDescription>
-            {account.plan !== 'FREE'
-              ? 'For active sellers. List more items and track buyer interest.'
-              : 'For occasional sellers. Start with the essentials.'}
-          </CardDescription>
+          <CardDescription>Your current benefits and usage. Compare selling plans on the pricing page.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-start gap-6">
           <Badge>{account.limits.name} plan</Badge>
+          <p className="text-2xl font-semibold">
+            {account.plan === 'FREE' ? (
+              <span className="text-muted-foreground text-base font-normal">No subscription required</span>
+            ) : account.plan !== account.paidPlan ? (
+              <span className="text-muted-foreground text-base font-normal">Complimentary Pro access</span>
+            ) : (
+              <>
+                {formatPlanPrice(account.plan)}
+                <span className="text-muted-foreground text-sm font-normal"> / month · standard plan price</span>
+              </>
+            )}
+          </p>
           <dl className="grid w-full gap-4 sm:grid-cols-2">
             <div>
-              <dt className="text-muted-foreground text-sm">Used listing slots</dt>
+              <dt className="text-muted-foreground text-sm">Active listing allowance</dt>
               <dd className="mt-1 text-lg font-semibold">
                 {account.listingSlotCount} / {account.limits.activeListings}
+                <p className="text-muted-foreground mt-1 text-xs font-normal">Includes pending listings and requested corrections.</p>
               </dd>
             </div>
             <div>
@@ -59,25 +66,20 @@ async function AccountSubscription({ searchParams }: Props) {
             </div>
             <div>
               <dt className="text-muted-foreground text-sm">Listing analytics</dt>
-              <dd className="mt-1 text-lg font-semibold">{account.limits.analyticsLevel}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground text-sm">Monthly listing boosts</dt>
               <dd className="mt-1 text-lg font-semibold">
-                {account.monthlyBoosts > 0 ? (
-                  <>
-                    {account.monthlyBoosts} total{' '}
-                    <span className="text-muted-foreground text-sm">
-                      · {account.planBoostsUsed} used · {account.planBoostsRemaining} remaining
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-muted-foreground text-sm font-normal">Available on paid plans</span>
-                )}
+                {account.limits.analyticsLevel === 'none' ? 'Not included' : account.limits.analyticsLevel === 'basic' ? 'Basic' : 'Advanced'}
               </dd>
             </div>
             <div>
-              <dt className="text-muted-foreground text-sm">Bonus boosts</dt>
+              <dt className="text-muted-foreground text-sm">Monthly Boosts</dt>
+              <dd className="mt-1 text-lg font-semibold">{account.monthlyBoosts}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground text-sm">Remaining monthly Boosts</dt>
+              <dd className="mt-1 text-lg font-semibold">{account.planBoostsRemaining}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground text-sm">Bonus Boosts</dt>
               <dd className="mt-1 text-lg font-semibold">{account.bonusBoostsRemaining} remaining</dd>
             </div>
             {account.boostPeriodEndsAt && (
@@ -123,7 +125,7 @@ async function AccountSubscription({ searchParams }: Props) {
           {account.subscription?.hasStripeSubscription && (
             <dl className="grid w-full gap-4 sm:grid-cols-2">
               <div>
-                <dt className="text-muted-foreground text-sm">Status</dt>
+                <dt className="text-muted-foreground text-sm">Subscription status</dt>
                 <dd className="mt-1 font-medium">
                   {['past_due', 'unpaid'].includes(account.subscription.stripeStatus ?? '')
                     ? 'Payment past due'
@@ -169,30 +171,29 @@ async function AccountSubscription({ searchParams }: Props) {
               Your current billing amount and any scheduled plan change are shown in Stripe billing. Existing subscription prices are retained.
             </p>
           )}
-          {account.subscription?.hasStripeSubscription && <BillingButton intent="manage" />}
-          {account.limits.analyticsLevel !== 'none' && (
-            <Button nativeButton={false} variant="outline" render={<Link href="/account/analytics" />}>
-              Analytics
+          <div className="flex w-full flex-col gap-3 sm:flex-row">
+            <Button nativeButton={false} className="h-auto min-h-11 w-full px-4 py-3 whitespace-normal" render={<Link href="/pricing" />}>
+              View all plans
             </Button>
+            {account.subscription?.hasStripeSubscription && <BillingButton intent="manage" />}
+            {account.limits.analyticsLevel !== 'none' && (
+              <Button nativeButton={false} className="h-auto min-h-11 px-4 py-3" variant="outline" render={<Link href="/account/analytics" />}>
+                Analytics
+              </Button>
+            )}
+          </div>
+          {account.subscription?.hasStripeSubscription && (
+            <p className="text-muted-foreground text-sm">Manage payment details, plan changes and cancellation in subscription billing.</p>
           )}
         </CardContent>
       </Card>
-      <Button nativeButton={false} variant="outline" render={<Link href="/pricing" />}>
-        Compare all plans
-      </Button>
-      <PlanComparison
-        currentPlan={account.plan}
-        paidPlan={account.paidPlan}
-        available={available}
-        hasSubscription={!!account.subscription?.hasStripeSubscription && account.subscription.status !== 'EXPIRED'}
-      />
     </div>
   )
 }
 
 export default function SubscriptionPage({ searchParams }: Props) {
   return (
-    <Suspense fallback={<AccountLoading />}>
+    <Suspense fallback={<AccountPlanSkeleton />}>
       <AccountSubscription searchParams={searchParams} />
     </Suspense>
   )

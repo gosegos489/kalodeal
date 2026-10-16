@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { ListingRowsSkeleton } from '@/entities/listing/ui/listing-skeleton'
 import { getAccount, getMyListings } from '@/features/account/data'
 import { MyListingRow } from '@/features/account/my-listing-row'
 import { serializePagination } from '@/lib/pagination'
@@ -85,17 +85,6 @@ async function MyListings({ searchParams }: Props) {
   )
 }
 
-function ListingsLoading() {
-  return (
-    <div role="status" aria-label="Loading your listings" className={listingsRowsClassName}>
-      {Array.from({ length: 3 }, (_, index) => (
-        <Skeleton key={index} className="h-44 rounded-xl xl:h-24" />
-      ))}
-      <span className="sr-only">Loading your listings...</span>
-    </div>
-  )
-}
-
 export default function ListingsPage({ searchParams }: Props) {
   return (
     <section aria-labelledby="my-listings-heading" className="flex flex-col gap-6">
@@ -110,7 +99,7 @@ export default function ListingsPage({ searchParams }: Props) {
           <Plus aria-hidden="true" /> Create listing
         </Button>
       </div>
-      <Suspense fallback={<ListingsLoading />}>
+      <Suspense fallback={<ListingRowsSkeleton label="Loading your listings" />}>
         <MyListings searchParams={searchParams} />
       </Suspense>
     </section>

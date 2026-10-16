@@ -1,10 +1,10 @@
 import { ArrowLeft, ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { Skeleton } from '@/components/ui/skeleton'
 import { getAccount } from '@/features/account/data'
 import CreateListingForm from '@/features/create-listing/create-listing-form'
 import { getListingCategoryOptions } from '@/features/create-listing/get-category-options'
+import { ListingFormSkeleton } from '@/features/create-listing/listing-form-skeleton'
 
 async function SellForm() {
   const [categories, account] = await Promise.all([getListingCategoryOptions(), getAccount()])
@@ -32,17 +32,7 @@ export default function SellPage() {
           </Link>
         </div>
       </div>
-      <Suspense
-        fallback={
-          <div className="grid gap-6 lg:grid-cols-3" role="status">
-            <div className="flex flex-col gap-6 lg:col-span-2">
-              <Skeleton className="h-96 w-full rounded-2xl" />
-              <Skeleton className="h-64 w-full rounded-2xl" />
-            </div>
-            <Skeleton className="h-80 w-full rounded-2xl" />
-          </div>
-        }
-      >
+      <Suspense fallback={<ListingFormSkeleton />}>
         <SellForm />
       </Suspense>
     </div>

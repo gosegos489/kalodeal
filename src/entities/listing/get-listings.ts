@@ -7,7 +7,7 @@ import { getPagination } from '@/lib/pagination'
 import prisma from '@/lib/prisma'
 import { HOMEPAGE_LISTINGS_LIMIT, SEARCH_RESULTS_LIMIT } from './constants'
 import { getFeaturedListings } from './get-featured-listings'
-import { listingSummarySelect, toListingSummary } from './listing-summary'
+import { listingCardSelect, toListingSummary } from './listing-summary'
 import { publicListingEligibilitySql } from './public-eligibility'
 import { type ListingFilters, listingFiltersSchema } from './schema'
 import { listingSearchPageSql, listingSearchWhereSql } from './search-where-sql'
@@ -56,7 +56,7 @@ export async function getListingSearchResults(
       const rows = await tx.$queryRaw<{ id: string }[]>(listingSearchPageSql(predicate, orderBy, featuredIds, pagination))
       const listings = await tx.listing.findMany({
         where: { AND: [where, { id: { in: rows.map(({ id }) => id) } }] },
-        select: listingSummarySelect,
+        select: listingCardSelect,
         take: pagination.take
       })
       const byId = new Map(listings.map((row) => [row.id, toListingSummary(row)]))

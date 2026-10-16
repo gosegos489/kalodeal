@@ -3,9 +3,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
-import { Skeleton } from '@/components/ui/skeleton'
 import { getListingCategoryOptions } from '@/features/create-listing/get-category-options'
 import { ListingForm } from '@/features/create-listing/listing-form'
+import { ListingFormSkeleton } from '@/features/create-listing/listing-form-skeleton'
 import { getEditableListing } from '@/features/edit-listing/data'
 
 type Props = { params: Promise<{ id: string }> }
@@ -37,18 +37,7 @@ export default function EditListingPage({ params }: Props) {
         </h2>
         <p className="text-muted-foreground mt-1 text-sm">Update your item details and contact information.</p>
       </div>
-      <Suspense
-        fallback={
-          <div className="grid gap-6 lg:grid-cols-3" role="status" aria-label="Loading listing form">
-            <div className="space-y-6 lg:col-span-2">
-              <Skeleton className="h-96 rounded-2xl" />
-              <Skeleton className="h-64 rounded-2xl" />
-            </div>
-            <Skeleton className="h-64 rounded-2xl" />
-            <span className="sr-only">Loading listing form...</span>
-          </div>
-        }
-      >
+      <Suspense fallback={<ListingFormSkeleton />}>
         <EditListing params={params} />
       </Suspense>
     </section>

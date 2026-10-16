@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma'
 import { CATEGORY_FEED_LIMIT } from './constants'
 import { mergeFeaturedListings } from './featured-ranking'
 import { getCategoryFeedListingIds } from './get-category-feed-listing-ids'
-import { listingSummarySelect, toListingSummary } from './listing-summary'
+import { listingCardSelect, toListingSummary } from './listing-summary'
 import { getPublicListingIds } from './public-eligibility'
 import type { ListingSummary } from './types'
 
@@ -37,7 +37,7 @@ export async function getMainCategoryFeeds() {
         }
       }
     },
-    select: { ...listingSummarySelect, userId: true }
+    select: { ...listingCardSelect, userId: true }
   })
   const featuredVisible = await getPublicListingIds(listings.map(({ id }) => id))
   const byId = new Map(
@@ -68,7 +68,7 @@ async function getOrganicMainCategoryFeeds() {
   const listings = feedIds.length
     ? await prisma.listing.findMany({
         where: { id: { in: feedIds.map(({ listingId }) => listingId) }, status: 'ACTIVE' },
-        select: listingSummarySelect
+        select: listingCardSelect
       })
     : []
   const listingsById = new Map(listings.map((listing) => [listing.id, toListingSummary(listing)]))

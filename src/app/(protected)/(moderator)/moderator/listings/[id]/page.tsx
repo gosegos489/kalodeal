@@ -11,7 +11,7 @@ async function Review({ params }: Props) {
 
 export default function ModeratorListingPage({ params }: Props) {
   return (
-    <Suspense fallback={<ModerationLoading />}>
+    <Suspense fallback={<ModerationLoading variant="listing" />}>
       <Review params={params} />
     </Suspense>
   )

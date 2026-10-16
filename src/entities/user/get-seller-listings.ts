@@ -1,6 +1,6 @@
 import 'server-only'
 import { getCategoryTaxonomy } from '@/entities/category/get-category-taxonomy'
-import { listingSummarySelect, toListingSummary } from '@/entities/listing/listing-summary'
+import { listingCardSelect, toListingSummary } from '@/entities/listing/listing-summary'
 import { publicListingEligibilitySql } from '@/entities/listing/public-eligibility'
 import { Prisma } from '@/generated/prisma/client'
 import { getPagination } from '@/lib/pagination'
@@ -37,7 +37,7 @@ export async function getSellerListings(userId: string, filters: { category?: st
       const listings = rows.length
         ? await tx.listing.findMany({
             where: { id: { in: rows.map((row) => row.id) }, userId, status: 'ACTIVE' },
-            select: listingSummarySelect,
+            select: listingCardSelect,
             orderBy: [{ sortDate: 'desc' }, { id: 'desc' }],
             take: pagination.take
           })

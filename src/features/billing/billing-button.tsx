@@ -5,15 +5,26 @@ import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 import type { PaidPlan } from '@/lib/plan-limits'
+import { cn } from '@/lib/utils'
 import { manageSubscription, startPlanCheckout } from './actions'
 
-export function BillingButton({ intent, upgradeLabel, plan = 'PRO' }: { intent: 'upgrade' | 'manage'; upgradeLabel?: string; plan?: PaidPlan }) {
+export function BillingButton({
+  intent,
+  upgradeLabel,
+  plan = 'PRO',
+  className
+}: {
+  intent: 'upgrade' | 'manage'
+  upgradeLabel?: string
+  plan?: PaidPlan
+  className?: string
+}) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   return (
-    <div className="flex flex-col items-start gap-2">
+    <div className="flex w-full min-w-0 flex-col items-start gap-2">
       <Button
-        className="h-auto min-h-8 cursor-pointer py-1.5 whitespace-normal"
+        className={cn('h-auto min-h-11 w-full cursor-pointer px-4 py-3 whitespace-normal', className)}
         disabled={pending}
         variant={intent === 'upgrade' ? 'default' : 'outline'}
         onClick={() => {

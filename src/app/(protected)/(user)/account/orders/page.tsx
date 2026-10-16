@@ -12,6 +12,7 @@ import { InvoiceActions } from '@/features/orders/invoice-actions'
 import { dayjs } from '@/lib/dayjs'
 import { serializePagination } from '@/lib/pagination'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
+import { LoadingStatus } from '@/shared/ui/loading-status'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 
@@ -34,7 +35,7 @@ async function Orders({ searchParams }: Props) {
       <div className="bg-card flex flex-col items-center gap-4 rounded-2xl border border-dashed px-6 py-12 text-center">
         <ReceiptText aria-hidden="true" className="text-muted-foreground size-8" strokeWidth={1.5} />
         <h3 className="text-lg font-semibold">No payments yet</h3>
-        <p className="text-muted-foreground max-w-sm text-sm">Your confirmed Pro subscription payments and renewals will appear here.</p>
+        <p className="text-muted-foreground max-w-sm text-sm">Your confirmed subscription payments and renewals will appear here.</p>
         <Button nativeButton={false} variant="outline" render={<Link href="/account/subscription" />}>
           My plan
         </Button>
@@ -49,7 +50,7 @@ async function Orders({ searchParams }: Props) {
       </p>
       <div className="bg-card overflow-x-auto rounded-xl border">
         <table className="w-full text-left text-sm">
-          <caption className="sr-only">Paid Pro subscription payments</caption>
+          <caption className="sr-only">Paid subscription payments</caption>
           <thead className="bg-muted/50 text-muted-foreground border-b">
             <tr>
               {['Date (UTC)', 'Description', 'Amount', 'Status', 'Invoice'].map((heading) => (
@@ -90,14 +91,24 @@ export default function OrdersPage({ searchParams }: Props) {
         <h2 id="orders-heading" className="text-2xl font-semibold">
           Orders
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm">Your paid Pro subscription history and Stripe invoices.</p>
+        <p className="text-muted-foreground mt-1 text-sm">Your paid subscription history and Stripe invoices.</p>
       </div>
       <Suspense
         fallback={
-          <div className="space-y-4" role="status" aria-label="Loading your payments">
-            <Skeleton className="h-64 rounded-xl" />
-            <span className="sr-only">Loading your payments...</span>
-          </div>
+          <LoadingStatus label="Loading your payments" className="space-y-4">
+            <Skeleton className="h-5 w-56 max-w-full" />
+            <div className="bg-card overflow-hidden rounded-xl border">
+              {[0, 1, 2, 3].map((index) => (
+                <div key={index} className="grid grid-cols-[1fr_2fr_1fr] gap-4 border-b p-4 last:border-0 sm:grid-cols-[1fr_2fr_1fr_1fr_1fr]">
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="hidden h-6 w-full sm:block" />
+                  <Skeleton className="hidden h-6 w-full sm:block" />
+                </div>
+              ))}
+            </div>
+          </LoadingStatus>
         }
       >
         <Orders searchParams={searchParams} />

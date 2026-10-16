@@ -3,6 +3,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { LoginForm } from '@/features/auth'
+import { AuthFormSkeleton } from '@/features/auth/components/auth-form-skeleton'
+import { GuestOnly } from '@/features/auth/components/guest-only'
 
 export const metadata: Metadata = { title: 'Sign In', description: 'Sign in to your Kalodeal account to manage listings, favorites, and messages.' }
 
@@ -34,30 +36,32 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="bg-card mx-auto flex w-full flex-col gap-6 rounded-xl border p-6 shadow-sm sm:p-8">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-2xl font-semibold">Sign in</h2>
+        <Suspense fallback={<AuthFormSkeleton variant="login" />}>
+          <GuestOnly>
+            <div className="bg-card mx-auto flex w-full flex-col gap-6 rounded-xl border p-6 shadow-sm sm:p-8">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-2xl font-semibold">Sign in</h2>
 
-            <p className="text-muted-foreground text-sm">Enter your email and password to access your KaloDeal account.</p>
-          </div>
+                <p className="text-muted-foreground text-sm">Enter your email and password to access your KaloDeal account.</p>
+              </div>
 
-          <Suspense fallback={<p role="status">Loading sign-in form...</p>}>
-            <LoginForm />
-          </Suspense>
+              <LoginForm />
 
-          <div className="flex flex-col items-center justify-center gap-2 text-center text-sm">
-            <Link href="/forgot-password" className="text-primary w-fit font-medium">
-              Forgot your password?
-            </Link>
+              <div className="flex flex-col items-center justify-center gap-2 text-center text-sm">
+                <Link href="/forgot-password" className="text-primary w-fit font-medium">
+                  Forgot your password?
+                </Link>
 
-            <p className="text-muted-foreground">
-              Don&apos;t have an account?{' '}
-              <Link href="/register" className="text-primary font-medium">
-                Create account
-              </Link>
-            </p>
-          </div>
-        </div>
+                <p className="text-muted-foreground">
+                  Don&apos;t have an account?{' '}
+                  <Link href="/register" className="text-primary font-medium">
+                    Create account
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </GuestOnly>
+        </Suspense>
       </div>
     </section>
   )

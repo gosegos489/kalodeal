@@ -3,11 +3,11 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AccountAnalyticsSkeleton } from '@/features/account/account-skeleton'
 import { ListingStatusBadge } from '@/features/account/listing-status-badge'
 import { getAnalytics } from '@/features/analytics/data'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
 import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
-import AccountLoading from '../loading'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 
@@ -165,7 +165,7 @@ async function AccountAnalytics({ searchParams }: Props) {
 
 export default function AnalyticsPage({ searchParams }: Props) {
   return (
-    <Suspense fallback={<AccountLoading />}>
+    <Suspense fallback={<AccountAnalyticsSkeleton />}>
       <RouteAutoRefresh />
       <AccountAnalytics searchParams={searchParams} />
     </Suspense>

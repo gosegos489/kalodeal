@@ -1,4 +1,89 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingStatus } from '@/shared/ui/loading-status'
+
+export function AccountPlanSkeleton() {
+  return (
+    <LoadingStatus label="Loading your current plan" className="bg-card space-y-6 rounded-xl border p-6">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-5 w-full" />
+      </div>
+      <Skeleton className="h-6 w-24" />
+      <Skeleton className="h-8 w-48 max-w-full" />
+      <div className="grid gap-4 sm:grid-cols-2">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="space-y-2">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-7 w-20" />
+          </div>
+        ))}
+      </div>
+      <Skeleton className="h-5 w-4/5" />
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Skeleton className="h-11 flex-1" />
+        <Skeleton className="h-11 flex-1" />
+      </div>
+    </LoadingStatus>
+  )
+}
+
+export function AccountAnalyticsSkeleton() {
+  return (
+    <LoadingStatus label="Loading listing analytics" className="flex flex-col gap-6">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-36" />
+        <Skeleton className="h-5 w-full" />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="bg-card space-y-6 rounded-xl border p-6">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-9 w-16" />
+          </div>
+        ))}
+      </div>
+      <div className="bg-card space-y-5 rounded-xl border p-6">
+        <Skeleton className="h-6 w-48 max-w-full" />
+        <Skeleton className="h-5 w-full" />
+        <div className="flex flex-wrap gap-2">
+          {[0, 1, 2].map((index) => (
+            <Skeleton key={index} className="h-8 w-24" />
+          ))}
+        </div>
+        {[0, 1, 2, 3].map((index) => (
+          <div key={index} className="grid grid-cols-[minmax(0,2fr)_1fr_1fr] gap-4 border-b py-3 last:border-0">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-full" />
+          </div>
+        ))}
+      </div>
+    </LoadingStatus>
+  )
+}
+
+export function AccountSettingsSkeleton() {
+  return (
+    <LoadingStatus label="Loading account settings" className="grid gap-6 xl:grid-cols-2">
+      {[0, 1, 2].map((index) => (
+        <div key={index} className="bg-card flex min-w-0 flex-col gap-6 rounded-xl border p-6">
+          <div className="space-y-2 border-b pb-6">
+            <Skeleton className="h-6 w-28" />
+            <Skeleton className="h-5 w-4/5" />
+          </div>
+          {index === 0 && <Skeleton className="size-24 rounded-full" />}
+          {Array.from({ length: index === 1 ? 1 : 3 }, (_, field) => (
+            <div key={field} className="space-y-2">
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+          ))}
+          <Skeleton className="mt-auto h-9 w-32" />
+        </div>
+      ))}
+    </LoadingStatus>
+  )
+}
 
 export function AccountContentSkeleton() {
   return (

@@ -11,7 +11,7 @@ async function Queue({ searchParams }: Props) {
 
 export default function ModeratorAvatarsPage({ searchParams }: Props) {
   return (
-    <Suspense fallback={<ModerationLoading />}>
+    <Suspense fallback={<ModerationLoading variant="profiles" />}>
       <Queue searchParams={searchParams} />
     </Suspense>
   )

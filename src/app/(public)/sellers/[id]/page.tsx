@@ -7,11 +7,11 @@ import { Suspense } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { ListingCard } from '@/entities/listing/ui/listing-card'
 import { getPublicSeller } from '@/entities/user/get-public-seller'
 import { getSellerListings } from '@/entities/user/get-seller-listings'
 import { getSellerInitials, postingSince } from '@/entities/user/public-profile'
+import { SellerProfileSkeleton } from '@/entities/user/seller-profile-skeleton'
 import { buildMetadata } from '@/lib/metadata'
 import { cn } from '@/lib/utils'
 import { BreadCrumbs } from '@/shared/ui/BreadCrumbs'
@@ -168,18 +168,7 @@ async function SellerProfile({ params, searchParams }: Props) {
 export default function SellerPage(props: Props) {
   return (
     <div className="container max-w-7xl py-8 sm:py-10">
-      <Suspense
-        fallback={
-          <div role="status" aria-label="Loading seller profile" className="space-y-8">
-            <Skeleton className="h-64 rounded-2xl" />
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((id) => (
-                <Skeleton key={id} className="h-80 rounded-2xl" />
-              ))}
-            </div>
-          </div>
-        }
-      >
+      <Suspense fallback={<SellerProfileSkeleton />}>
         <SellerProfile {...props} />
       </Suspense>
     </div>

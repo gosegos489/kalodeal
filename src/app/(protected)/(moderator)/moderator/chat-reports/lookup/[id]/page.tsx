@@ -9,7 +9,7 @@ async function Review({ params, searchParams }: Props) {
 }
 export default function ConversationLookupReviewPage(props: Props) {
   return (
-    <Suspense fallback={<ModerationLoading />}>
+    <Suspense fallback={<ModerationLoading variant="conversation" />}>
       <Review {...props} />
     </Suspense>
   )

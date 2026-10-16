@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ConversationLoading } from '@/features/messages/conversation-skeleton'
 import { getReportReasonLabel } from '@/features/messages/report-schema'
 import { requireModerator } from '@/lib/auth-utils'
 import { hasActiveBan } from '@/lib/ban-status'
@@ -65,7 +67,9 @@ export async function ChatReportReview({ id, before }: { id: string; before?: st
           {report.status === 'OPEN' && <ResolveReportButton reportId={report.id} />}
         </div>
       </div>
-      <ModeratorConversationHistory conversationId={conversation.id} before={before} href={`/moderator/chat-reports/${report.id}`} />
+      <Suspense fallback={<ConversationLoading />}>
+        <ModeratorConversationHistory conversationId={conversation.id} before={before} href={`/moderator/chat-reports/${report.id}`} />
+      </Suspense>
     </section>
   )
 }

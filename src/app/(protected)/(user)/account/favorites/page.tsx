@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { ListingRow } from '@/entities/listing/ui/listing-row'
+import { ListingRowsSkeleton } from '@/entities/listing/ui/listing-skeleton'
 import { ListingStatusBadge } from '@/features/account/listing-status-badge'
 import { getMyFavorites } from '@/features/favorites/data'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
@@ -72,17 +72,6 @@ async function FavoriteListings({ searchParams }: Props) {
   )
 }
 
-function FavoritesLoading() {
-  return (
-    <div role="status" aria-label="Loading your favorites" className={favoritesRowsClassName}>
-      {Array.from({ length: 3 }, (_, index) => (
-        <Skeleton key={index} className="h-36 rounded-xl xl:h-24" />
-      ))}
-      <span className="sr-only">Loading your favorites...</span>
-    </div>
-  )
-}
-
 export default function FavoritesPage({ searchParams }: Props) {
   return (
     <section aria-labelledby="favorites-heading" className="flex flex-col gap-6">
@@ -94,7 +83,7 @@ export default function FavoritesPage({ searchParams }: Props) {
           Your saved listings, with the most recently added first. Unavailable listings stay here until you remove them.
         </p>
       </div>
-      <Suspense fallback={<FavoritesLoading />}>
+      <Suspense fallback={<ListingRowsSkeleton label="Loading your favorites" />}>
         <FavoriteListings searchParams={searchParams} />
       </Suspense>
     </section>

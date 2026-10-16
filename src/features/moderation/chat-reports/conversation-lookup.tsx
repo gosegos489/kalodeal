@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ConversationLoading } from '@/features/messages/conversation-skeleton'
 import { requireModerator } from '@/lib/auth-utils'
 import NuqsPagination from '@/shared/ui/NuqsPagination'
 import type { ModerationSearchParams } from '../shared/search'
@@ -68,7 +70,9 @@ export async function ConversationLookupReview({ id, before }: { id: string; bef
           </Link>
         )}
       </div>
-      <ModeratorConversationHistory conversationId={conversation.id} before={before} href={`/moderator/chat-reports/lookup/${conversation.id}`} />
+      <Suspense fallback={<ConversationLoading />}>
+        <ModeratorConversationHistory conversationId={conversation.id} before={before} href={`/moderator/chat-reports/lookup/${conversation.id}`} />
+      </Suspense>
     </section>
   )
 }

@@ -9,6 +9,7 @@ import { formatAttributeListingPrice } from '@/features/listing-attributes/forma
 import type { ListingStatus } from '@/generated/prisma/enums'
 import { dayjs } from '@/lib/dayjs'
 import type { ListingSummary } from '../types'
+import { ListingCardImages } from './listing-card-images'
 
 type ListingCardProps = {
   listing: ListingSummary
@@ -37,21 +38,33 @@ export function ListingCard({
   return (
     <article className="bg-card flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border shadow-xs">
       <div className="relative">
-        <Link
-          href={href}
-          prefetch={prefetch}
-          aria-label={`View listing: ${listing.title}`}
-          className="bg-muted focus-visible:ring-ring relative block aspect-4/3 shrink-0 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset"
-        >
-          {listing.coverUrl ? (
-            <Image src={listing.coverUrl} alt={listing.title} fill sizes={imageSizes} loading={eager ? 'eager' : 'lazy'} className="object-cover" />
-          ) : (
-            <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2">
-              <ImageIcon aria-hidden="true" className="size-8" strokeWidth={1.5} />
-              <span className="text-xs">No photo</span>
-            </div>
-          )}
-        </Link>
+        {listing.imageUrls.length > 1 ? (
+          <ListingCardImages
+            key={listing.id}
+            images={listing.imageUrls}
+            title={listing.title}
+            href={href}
+            sizes={imageSizes}
+            eager={eager}
+            prefetch={prefetch}
+          />
+        ) : (
+          <Link
+            href={href}
+            prefetch={prefetch}
+            aria-label={`View listing: ${listing.title}`}
+            className="bg-muted focus-visible:ring-ring relative block aspect-4/3 shrink-0 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset"
+          >
+            {listing.coverUrl ? (
+              <Image src={listing.coverUrl} alt={listing.title} fill sizes={imageSizes} loading={eager ? 'eager' : 'lazy'} className="object-cover" />
+            ) : (
+              <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2">
+                <ImageIcon aria-hidden="true" className="size-8" strokeWidth={1.5} />
+                <span className="text-xs">No photo</span>
+              </div>
+            )}
+          </Link>
+        )}
         {showFavorite && (
           <FavoriteButton
             listingId={listing.id}

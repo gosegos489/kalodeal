@@ -4,7 +4,7 @@ import { Prisma } from '@/generated/prisma/client'
 import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'
 import { HOMEPAGE_LISTINGS_LIMIT } from './constants'
-import { listingSummarySelect, toListingSummary } from './listing-summary'
+import { listingCardSelect, toListingSummary } from './listing-summary'
 import { getPublicListingIds, publicListingEligibilitySql } from './public-eligibility'
 
 export async function getRecentListings() {
@@ -26,7 +26,7 @@ async function getCachedRecentListings() {
   `)
   const listings = await prisma.listing.findMany({
     where: { id: { in: ids.map(({ id }) => id) }, status: 'ACTIVE' },
-    select: listingSummarySelect,
+    select: listingCardSelect,
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: HOMEPAGE_LISTINGS_LIMIT
   })

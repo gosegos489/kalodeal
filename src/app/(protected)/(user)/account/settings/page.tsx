@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+import { AccountSettingsSkeleton } from '@/features/account/account-skeleton'
 import { AccountTypeForm } from '@/features/account/settings/account-type-form'
 import { getApprovedAvatarUrl, pendingAvatarUrl } from '@/features/account/settings/avatar-reference'
 import { BusinessDetailsForm } from '@/features/account/settings/business-details-form'
@@ -118,14 +118,7 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-6">
       <h2 className="text-2xl font-semibold">Settings</h2>
-      <Suspense
-        fallback={
-          <div className="grid gap-6 xl:grid-cols-2">
-            <Skeleton className="h-96 w-full rounded-xl" />
-            <Skeleton className="h-96 w-full rounded-xl" />
-          </div>
-        }
-      >
+      <Suspense fallback={<AccountSettingsSkeleton />}>
         <SettingsForms />
       </Suspense>
     </div>

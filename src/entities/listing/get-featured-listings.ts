@@ -1,7 +1,7 @@
 import 'server-only'
 import type { Prisma } from '@/generated/prisma/client'
 import prisma from '@/lib/prisma'
-import { listingSummarySelect, toListingSummary } from './listing-summary'
+import { listingCardSelect, toListingSummary } from './listing-summary'
 import { getPublicListingIds } from './public-eligibility'
 import type { ListingSummary } from './types'
 
@@ -27,7 +27,7 @@ export async function getFeaturedListings(
         }
       ]
     },
-    select: { ...listingSummarySelect, userId: true },
+    select: { ...listingCardSelect, userId: true },
     orderBy: [{ featuredAt: 'asc' }, { id: 'asc' }],
     take: 50
   })

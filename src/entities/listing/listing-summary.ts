@@ -1,5 +1,6 @@
 import 'server-only'
 import type { Prisma } from '@/generated/prisma/client'
+import { MAX_LISTING_PHOTOS } from '@/lib/plan-limits'
 import type { ListingSummary } from './types'
 
 export const listingSummarySelect = {
@@ -21,13 +22,23 @@ export const listingSummarySelect = {
   }
 } satisfies Prisma.ListingSelect
 
+// Public cards need ordered photo URLs, while compact owner/staff rows only need the cover.
+export const listingCardSelect = {
+  ...listingSummarySelect,
+  images: { ...listingSummarySelect.images, take: MAX_LISTING_PHOTOS }
+} satisfies Prisma.ListingSelect
+
 type ListingSummaryRow = Prisma.ListingGetPayload<{ select: typeof listingSummarySelect }>
 
 export function toListingSummary({ images, price, ...listing }: ListingSummaryRow): ListingSummary {
   return {
     ...listing,
     price: price?.toNumber() ?? null,
-    coverUrl: getListingImageUrl(images[0]?.key)
+    coverUrl: getListingImageUrl(images[0]?.key),
+    imageUrls: images.flatMap(({ key }) => {
+      const url = getListingImageUrl(key)
+      return url ? [url] : []
+    })
   }
 }
 

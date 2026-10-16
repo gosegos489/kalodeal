@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { ModeratorShell } from '@/features/moderation/moderator-shell'
-import { ModerationLoading } from '@/features/moderation/shared/moderation-loading'
+import { ModeratorShellSkeleton } from '@/features/moderation/shared/moderation-loading'
 import { canManageCategoryIcons } from '@/lib/auth-permissions'
 import { requireModerator } from '@/lib/auth-utils'
 
@@ -15,13 +15,7 @@ async function ModeratorGuard({ children }: { children: React.ReactNode }) {
 
 export default function ModeratorLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense
-      fallback={
-        <div className="container py-10">
-          <ModerationLoading />
-        </div>
-      }
-    >
+    <Suspense fallback={<ModeratorShellSkeleton />}>
       <ModeratorGuard>{children}</ModeratorGuard>
     </Suspense>
   )

@@ -2,9 +2,9 @@ import { ChevronRight, MoveRight } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { Skeleton } from '@/components/ui/skeleton'
 import { getCategorySummaries } from '@/entities/category/get-category-tree'
 import { CategoryCard } from '@/entities/category/ui/CategoryCard'
+import { CategoryGridSkeleton } from '@/entities/category/ui/category-grid-skeleton'
 import { CategoryIcon } from '@/entities/category/ui/category-icon'
 import { buildCollectionJsonLd } from '@/lib/json-ld'
 import { buildMetadata } from '@/lib/metadata'
@@ -22,7 +22,7 @@ async function CategoriesContent() {
   const listingsCount = categories.reduce((total, category) => total + category.listingCount, 0)
 
   return (
-    <div className="container flex flex-col gap-4 py-10">
+    <>
       <JsonLd
         data={buildCollectionJsonLd({
           title: 'Categories',
@@ -34,10 +34,6 @@ async function CategoriesContent() {
           ]
         })}
       />
-      <div className="flex flex-col gap-4">
-        <BreadCrumbs items={[{ label: 'Home', href: '/' }, { label: 'Categories' }]} />
-        <h1 className="text-xl font-bold md:text-3xl">Browse categories on Kalodeal</h1>
-      </div>
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -108,20 +104,20 @@ async function CategoriesContent() {
           </div>
         )}
       </div>
-    </div>
+    </>
   )
 }
 
 export default function CategoriesPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="container py-10" role="status" aria-label="Loading categories">
-          <Skeleton className="h-96 rounded-xl" />
-        </div>
-      }
-    >
-      <CategoriesContent />
-    </Suspense>
+    <div className="container flex flex-col gap-4 py-10">
+      <div className="flex flex-col gap-4">
+        <BreadCrumbs items={[{ label: 'Home', href: '/' }, { label: 'Categories' }]} />
+        <h1 className="text-xl font-bold md:text-3xl">Browse categories on Kalodeal</h1>
+      </div>
+      <Suspense fallback={<CategoryGridSkeleton />}>
+        <CategoriesContent />
+      </Suspense>
+    </div>
   )
 }
