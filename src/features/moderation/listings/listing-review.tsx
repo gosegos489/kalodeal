@@ -2,6 +2,7 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { getListingChatLabel } from '@/entities/listing/contact-links'
 import { formatListingPrice } from '@/entities/listing/format-price'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
 import { formatLocation } from '@/entities/location/catalog'
@@ -40,7 +41,7 @@ export async function ListingReview({ id }: { id: string }) {
     { label: 'Phone', value: listing.phone },
     { label: 'YouTube', value: listing.youtube },
     { label: 'Facebook', value: listing.facebookUrl },
-    { label: 'Messenger', value: listing.messengerUrl }
+    { label: listing.messengerUrl ? getListingChatLabel(listing.messengerUrl) : 'WhatsApp', value: listing.messengerUrl }
   ]
 
   return (

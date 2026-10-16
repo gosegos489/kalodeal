@@ -16,11 +16,11 @@ async function EditListing({ params }: Props) {
   const { id } = await params
   const [listing, categories] = await Promise.all([getEditableListing(id), getListingCategoryOptions()])
   if (!listing) notFound()
-  const { categoryName, ...editableListing } = listing
+  const { categoryName, categorySlug, ...editableListing } = listing
   // Keep the current value visible even if its category is no longer in navigation.
   const options = categories.some((category) => category.id === listing.values.categoryId)
     ? categories
-    : [{ id: listing.values.categoryId, name: `${categoryName} (current category)` }, ...categories]
+    : [{ id: listing.values.categoryId, name: `${categoryName} (current category)`, slug: categorySlug, parentId: null }, ...categories]
 
   return <ListingForm mode="edit" key={listing.id} categories={options} listing={editableListing} />
 }

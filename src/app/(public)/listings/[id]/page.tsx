@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPublicCategory } from '@/entities/category/get-category-tree'
+import { getListingChatLabel } from '@/entities/listing/contact-links'
 import { formatListingPrice } from '@/entities/listing/format-price'
 import { getListing } from '@/entities/listing/get-listing'
 import { listingStatusLabels } from '@/entities/listing/lifecycle'
@@ -156,7 +157,7 @@ async function ListingDetails({ params }: Props) {
                       variant="outline"
                       render={<a href={listing.messengerUrl} target="_blank" rel="noopener noreferrer" />}
                     >
-                      Messenger
+                      {getListingChatLabel(listing.messengerUrl)}
                     </Button>
                   )}
                 </div>

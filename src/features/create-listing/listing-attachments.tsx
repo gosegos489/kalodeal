@@ -104,6 +104,8 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
   return (
     <div className="flex flex-col gap-3">
       <div
+        aria-invalid={invalid}
+        aria-describedby={invalid ? 'images-description images-error' : 'images-description'}
         className={cn(
           'bg-muted/30 flex min-h-52 flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 text-center transition-colors motion-reduce:transition-none sm:p-8',
           isDragging && 'border-primary bg-primary/5',
@@ -138,6 +140,8 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
             inputRef(node)
           }}
           type="file"
+          aria-invalid={invalid}
+          aria-describedby={invalid ? 'images-description images-error' : 'images-description'}
           accept={IMAGE_TYPES.join(',')}
           multiple
           disabled={disabled || value.length >= maxImages}
@@ -148,7 +152,14 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
             event.currentTarget.value = ''
           }}
         />
-        <Button type="button" variant="outline" disabled={disabled || value.length >= maxImages} onClick={() => pickerRef.current?.click()}>
+        <Button
+          type="button"
+          variant="outline"
+          aria-invalid={invalid}
+          aria-describedby={invalid ? 'images-error' : undefined}
+          disabled={disabled || value.length >= maxImages}
+          onClick={() => pickerRef.current?.click()}
+        >
           <Upload className="size-4" /> Choose photos
         </Button>
       </div>

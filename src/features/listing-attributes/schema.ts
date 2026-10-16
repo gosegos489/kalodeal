@@ -12,7 +12,7 @@ import {
   VehicleFuel,
   VehicleTransmission
 } from '@/generated/prisma/enums'
-import { type CategoryAttributeProfile, getPropertyAmenities, getPropertyFields, getVehicleFields } from './rules'
+import { type CategoryAttributeProfile, getPropertyAmenities, getPropertyFields, getVehicleBodyTypes, getVehicleFields } from './rules'
 import { vehicleSelectionSchema } from './vehicle-selection'
 
 export const ATTRIBUTE_LIMITS = {
@@ -33,7 +33,7 @@ const area = (max: number) => optional(z.number().positive().max(max).multipleOf
 const count = (min: number, max: number) => optional(z.number().int().min(min).max(max))
 
 // Transport contracts use numbers, never unparsed FormData strings or Decimal
-// instances. The future form adapter must turn empty optional fields into null.
+// instances. Form controls turn empty optional fields into null.
 export const propertyDetailsSchema = z.strictObject({
   propertyType: z.enum(PropertyType),
   plotArea: area(ATTRIBUTE_LIMITS.plotArea),
@@ -127,11 +127,8 @@ export function createCategoryAttributesSchema(profile: CategoryAttributeProfile
         }
         if (profile.vehicleType === 'MOTORCYCLE' && vehicle.seats != null && vehicle.seats > 2)
           issue(['vehicleDetails', 'seats'], 'Use one or two seats for a motorcycle.')
-        if (vehicle.bodyType != null) {
-          const vanBody = ['PANEL_VAN', 'MINIBUS', 'PICKUP', 'OTHER'].includes(vehicle.bodyType)
-          if ((profile.vehicleType === 'VAN' && !vanBody) || (profile.vehicleType === 'CAR' && ['PANEL_VAN', 'MINIBUS'].includes(vehicle.bodyType)))
-            issue(['vehicleDetails', 'bodyType'], 'Choose a body type allowed for this vehicle category.')
-        }
+        if (vehicle.bodyType != null && !getVehicleBodyTypes(profile.vehicleType).includes(vehicle.bodyType))
+          issue(['vehicleDetails', 'bodyType'], 'Choose a body type allowed for this vehicle category.')
       }
       if (vehicle.fuel === 'ELECTRIC' && vehicle.engineCapacity != null)
         issue(['vehicleDetails', 'engineCapacity'], 'Electric vehicles do not have combustion engine capacity.')

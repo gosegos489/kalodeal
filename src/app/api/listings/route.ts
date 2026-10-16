@@ -1,7 +1,10 @@
 import { revalidateTag } from 'next/cache'
 import { randomUUID } from 'node:crypto'
+import { readListingPayload } from '@/features/create-listing/multipart'
 import { MAX_PHOTO_REQUEST_BYTES, createListingSchema } from '@/features/create-listing/schema'
 import type { CreateListingResult } from '@/features/create-listing/types'
+import { listingFieldErrors, validateListingCategoryAttributes } from '@/features/create-listing/validation'
+import { buildListingAttributeCreate } from '@/features/listing-attributes/persistence'
 import { canUseMarketplace } from '@/lib/account-role'
 import { isActiveMarketplaceUser } from '@/lib/active-user'
 import { getMutationSession } from '@/lib/auth-utils'
@@ -57,25 +60,16 @@ export async function POST(request: Request) {
   if (listingSlotCount >= limits.activeListings)
     return failure('You have reached your listing limit, including listings awaiting moderation or changes.', 409)
 
-  const parsed = createListingSchema(plan).safeParse({
-    title: payload.get('title'),
-    categoryId: payload.get('categoryId'),
-    district: payload.get('district'),
-    area: payload.get('area'),
-    description: payload.get('description'),
-    price: payload.get('price') ?? '',
-    currency: payload.get('currency'),
-    phone: payload.get('phone'),
-    youtube: payload.get('youtube') ?? '',
-    facebookUrl: payload.get('facebookUrl') ?? '',
-    messengerUrl: payload.get('messengerUrl') ?? '',
-    images: payload.getAll('images')
-  })
-  if (!parsed.success) return failure('Please check your listing details.', 400, parsed.error.flatten().fieldErrors)
+  const transport = readListingPayload(payload)
+  if (!transport.success) return failure(transport.message, 400)
+  const parsed = createListingSchema(plan).safeParse(transport.input)
+  if (!parsed.success) return failure('Please check your listing details.', 400, listingFieldErrors(parsed.error))
 
   const { images, ...details } = parsed.data
-  const category = await prisma.category.findFirst({ where: { id: details.categoryId, isActive: true }, select: { id: true } })
+  const category = await prisma.category.findFirst({ where: { id: details.categoryId, isActive: true }, select: { id: true, slug: true } })
   if (!category) return failure('Choose an available category.', 400, { categoryId: ['This category is no longer available.'] })
+  const attributes = validateListingCategoryAttributes(category.slug, details)
+  if (!attributes.success) return failure('Please check your listing attributes.', 400, listingFieldErrors(attributes.error))
 
   const attemptedKeys: string[] = []
   let savedListing: { id: string }
@@ -97,10 +91,17 @@ export async function POST(request: Request) {
       if (images.length > currentLimits.imagesPerListing) {
         return { message: 'Your plan has changed. Reduce the number of photos and try again.' }
       }
+      const currentCategory = await tx.category.findFirst({ where: { id: details.categoryId, isActive: true }, select: { slug: true } })
+      if (!currentCategory) return { message: 'This category is no longer available.' }
+      const currentAttributes = validateListingCategoryAttributes(currentCategory.slug, details)
+      if (!currentAttributes.success) return { message: 'The category has changed. Check the listing attributes and try again.' }
+      const { propertyDetails, vehicleDetails, priceNegotiable, pricePeriod, ...common } = details
+      const attributeData = buildListingAttributeCreate({ propertyDetails, vehicleDetails, priceNegotiable, pricePeriod })
 
       return tx.listing.create({
         data: {
-          ...details,
+          ...common,
+          ...attributeData,
           id: listingId,
           userId,
           status: 'PENDING',

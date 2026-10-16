@@ -1,6 +1,8 @@
 import z from 'zod'
+import { LEGACY_MESSENGER_HOSTS, WHATSAPP_HOSTS } from '@/entities/listing/contact-links'
 import { LISTING_CURRENCIES } from '@/entities/listing/currency'
 import { listingLocationSchema, locationPairError, matchesLocation } from '@/entities/location/schema'
+import { listingAttributeInputSchema } from '@/features/listing-attributes/schema'
 import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -15,7 +17,7 @@ export const listingImageSchema = z
   .max(MAX_IMAGE_BYTES, 'Each image must be no larger than 5 MB.')
   .mime([...IMAGE_TYPES], 'Use a JPEG, PNG or WebP image.')
 
-function optionalContactUrlSchema(label: string, hosts: string[]) {
+function optionalContactUrlSchema(label: string, hosts: readonly string[]) {
   return z
     .string()
     .trim()
@@ -39,9 +41,13 @@ function optionalContactUrlSchema(label: string, hosts: string[]) {
     }, `Enter an HTTPS ${label} link.`)
 }
 
+export const whatsappContactUrlSchema = optionalContactUrlSchema('WhatsApp', WHATSAPP_HOSTS)
+const legacyMessengerUrlSchema = optionalContactUrlSchema('Messenger', LEGACY_MESSENGER_HOSTS)
+
 export const listingDetailsSchema = z
-  .object({
+  .strictObject({
     ...listingLocationSchema.shape,
+    ...listingAttributeInputSchema.shape,
     title: z.string().trim().min(5, 'Use at least 5 characters.').max(120, 'Use no more than 120 characters.'),
     categoryId: z.string().min(1, 'Choose a category.').max(100),
     description: z.string().trim().min(20, 'Add at least 20 characters about your listing.').max(3000, 'Use no more than 3000 characters.'),
@@ -78,14 +84,19 @@ export const listingDetailsSchema = z
         }
       }, 'Enter an HTTPS YouTube link.'),
     facebookUrl: optionalContactUrlSchema('Facebook', ['facebook.com', 'www.facebook.com', 'm.facebook.com']),
-    messengerUrl: optionalContactUrlSchema('Messenger', ['messenger.com', 'www.messenger.com', 'm.me'])
+    // The owner edit boundary permits a legacy Messenger link only unchanged.
+    messengerUrl: optionalContactUrlSchema('WhatsApp', [...WHATSAPP_HOSTS, ...LEGACY_MESSENGER_HOSTS])
   })
   .refine(matchesLocation, locationPairError)
 
-export function createListingSchema(plan: ListingPlan = 'FREE') {
+export function createListingSchema(plan: ListingPlan = 'FREE', savedMessengerUrl?: string | null) {
   const maxImages = PLAN_LIMITS[plan].imagesPerListing
 
   return listingDetailsSchema.safeExtend({
+    messengerUrl:
+      savedMessengerUrl && legacyMessengerUrlSchema.safeParse(savedMessengerUrl).success
+        ? whatsappContactUrlSchema.or(z.literal(savedMessengerUrl))
+        : whatsappContactUrlSchema,
     images: z
       .array(listingImageSchema)
       .max(maxImages, `Add no more than ${maxImages} images.`)

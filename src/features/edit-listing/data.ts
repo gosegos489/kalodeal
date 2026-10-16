@@ -1,13 +1,14 @@
 import 'server-only'
 import { getListingImageUrl } from '@/entities/listing/listing-summary'
 import { listingIdSchema } from '@/entities/listing/schema'
+import { listingAttributeSelect, serializeListingAttributes } from '@/features/listing-attributes/persistence'
 import { requireMarketplaceUser } from '@/lib/auth-utils'
 import { MAX_LISTING_PHOTOS } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { getUserAccess } from '@/lib/user-access'
 import type { EditableListing } from './types'
 
-export async function getEditableListing(id: unknown): Promise<(EditableListing & { categoryName: string }) | null> {
+export async function getEditableListing(id: unknown): Promise<(EditableListing & { categoryName: string; categorySlug: string }) | null> {
   const session = await requireMarketplaceUser()
   const parsed = listingIdSchema.safeParse(id)
   if (!parsed.success) return null
@@ -17,6 +18,7 @@ export async function getEditableListing(id: unknown): Promise<(EditableListing 
     prisma.listing.findFirst({
       where: { id: parsed.data, userId: session.user.id },
       select: {
+        ...listingAttributeSelect,
         id: true,
         title: true,
         description: true,
@@ -25,7 +27,7 @@ export async function getEditableListing(id: unknown): Promise<(EditableListing 
         categoryId: true,
         district: true,
         area: true,
-        category: { select: { name: true } },
+        category: { select: { name: true, slug: true } },
         phone: true,
         youtube: true,
         facebookUrl: true,
@@ -53,7 +55,14 @@ export async function getEditableListing(id: unknown): Promise<(EditableListing 
     moderationMessage: listing.moderationMessage,
     plan: access.plan,
     categoryName: listing.category.name,
+    categorySlug: listing.category.slug,
     values: {
+      ...serializeListingAttributes({
+        priceNegotiable: listing.priceNegotiable,
+        pricePeriod: listing.pricePeriod,
+        propertyDetails: listing.propertyDetails,
+        vehicleDetails: listing.vehicleDetails
+      }),
       title: listing.title,
       description: listing.description,
       price: listing.price?.toString() ?? '',

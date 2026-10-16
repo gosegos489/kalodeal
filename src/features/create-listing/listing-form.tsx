@@ -1,6 +1,7 @@
 'use client'
 
-import { Controller } from 'react-hook-form'
+import Link from 'next/link'
+import { Controller, useWatch } from 'react-hook-form'
 import { useRef, useState } from 'react'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -11,14 +12,19 @@ import { ListingModerationFeedback } from '@/features/account/listing-moderation
 import { ListingPhotos } from '@/features/edit-listing/listing-photos'
 import type { ListingPhotoState } from '@/features/edit-listing/photo-schema'
 import type { EditableListing } from '@/features/edit-listing/types'
+import { getCategoryAttributeProfile } from '@/features/listing-attributes/rules'
 import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
 import { ListingAllowanceCard } from './listing-allowance-card'
 import { ListingAttachments } from './listing-attachments'
+import { ListingCategoryFields } from './listing-category-fields'
 import { ListingLocationFields } from './listing-location-fields'
+import { ListingPriceFields } from './listing-price-fields'
 import { ListingTipsCard } from './listing-tips-card'
+import { PropertyFields } from './property-fields'
 import { PublishListingCard } from './publish-listing-card'
 import type { ListingCategoryOption } from './types'
 import { useListingForm } from './use-listing-form'
+import { VehicleFields } from './vehicle-fields'
 
 type ListingFormProps = {
   categories: ListingCategoryOption[]
@@ -38,13 +44,18 @@ export function ListingForm(props: ListingFormProps) {
   const listing = props.mode === 'edit' ? { ...props.listing, ...photoState } : undefined
   const plan = props.mode === 'create' ? props.plan : props.listing.plan
   const currentPlan = photoState?.plan ?? plan
-  const { form, isSubmitting, onSubmit } = useListingForm(currentPlan, listing)
+  const { form, isSubmitting, onSubmit, submissionError } = useListingForm(currentPlan, categories, listing)
+  const categoryId = useWatch({ control: form.control, name: 'categoryId' })
+  const categorySlug = categories.find((category) => category.id === categoryId)?.slug ?? ''
+  const profile = getCategoryAttributeProfile(categorySlug)
   const limits = PLAN_LIMITS[currentPlan]
   const limitReached = props.mode === 'create' && props.listingSlotCount >= limits.activeListings
   const disabled = isSubmitting || photosPending || limitReached || categories.length === 0
 
   return (
     <form
+      noValidate
+      aria-busy={isSubmitting || photosPending}
       className="grid w-full items-start gap-6 lg:grid-cols-3 lg:gap-8"
       onSubmit={(event) => {
         if (photosLocked.current) event.preventDefault()
@@ -52,6 +63,18 @@ export function ListingForm(props: ListingFormProps) {
       }}
     >
       <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+        <div className="bg-muted/50 rounded-xl border p-4 text-sm leading-relaxed">
+          Duplicate listings are not allowed. You can manage your existing listings in{' '}
+          <Link href="/account/listings" className="text-primary underline underline-offset-4">
+            My Listings
+          </Link>
+          .
+        </div>
+        {submissionError && (
+          <p role="alert" className="border-destructive/30 text-destructive rounded-xl border p-4 text-sm">
+            {submissionError}
+          </p>
+        )}
         {listing && (
           <ListingModerationFeedback
             status={listing.status}
@@ -74,39 +97,21 @@ export function ListingForm(props: ListingFormProps) {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={field.name}>Title</FieldLabel>
-                  <Input {...field} id={field.name} placeholder="e.g. iPhone 15 in excellent condition" maxLength={120} disabled={disabled} />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  <Input
+                    {...field}
+                    id={field.name}
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={fieldState.error ? `${field.name}-error` : undefined}
+                    placeholder="e.g. iPhone 15 in excellent condition"
+                    maxLength={120}
+                    disabled={disabled}
+                  />
+                  {fieldState.invalid && <FieldError id={`${field.name}-error`} errors={[fieldState.error]} />}
                 </Field>
               )}
             />
 
-            <Controller
-              name="categoryId"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Category</FieldLabel>
-                  <Select
-                    value={field.value || null}
-                    onValueChange={(value) => field.onChange(value ?? '')}
-                    disabled={disabled}
-                    items={categories.map((category) => ({ value: category.id, label: category.name }))}
-                  >
-                    <SelectTrigger ref={field.ref} id={field.name} onBlur={field.onBlur} className="w-full">
-                      <SelectValue placeholder="Choose a category" />
-                    </SelectTrigger>
-                    <SelectContent alignItemWithTrigger={false}>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+            <ListingCategoryFields form={form} categories={categories} disabled={disabled} />
 
             <ListingLocationFields form={form} disabled={disabled} missingLocation={!!listing && !listing.values.district} />
 
@@ -119,6 +124,8 @@ export function ListingForm(props: ListingFormProps) {
                   <Textarea
                     {...field}
                     id={field.name}
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={fieldState.error ? `${field.name}-error` : undefined}
                     placeholder="Describe the condition, features and anything buyers should know."
                     rows={6}
                     maxLength={3000}
@@ -126,12 +133,15 @@ export function ListingForm(props: ListingFormProps) {
                     disabled={disabled}
                   />
                   <FieldDescription>Use at least 20 characters. Include useful details about your item.</FieldDescription>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && <FieldError id={`${field.name}-error`} errors={[fieldState.error]} />}
                 </Field>
               )}
             />
           </FieldGroup>
         </section>
+
+        {profile.kind === 'property' && <PropertyFields form={form} profile={profile} categorySlug={categorySlug} disabled={disabled} />}
+        {profile.kind === 'vehicle' && <VehicleFields form={form} vehicleType={profile.vehicleType} disabled={disabled} />}
 
         <section className="bg-card flex min-w-0 flex-col gap-6 rounded-2xl border p-5 shadow-xs sm:p-7">
           <div className="flex items-start gap-3 border-b pb-5">
@@ -172,7 +182,7 @@ export function ListingForm(props: ListingFormProps) {
                       isSubmitting={isSubmitting}
                       invalid={fieldState.invalid}
                     />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    {fieldState.invalid && <FieldError id="images-error" errors={[fieldState.error]} />}
                   </Field>
                 )}
               />
@@ -186,8 +196,16 @@ export function ListingForm(props: ListingFormProps) {
                   <FieldLabel htmlFor={field.name}>
                     YouTube link <span className="text-muted-foreground font-normal">(optional)</span>
                   </FieldLabel>
-                  <Input {...field} id={field.name} type="url" placeholder="https://youtu.be/..." disabled={disabled} />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  <Input
+                    {...field}
+                    id={field.name}
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={fieldState.error ? `${field.name}-error` : undefined}
+                    type="url"
+                    placeholder="https://youtu.be/..."
+                    disabled={disabled}
+                  />
+                  {fieldState.invalid && <FieldError id={`${field.name}-error`} errors={[fieldState.error]} />}
                 </Field>
               )}
             />
@@ -213,8 +231,17 @@ export function ListingForm(props: ListingFormProps) {
                       <FieldLabel htmlFor={field.name}>
                         Price <span className="text-muted-foreground font-normal">(optional)</span>
                       </FieldLabel>
-                      <Input {...field} id={field.name} type="text" inputMode="decimal" placeholder="0.00" disabled={disabled} />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      <Input
+                        {...field}
+                        id={field.name}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={fieldState.error ? `${field.name}-error` : undefined}
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        disabled={disabled}
+                      />
+                      {fieldState.invalid && <FieldError id={`${field.name}-error`} errors={[fieldState.error]} />}
                     </Field>
                   )}
                 />
@@ -225,7 +252,14 @@ export function ListingForm(props: ListingFormProps) {
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor={field.name}>Currency</FieldLabel>
                       <Select value={field.value} onValueChange={(value) => field.onChange(value ?? '')} disabled={disabled} items={currencyOptions}>
-                        <SelectTrigger ref={field.ref} id={field.name} onBlur={field.onBlur} aria-invalid={fieldState.invalid} className="w-full">
+                        <SelectTrigger
+                          ref={field.ref}
+                          id={field.name}
+                          onBlur={field.onBlur}
+                          aria-invalid={fieldState.invalid}
+                          aria-describedby={fieldState.error ? `${field.name}-error` : undefined}
+                          className="w-full"
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent alignItemWithTrigger={false}>
@@ -236,7 +270,7 @@ export function ListingForm(props: ListingFormProps) {
                           ))}
                         </SelectContent>
                       </Select>
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      {fieldState.invalid && <FieldError id={`${field.name}-error`} errors={[fieldState.error]} />}
                     </Field>
                   )}
                 />
@@ -248,12 +282,22 @@ export function ListingForm(props: ListingFormProps) {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>Phone number</FieldLabel>
-                    <Input {...field} id={field.name} type="tel" autoComplete="tel" placeholder="+373 60 123 456" disabled={disabled} />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    <Input
+                      {...field}
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      aria-describedby={fieldState.error ? `${field.name}-error` : undefined}
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="+357 99 123456"
+                      disabled={disabled}
+                    />
+                    {fieldState.invalid && <FieldError id={`${field.name}-error`} errors={[fieldState.error]} />}
                   </Field>
                 )}
               />
             </div>
+            <ListingPriceFields form={form} profile={profile} disabled={disabled} />
             <div className="grid gap-6 sm:grid-cols-2">
               <Controller
                 name="facebookUrl"
@@ -263,9 +307,18 @@ export function ListingForm(props: ListingFormProps) {
                     <FieldLabel htmlFor={field.name}>
                       Facebook <span className="text-muted-foreground font-normal">(optional)</span>
                     </FieldLabel>
-                    <Input {...field} id={field.name} type="url" placeholder="https://www.facebook.com/..." maxLength={500} disabled={disabled} />
+                    <Input
+                      {...field}
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      aria-describedby={fieldState.error ? `${field.name}-error` : undefined}
+                      type="url"
+                      placeholder="https://www.facebook.com/..."
+                      maxLength={500}
+                      disabled={disabled}
+                    />
                     <FieldDescription>Link to your Facebook profile or page.</FieldDescription>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    {fieldState.invalid && <FieldError id={`${field.name}-error`} errors={[fieldState.error]} />}
                   </Field>
                 )}
               />
@@ -275,11 +328,20 @@ export function ListingForm(props: ListingFormProps) {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>
-                      Messenger <span className="text-muted-foreground font-normal">(optional)</span>
+                      WhatsApp <span className="text-muted-foreground font-normal">(optional)</span>
                     </FieldLabel>
-                    <Input {...field} id={field.name} type="url" placeholder="https://m.me/..." maxLength={500} disabled={disabled} />
-                    <FieldDescription>Use a messenger.com or m.me link.</FieldDescription>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    <Input
+                      {...field}
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      aria-describedby={fieldState.error ? `${field.name}-error` : undefined}
+                      type="url"
+                      placeholder="https://wa.me/35799123456"
+                      maxLength={500}
+                      disabled={disabled}
+                    />
+                    <FieldDescription>Use a wa.me or api.whatsapp.com link.</FieldDescription>
+                    {fieldState.invalid && <FieldError id={`${field.name}-error`} errors={[fieldState.error]} />}
                   </Field>
                 )}
               />

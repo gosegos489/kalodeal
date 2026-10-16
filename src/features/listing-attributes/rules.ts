@@ -1,4 +1,4 @@
-import type { ListingPricePeriod, PropertyAmenity, PropertyType, VehicleType } from '@/generated/prisma/enums'
+import { type ListingPricePeriod, type PropertyAmenity, type PropertyType, VehicleBodyType, type VehicleType } from '@/generated/prisma/enums'
 
 export type CategoryAttributeProfile =
   | { kind: 'generic' }
@@ -98,4 +98,11 @@ export type VehicleField = (typeof VEHICLE_FIELDS)[number]
 
 export function getVehicleFields(vehicleType: VehicleType): readonly VehicleField[] {
   return vehicleType === 'MOTORCYCLE' ? VEHICLE_FIELDS.filter((field) => field !== 'doors' && field !== 'bodyType') : VEHICLE_FIELDS
+}
+
+export function getVehicleBodyTypes(vehicleType: VehicleType): VehicleBodyType[] {
+  if (vehicleType === 'MOTORCYCLE') return []
+  return Object.values(VehicleBodyType).filter((body) =>
+    vehicleType === 'VAN' ? ['PANEL_VAN', 'MINIBUS', 'PICKUP', 'OTHER'].includes(body) : !['PANEL_VAN', 'MINIBUS'].includes(body)
+  )
 }
