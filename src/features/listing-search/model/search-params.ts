@@ -1,6 +1,7 @@
 import { parseAsString } from 'nuqs/server'
 import { listingFiltersSchema } from '@/entities/listing/schema'
 import { createListingAttributeFiltersSchema } from '@/features/listing-attributes/filters'
+import { attributeLabel } from '@/features/listing-attributes/labels'
 import { type CategoryAttributeProfile, getPropertyFields } from '@/features/listing-attributes/rules'
 import { PropertyType } from '@/generated/prisma/enums'
 
@@ -152,7 +153,7 @@ export function filterLabel(value: string) {
     true: 'Yes',
     false: 'No'
   }
-  return special[value] ?? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase().replaceAll('_', ' ')
+  return Object.hasOwn(special, value) ? special[value] : attributeLabel(value.charAt(0).toUpperCase() + value.slice(1))
 }
 
 // Ignore stale, incompatible detail parameters even in a hand-edited URL. The

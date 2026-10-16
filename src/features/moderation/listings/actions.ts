@@ -5,6 +5,8 @@ import 'server-only'
 import { getModerationStatusTransition } from '@/entities/listing/lifecycle'
 import { AvatarError } from '@/features/account/settings/avatar-lifecycle'
 import { getSettingsActor } from '@/features/account/settings/server'
+import { validateListingCategoryAttributes } from '@/features/create-listing/validation'
+import { listingAttributeSelect, serializeListingAttributes } from '@/features/listing-attributes/persistence'
 import { canChangeListingAttributeCategory } from '@/features/listing-attributes/server'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { hasActiveBan } from '@/lib/ban-status'
@@ -27,9 +29,19 @@ export async function moderateListing(input: unknown): Promise<ActionMessageResu
       if (!moderator || hasActiveBan(moderator) || (moderator.role !== 'moderator' && moderator.role !== 'admin')) {
         return { message: 'Moderator access is required.' }
       }
+      await tx.$queryRaw`SELECT id FROM listing WHERE id = ${review.id} FOR UPDATE`
       const listing = await tx.listing.findUnique({
         where: { id: review.id },
-        select: { status: true, updatedAt: true, categoryId: true, district: true, area: true, price: true }
+        select: {
+          ...listingAttributeSelect,
+          category: { select: { slug: true } },
+          status: true,
+          updatedAt: true,
+          categoryId: true,
+          district: true,
+          area: true,
+          price: true
+        }
       })
       if (!listing) return { message: 'This listing is no longer available.' }
       if (listing.updatedAt.toISOString() !== review.updatedAt) return { message: 'This listing has changed. Reload it before making a decision.' }
@@ -63,6 +75,11 @@ export async function moderateListing(input: unknown): Promise<ActionMessageResu
       }
       const status = getModerationStatusTransition(listing.status, review.decision)
       if (!status) return { message: 'This decision is unavailable for the current listing status. Reload the listing.' }
+      if (review.decision === 'approve') {
+        const values = { ...serializeListingAttributes(listing), categoryId: listing.categoryId, price: listing.price?.toString() ?? '' }
+        if (!validateListingCategoryAttributes(listing.category.slug, values, values).success)
+          return { message: 'The saved characteristics do not match this category. Correct them or request changes before approving.' }
+      }
       const updated = await tx.listing.updateMany({
         where: { id: review.id, status: listing.status, updatedAt: listing.updatedAt },
         data: {

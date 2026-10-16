@@ -3,6 +3,7 @@ import { getListingImageUrl, listingSummarySelect, toListingSummary } from '@/en
 import { listingIdSchema } from '@/entities/listing/schema'
 import { getSellerName } from '@/entities/user/public-profile'
 import { getSettingsPageActor } from '@/features/account/settings/server'
+import { listingAttributeSelect, serializeListingAttributes } from '@/features/listing-attributes/persistence'
 import type { Prisma } from '@/generated/prisma/client'
 import { getPagination } from '@/lib/pagination'
 import { MAX_LISTING_PHOTOS } from '@/lib/plan-limits'
@@ -54,6 +55,8 @@ export async function getModerationListing(id: unknown) {
     where: { id: parsed.data },
     select: {
       ...moderationListingSelect,
+      ...listingAttributeSelect,
+      user: { select: { id: true, name: true, email: true } },
       updatedAt: true,
       phone: true,
       youtube: true,
@@ -68,8 +71,32 @@ export async function getModerationListing(id: unknown) {
   })
   if (!listing) return null
 
+  const otherListings = await prisma.listing.findMany({
+    where: { userId: listing.user.id, id: { not: listing.id } },
+    select: { ...listingSummarySelect, status: true },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: 6
+  })
+  const { propertyDetails, vehicleDetails, ...common } = listing
+  const attributes = serializeListingAttributes({ ...listing, propertyDetails, vehicleDetails })
+
   return {
-    ...toModerationListing(listing),
+    ...toModerationListing(common),
+    attributes,
+    otherListings: otherListings.map((row) => ({ ...toListingSummary(row), status: row.status })),
+    correction: {
+      id: listing.id,
+      updatedAt: listing.updatedAt.toISOString(),
+      status: listing.status,
+      price: listing.price?.toString() ?? '',
+      currency: listing.currency,
+      values: {
+        ...attributes,
+        categoryId: listing.category.id,
+        district: listing.district,
+        area: listing.area
+      }
+    },
     updatedAt: listing.updatedAt.toISOString(),
     phone: listing.phone,
     youtube: listing.youtube,

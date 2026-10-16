@@ -1,6 +1,7 @@
 import 'server-only'
 import { cache } from 'react'
 import { getPublicSeller } from '@/entities/user/get-public-seller'
+import { listingAttributeSelect, serializeListingAttributes } from '@/features/listing-attributes/persistence'
 import { canUseMarketplace } from '@/lib/account-role'
 import { getSession } from '@/lib/auth-utils'
 import { MAX_LISTING_PHOTOS } from '@/lib/plan-limits'
@@ -16,6 +17,7 @@ const getListingRow = cache(async (id: string, userId: string | null) => {
     where: { id },
     select: {
       ...listingSummarySelect,
+      ...listingAttributeSelect,
       status: true,
       userId: true,
       phone: true,
@@ -41,7 +43,7 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
   const listing = await getListingRow(result.data, session?.user.id ?? null)
   if (!listing) return null
 
-  const { userId, phone, facebookUrl, messengerUrl, status, favorites, _count, ...summary } = listing
+  const { userId, phone, facebookUrl, messengerUrl, status, favorites, _count, propertyDetails, vehicleDetails, ...summary } = listing
   const isOwner = session?.user.id === userId
   const publiclyVisible = status === 'ACTIVE' && (await getPublicListingIds([listing.id])).has(listing.id)
   if (!publiclyVisible && !isOwner) return null
@@ -50,6 +52,7 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
 
   return {
     ...toListingSummary(summary),
+    ...serializeListingAttributes({ ...listing, propertyDetails, vehicleDetails }),
     category: listing.category,
     status,
     publiclyVisible,

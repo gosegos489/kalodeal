@@ -101,3 +101,12 @@ export function hasEnteredAttributeLoss(current: ListingAttributes, removedField
     )
   })
 }
+
+// A correction is a full explicit replacement. Require acknowledgement when
+// changing category/type removes entered characteristics, including entire rows.
+export function getIncompatibleAttributeLoss(categorySlug: string, previous: ListingAttributes, next: ListingAttributes) {
+  const { removedFields } = previewCategoryAttributeChange(categorySlug, previous, next.propertyDetails?.propertyType)
+  if (previous.propertyDetails && !next.propertyDetails) removedFields.push('propertyDetails')
+  if (previous.vehicleDetails && !next.vehicleDetails) removedFields.push('vehicleDetails')
+  return [...new Set(removedFields)].filter((path) => hasEnteredAttributeLoss(previous, [path]))
+}

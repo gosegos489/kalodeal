@@ -9,33 +9,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
 import type { ListingModerationDecision } from '@/entities/listing/lifecycle'
-import { isAreaInDistrict } from '@/entities/location/catalog'
-import { AreaSelect, DistrictSelect } from '@/entities/location/ui/location-selects'
-import type { ListingCategoryOption } from '@/features/create-listing/types'
 import type { ListingStatus } from '@/generated/prisma/enums'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { moderateListing } from './actions'
 import { listingModerationReasons, listingModerationSchema } from './schema'
 
 type Reason = (typeof listingModerationReasons)[number]['value']
-type Decision = ListingModerationDecision | 'change-category' | 'change-location'
+type Decision = ListingModerationDecision
 
 export function ListingModerationControls({
   id,
   updatedAt,
   status,
-  categoryId,
-  categories,
-  district,
-  area
+  disabled = false,
+  onPendingChange
 }: {
   id: string
   updatedAt: string
   status: ListingStatus
-  categoryId: string
-  categories: ListingCategoryOption[]
-  district: string | null
-  area: string | null
+  disabled?: boolean
+  onPendingChange?: (pending: boolean) => void
 }) {
   const router = useRouter()
   const fieldId = useId()
@@ -45,28 +38,19 @@ export function ListingModerationControls({
   const [feedbackDecision, setFeedbackDecision] = useState<'request-changes' | 'reject' | 'hide' | null>(null)
   const [message, setMessage] = useState('')
   const [reason, setReason] = useState<Reason | null>(null)
-  const [category, setCategory] = useState(categoryId)
-  const [location, setLocation] = useState({ district: district ?? '', area: area ?? '' })
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ActionMessageResult | null>(null)
   const busy = pendingDecision !== null
   const decided = result?.success === true
   const changed = reviewedVersion !== updatedAt
-  const locationChanged = location.district !== (district ?? '') || location.area !== (area ?? '')
 
   async function submit(decision: Decision) {
-    if (inFlight.current || decided || changed) return
+    if (inFlight.current || decided || changed || disabled) return
     const input = {
       id,
       updatedAt: reviewedVersion,
       decision,
-      ...(decision === 'change-location'
-        ? location
-        : decision === 'change-category'
-          ? { categoryId: category }
-          : decision === 'approve'
-            ? {}
-            : { message, ...(reason ? { reason } : {}) })
+      ...(decision === 'approve' ? {} : { message, ...(reason ? { reason } : {}) })
     }
     const parsed = listingModerationSchema.safeParse(input)
     if (!parsed.success) {
@@ -75,6 +59,7 @@ export function ListingModerationControls({
     }
     inFlight.current = true
     setPendingDecision(decision)
+    onPendingChange?.(true)
     setError(null)
     setResult(null)
     try {
@@ -90,6 +75,7 @@ export function ListingModerationControls({
       setResult({ success: false, message: 'Could not confirm this decision. Reload the listing to check its status before retrying.' })
     } finally {
       setPendingDecision(null)
+      onPendingChange?.(false)
       inFlight.current = false
     }
   }
@@ -103,11 +89,9 @@ export function ListingModerationControls({
         <Button
           type="button"
           variant="outline"
-          disabled={busy}
+          disabled={busy || disabled}
           onClick={() => {
             setReviewedVersion(updatedAt)
-            setCategory(categoryId)
-            setLocation({ district: district ?? '', area: area ?? '' })
             setFeedbackDecision(null)
             setMessage('')
             setReason(null)
@@ -128,14 +112,19 @@ export function ListingModerationControls({
           ? 'Approve this version, request corrections, or reject it permanently.'
           : status === 'ACTIVE'
             ? 'Hide this published listing and explain the reason to its owner.'
-            : 'You can correct the location. No status decision is available for this listing.'}
+            : 'No status decision is available for this listing. Corrections preserve its current status.'}
       </p>
+      {disabled && (
+        <p role="status" className="text-muted-foreground text-sm">
+          Save or discard your corrections before making a review decision.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {status === 'PENDING' ? (
           <>
             <Button
               type="button"
-              disabled={busy || decided || category !== categoryId || locationChanged}
+              disabled={busy || decided || disabled}
               aria-busy={pendingDecision === 'approve'}
               onClick={() => void submit('approve')}
             >
@@ -149,7 +138,7 @@ export function ListingModerationControls({
             <Button
               type="button"
               variant="outline"
-              disabled={busy || decided}
+              disabled={busy || decided || disabled}
               onClick={() => {
                 setFeedbackDecision('request-changes')
                 setError(null)
@@ -162,7 +151,7 @@ export function ListingModerationControls({
             <Button
               type="button"
               variant="destructive"
-              disabled={busy || decided}
+              disabled={busy || decided || disabled}
               onClick={() => {
                 setFeedbackDecision('reject')
                 setError(null)
@@ -177,7 +166,7 @@ export function ListingModerationControls({
           <Button
             type="button"
             variant="outline"
-            disabled={busy || decided}
+            disabled={busy || decided || disabled}
             onClick={() => {
               setFeedbackDecision('hide')
               setError(null)
@@ -203,7 +192,7 @@ export function ListingModerationControls({
             <Select
               value={reason ?? ''}
               items={[{ value: '', label: 'No category selected' }, ...listingModerationReasons]}
-              disabled={busy || decided}
+              disabled={busy || decided || disabled}
               onValueChange={(value) => setReason(listingModerationReasons.find((item) => item.value === value)?.value ?? null)}
             >
               <SelectTrigger id={`${fieldId}-reason`} className="w-full">
@@ -226,7 +215,7 @@ export function ListingModerationControls({
               value={message}
               maxLength={500}
               required={feedbackDecision !== 'reject'}
-              disabled={busy || decided}
+              disabled={busy || decided || disabled}
               aria-invalid={!!error}
               aria-describedby={`${fieldId}-help${error ? ` ${fieldId}-error` : ''}`}
               onChange={(event) => {
@@ -242,7 +231,7 @@ export function ListingModerationControls({
             {error && <FieldError id={`${fieldId}-error`}>{error}</FieldError>}
           </Field>
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" variant={feedbackDecision === 'reject' ? 'destructive' : 'default'} disabled={busy || decided}>
+            <Button type="submit" variant={feedbackDecision === 'reject' ? 'destructive' : 'default'} disabled={busy || decided || disabled}>
               {pendingDecision === feedbackDecision && <LoaderCircle aria-hidden="true" className="motion-safe:animate-spin" />}
               {busy
                 ? 'Saving...'
@@ -255,7 +244,7 @@ export function ListingModerationControls({
             <Button
               type="button"
               variant="outline"
-              disabled={busy || decided}
+              disabled={busy || decided || disabled}
               onClick={() => {
                 setFeedbackDecision(null)
                 setError(null)
@@ -266,93 +255,6 @@ export function ListingModerationControls({
           </div>
         </form>
       )}
-      {status === 'PENDING' && (
-        <form
-          className="flex flex-col gap-3 border-t pt-4"
-          onSubmit={(event) => {
-            event.preventDefault()
-            void submit('change-category')
-          }}
-        >
-          <Field>
-            <FieldLabel htmlFor={`${fieldId}-category`}>Change category</FieldLabel>
-            <Select
-              value={category}
-              items={categories.map((item) => ({ value: item.id, label: item.name }))}
-              disabled={busy || decided || !categories.length}
-              onValueChange={(value) => {
-                if (value) setCategory(value)
-              }}
-            >
-              <SelectTrigger id={`${fieldId}-category`} className="w-full">
-                <SelectValue placeholder="Choose a category" />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                {categories.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FieldDescription>Correct the category, then review and approve the updated version. Saving keeps it awaiting approval.</FieldDescription>
-            {category !== categoryId && <p className="text-muted-foreground text-xs">Save the selected category before approving.</p>}
-          </Field>
-          <Button
-            type="submit"
-            variant="outline"
-            disabled={busy || decided || !categories.some((item) => item.id === category) || category === categoryId}
-          >
-            {pendingDecision === 'change-category' && <LoaderCircle aria-hidden="true" className="motion-safe:animate-spin" />}
-            {pendingDecision === 'change-category' ? 'Saving category...' : 'Save category'}
-          </Button>
-        </form>
-      )}
-      <form
-        className="flex flex-col gap-3 border-t pt-4"
-        onSubmit={(event) => {
-          event.preventDefault()
-          void submit('change-location')
-        }}
-      >
-        <Field>
-          <FieldLabel htmlFor={`${fieldId}-district`}>Correct district</FieldLabel>
-          <DistrictSelect
-            id={`${fieldId}-district`}
-            value={location.district}
-            onValueChange={(value) => {
-              setLocation((current) => ({ district: value, area: isAreaInDistrict(value, current.area) ? current.area : '' }))
-              setError(null)
-            }}
-            disabled={busy || decided}
-          />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor={`${fieldId}-area`}>Correct area</FieldLabel>
-          <AreaSelect
-            key={location.district}
-            id={`${fieldId}-area`}
-            district={location.district}
-            value={location.area}
-            onValueChange={(value) => {
-              setLocation((current) => ({ ...current, area: value }))
-              setError(null)
-            }}
-            disabled={busy || decided}
-          />
-          <FieldDescription>Saving corrects only the location and keeps the current status and owner feedback.</FieldDescription>
-          {locationChanged && status === 'PENDING' && <p className="text-muted-foreground text-xs">Save the selected location before approving.</p>}
-        </Field>
-        <Button type="submit" variant="outline" disabled={busy || decided || !locationChanged || !isAreaInDistrict(location.district, location.area)}>
-          {pendingDecision === 'change-location' && <LoaderCircle aria-hidden="true" className="motion-safe:animate-spin" />}
-          {pendingDecision === 'change-location' ? 'Saving location...' : 'Save location'}
-        </Button>
-        {error && !feedbackDecision && (
-          <p role="alert" className="text-destructive text-sm">
-            {error}
-          </p>
-        )}
-      </form>
       {result && (
         <p role={result.success ? 'status' : 'alert'} className={result.success ? 'text-sm' : 'text-destructive text-sm'}>
           {result.message}

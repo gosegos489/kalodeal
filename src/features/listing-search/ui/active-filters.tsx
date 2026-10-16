@@ -3,6 +3,7 @@
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CYPRUS_LOCATIONS, getDistrict } from '@/entities/location/catalog'
+import { propertyTypeLabels } from '@/features/listing-attributes/labels'
 import { getCategoryAttributeProfile } from '@/features/listing-attributes/rules'
 import { getVehicleMakes, getVehicleModels } from '@/features/listing-attributes/vehicle-catalog'
 import { FILTER_LABELS, type SearchKey, applicableSearchParams, filterLabel } from '../model/search-params'
@@ -21,6 +22,10 @@ export function ActiveFilters({ categories }: { categories: SearchCategory[] }) 
     if (key === 'category') return categories.find((category) => category.slug === value)?.name ?? value
     if (key === 'district') return getDistrict(value)?.name ?? value
     if (key === 'area') return CYPRUS_LOCATIONS.map(({ areas }) => areas.find(([slug]) => slug === value)?.[1]).find(Boolean) ?? value
+    if (key === 'propertyType' && profile.kind === 'property') {
+      const type = profile.propertyTypes.find((type) => type === value)
+      if (type) return propertyTypeLabels[type]
+    }
     if (profile.kind === 'vehicle' && key === 'make') return getVehicleMakes(profile.vehicleType).find((make) => make.key === value)?.label ?? value
     if (profile.kind === 'vehicle' && key === 'model')
       return getVehicleModels(search.filters.make, profile.vehicleType).find((model) => model.key === value)?.label ?? value

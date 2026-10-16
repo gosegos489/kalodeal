@@ -13,6 +13,7 @@ export const listingModerationReasons = [
   { value: 'advertising-links', label: 'Advertising / links' },
   { value: 'contact-information', label: 'Contact information' },
   { value: 'misleading-information', label: 'Misleading information' },
+  { value: 'duplicate-listing', label: 'Duplicate listing' },
   { value: 'other', label: 'Other' }
 ] as const
 

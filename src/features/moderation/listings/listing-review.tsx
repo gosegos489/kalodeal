@@ -3,16 +3,18 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getListingChatLabel } from '@/entities/listing/contact-links'
-import { formatListingPrice } from '@/entities/listing/format-price'
+import { ListingAttributeDetails } from '@/entities/listing/ui/listing-attributes'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
+import { ListingRow } from '@/entities/listing/ui/listing-row'
 import { formatLocation } from '@/entities/location/catalog'
 import { ListingModerationFeedback } from '@/features/account/listing-moderation-feedback'
 import { ListingStatusBadge } from '@/features/account/listing-status-badge'
 import { getListingCategoryOptions } from '@/features/create-listing/get-category-options'
+import { formatAttributeListingPrice } from '@/features/listing-attributes/format-price'
 import { dayjs } from '@/lib/dayjs'
 import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 import { getModerationListing } from './data'
-import { ListingModerationControls } from './listing-moderation-controls'
+import { ListingModerationWorkspace } from './listing-moderation-workspace'
 
 export async function ListingReview({ id }: { id: string }) {
   const listing = await getModerationListing(id)
@@ -31,13 +33,16 @@ export async function ListingReview({ id }: { id: string }) {
       </section>
     )
   }
-  const categories = listing.status === 'PENDING' ? await getListingCategoryOptions() : []
+  const availableCategories = await getListingCategoryOptions()
+  const categories = availableCategories.some(({ id }) => id === listing.category.id)
+    ? availableCategories
+    : [...availableCategories, { ...listing.category, parentId: null }]
   const details = [
     { label: 'Seller', value: listing.seller.name },
     { label: 'Seller email', value: listing.seller.email },
     { label: 'Category', value: listing.category.name },
     { label: 'Location', value: formatLocation(listing) ?? 'Not specified' },
-    { label: 'Price', value: formatListingPrice(listing.price, listing.currency) },
+    { label: 'Price', value: formatAttributeListingPrice(listing.price, listing.currency, listing.category.slug, listing.attributes) },
     { label: 'Phone', value: listing.phone },
     { label: 'YouTube', value: listing.youtube },
     { label: 'Facebook', value: listing.facebookUrl },
@@ -61,9 +66,17 @@ export async function ListingReview({ id }: { id: string }) {
           moderationMessage={listing.moderationMessage}
         />
       </div>
+      <div className="bg-muted/50 space-y-2 rounded-xl border p-4 text-sm leading-relaxed">
+        <p className="font-medium">Duplicate listings are not allowed.</p>
+        <p>
+          Compare the item, photos, location and other listings from this seller before deciding. Matching titles alone do not prove duplication. For
+          a confirmed duplicate, use Reject with the Duplicate listing reason and explain the match to the owner.
+        </p>
+      </div>
       <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
         <div className="flex min-w-0 flex-col gap-6">
           <ListingGallery key={`${listing.id}:${listing.updatedAt}`} title={listing.title} images={listing.images} />
+          <ListingAttributeDetails categorySlug={listing.category.slug} attributes={listing.attributes} staff />
           <Card className="min-w-0">
             <CardHeader>
               <CardTitle>
@@ -76,25 +89,6 @@ export async function ListingReview({ id }: { id: string }) {
           </Card>
         </div>
         <div className="flex min-w-0 flex-col gap-6">
-          <Card className="min-w-0">
-            <CardHeader>
-              <CardTitle>
-                <h3>Review decision</h3>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ListingModerationControls
-                key={listing.id}
-                id={listing.id}
-                updatedAt={listing.updatedAt}
-                status={listing.status}
-                categoryId={listing.category.id}
-                categories={categories}
-                district={listing.district}
-                area={listing.area}
-              />
-            </CardContent>
-          </Card>
           <Card className="min-w-0">
             <CardHeader>
               <CardTitle>
@@ -128,6 +122,33 @@ export async function ListingReview({ id }: { id: string }) {
           </Card>
         </div>
       </div>
+      {listing.otherListings.length > 0 && (
+        <Card className="min-w-0">
+          <CardHeader>
+            <CardTitle>
+              <h3>Other recent listings from this seller</h3>
+            </CardTitle>
+            <p className="text-muted-foreground text-sm">Up to six recent listings for manual comparison. These are not confirmed duplicates.</p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {listing.otherListings.map((other) => (
+              <ListingRow
+                key={other.id}
+                listing={other}
+                href={`/moderator/listings/${other.id}`}
+                metadata={<span>{other.category.name}</span>}
+                status={<ListingStatusBadge status={other.status} />}
+                actions={
+                  <Button nativeButton={false} variant="outline" size="sm" render={<Link href={`/moderator/listings/${other.id}`} />}>
+                    Compare listing
+                  </Button>
+                }
+              />
+            ))}
+          </CardContent>
+        </Card>
+      )}
+      <ListingModerationWorkspace key={listing.id} listing={listing.correction} categories={categories} />
     </section>
   )
 }

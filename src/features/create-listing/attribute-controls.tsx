@@ -5,6 +5,7 @@ import { ComboboxSelect } from '@/components/ui/combobox'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { attributeLabel } from '@/features/listing-attributes/labels'
 import type { CreateListingInput, ListingFormApi } from './types'
 
 type ControlProps = {
@@ -16,10 +17,7 @@ type ControlProps = {
 }
 export type AttributeOption = { value: string; label: string }
 export const enumOptions = (values: readonly string[]): AttributeOption[] => values.map((value) => ({ value, label: attributeLabel(value) }))
-export function attributeLabel(value: string) {
-  const special: Record<string, string> = { A_PLUS: 'A+', LPG: 'LPG', SUV: 'SUV', ATTIC_LOFT: 'Attic / Loft', PART_FURNISHED: 'Part furnished' }
-  return special[value] ?? value.charAt(0) + value.slice(1).toLowerCase().replaceAll('_', ' ')
-}
+export { attributeLabel } from '@/features/listing-attributes/labels'
 
 export function AttributeSelect({
   form,

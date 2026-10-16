@@ -11,13 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPublicCategory } from '@/entities/category/get-category-tree'
 import { getListingChatLabel } from '@/entities/listing/contact-links'
-import { formatListingPrice } from '@/entities/listing/format-price'
 import { getListing } from '@/entities/listing/get-listing'
 import { listingStatusLabels } from '@/entities/listing/lifecycle'
+import { ListingAttributeDetails } from '@/entities/listing/ui/listing-attributes'
 import { ListingGallery } from '@/entities/listing/ui/listing-gallery'
 import { formatLocation } from '@/entities/location/catalog'
 import { getSellerInitials, postingSince } from '@/entities/user/public-profile'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
+import { formatAttributeListingPrice } from '@/features/listing-attributes/format-price'
 import { ListingViewTracker } from '@/features/listing-views/listing-view-tracker'
 import { MessageSellerButton } from '@/features/messages/message-seller-button'
 import { RevealListingPhoneButton } from '@/features/reveal-listing-phone/reveal-listing-phone-button'
@@ -81,7 +82,9 @@ async function ListingDetails({ params }: Props) {
                   {listingStatusLabels[listing.status]}
                 </Badge>
               </div>
-              <p className="text-primary text-3xl font-semibold">{formatListingPrice(listing.price, listing.currency)}</p>
+              <p className="text-primary text-3xl font-semibold">
+                {formatAttributeListingPrice(listing.price, listing.currency, listing.category.slug, listing)}
+              </p>
               <h1 className="text-2xl font-semibold wrap-break-word">{listing.title}</h1>
               <div className="flex items-center gap-3">
                 {listing.canUseMarketplace && listing.publiclyVisible && (
@@ -191,6 +194,7 @@ async function ListingDetails({ params }: Props) {
         </aside>
         <div className="contents lg:col-start-1 lg:row-start-1 lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
           <ListingGallery key={listing.id} title={listing.title} images={listing.images} />
+          <ListingAttributeDetails categorySlug={listing.category.slug} attributes={listing} />
           <Card className="order-3 lg:order-0">
             <CardHeader>
               <CardTitle>

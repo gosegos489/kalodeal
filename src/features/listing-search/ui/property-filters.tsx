@@ -2,6 +2,7 @@
 
 import { useId } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
+import { propertyTypeLabels } from '@/features/listing-attributes/labels'
 import { type CategoryAttributeProfile, getPropertyAmenities, getPropertyFields } from '@/features/listing-attributes/rules'
 import { ATTRIBUTE_LIMITS } from '@/features/listing-attributes/schema'
 import { PropertyEnergyRating, PropertyFurnishing, PropertyParking, PropertyType } from '@/generated/prisma/enums'
@@ -19,7 +20,11 @@ export function PropertyFilters({ profile, ...control }: FilterControlProps & { 
     <fieldset className="min-w-0 space-y-4 border-t pt-5" disabled={control.disabled}>
       <legend className="float-left mb-4 text-sm font-semibold">Property details</legend>
       <div className="clear-both space-y-4">
-        <FilterSelect {...control} name="propertyType" options={enumOptions(profile.propertyTypes)} />
+        <FilterSelect
+          {...control}
+          name="propertyType"
+          options={profile.propertyTypes.map((value) => ({ value, label: propertyTypeLabels[value] }))}
+        />
         {fields.includes('bedrooms') && (
           <FilterRange {...control} label="Bedrooms" from="minBedrooms" to="maxBedrooms" max={ATTRIBUTE_LIMITS.rooms} />
         )}

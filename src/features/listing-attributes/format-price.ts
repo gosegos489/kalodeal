@@ -4,8 +4,7 @@ import { getCategoryAttributeProfile } from './rules'
 
 const periodLabels = { DAY: 'day', WEEK: 'week', MONTH: 'month', YEAR: 'year' } satisfies Record<ListingPricePeriod, string>
 
-// Use together with the new read projection in the next UI stage. Legacy rent
-// must explicitly disclose its unknown period instead of assuming monthly.
+// Legacy rent must disclose its unknown period instead of assuming monthly.
 export function formatAttributeListingPrice(
   price: number | null,
   currency: ListingCurrency,

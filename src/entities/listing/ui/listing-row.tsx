@@ -3,12 +3,14 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { formatLocation } from '@/entities/location/catalog'
+import { formatAttributeListingPrice } from '@/features/listing-attributes/format-price'
 import { cn } from '@/lib/utils'
-import { formatListingPrice } from '../format-price'
 import type { ListingSummary } from '../types'
 
 type ListingRowProps = {
-  listing: Pick<ListingSummary, 'id' | 'title' | 'price' | 'currency' | 'coverUrl' | 'district' | 'area'>
+  listing: Pick<ListingSummary, 'id' | 'title' | 'price' | 'currency' | 'coverUrl' | 'district' | 'area' | 'pricePeriod' | 'priceNegotiable'> & {
+    category?: ListingSummary['category']
+  }
   href: string | null
   metadata: ReactNode
   status: ReactNode
@@ -59,7 +61,12 @@ export function ListingRow({ listing, href, metadata, status, actions, actionsCl
           )}
         </h3>
         <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs wrap-anywhere">
-          <span className="text-foreground font-medium">{formatListingPrice(listing.price, listing.currency)}</span>
+          <span className="text-foreground font-medium">
+            {formatAttributeListingPrice(listing.price, listing.currency, listing.category?.slug ?? '', {
+              pricePeriod: listing.pricePeriod ?? null,
+              priceNegotiable: listing.priceNegotiable ?? false
+            })}
+          </span>
           {metadata}
         </div>
         {location && <p className="text-muted-foreground text-xs wrap-anywhere">{location}</p>}

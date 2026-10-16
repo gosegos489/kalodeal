@@ -4,21 +4,13 @@ import { Controller, useWatch } from 'react-hook-form'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { previewCategoryAttributeChange } from '@/features/listing-attributes/category-change'
+import { propertyTypeLabels } from '@/features/listing-attributes/labels'
 import { type CategoryAttributeProfile, getPropertyAmenities, getPropertyFields } from '@/features/listing-attributes/rules'
 import { ATTRIBUTE_LIMITS } from '@/features/listing-attributes/schema'
 import { PropertyEnergyRating, PropertyFurnishing, PropertyParking, PropertyType } from '@/generated/prisma/enums'
 import { AttributeBoolean, AttributeNumber, AttributeSelect, AttributeText, attributeLabel, enumOptions } from './attribute-controls'
 import type { ListingFormApi } from './types'
 import { getFormAttributes, useAttributeChange } from './use-attribute-change'
-
-const propertyLabels: Record<PropertyType, string> = {
-  HOUSE: 'House',
-  APARTMENT: 'Apartment / Flat',
-  COMMERCIAL: 'Commercial property',
-  LAND: 'Plot of land',
-  ROOM: 'Room',
-  OTHER: 'Other property'
-}
 
 export function PropertyFields({
   form,
@@ -56,7 +48,7 @@ export function PropertyFields({
         allowEmpty={profile.propertyTypes.length > 1}
         label="Property type"
         placeholder="Not specified"
-        options={profile.propertyTypes.map((value) => ({ value, label: propertyLabels[value] }))}
+        options={profile.propertyTypes.map((value) => ({ value, label: propertyTypeLabels[value] }))}
         onChange={(value) => {
           const parsed = Object.values(PropertyType).find((item) => item === value)
           const current = getFormAttributes(form)
