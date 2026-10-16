@@ -11,7 +11,7 @@ import { type ModerationSearchParams, listingModerationWhere } from '../shared/s
 
 export const moderationListingSelect = {
   ...listingSummarySelect,
-  category: { select: { id: true, name: true } },
+  category: { select: { id: true, name: true, slug: true } },
   status: true,
   moderationReason: true,
   moderationMessage: true,

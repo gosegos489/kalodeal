@@ -2,10 +2,10 @@ import { ImageIcon, MapPin } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import { formatListingPrice } from '@/entities/listing/format-price'
 import { listingStatusLabels } from '@/entities/listing/lifecycle'
 import { formatLocation } from '@/entities/location/catalog'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
+import { formatAttributeListingPrice } from '@/features/listing-attributes/format-price'
 import type { ListingStatus } from '@/generated/prisma/enums'
 import { dayjs } from '@/lib/dayjs'
 import type { ListingSummary } from '../types'
@@ -77,7 +77,12 @@ export function ListingCard({
           className="group focus-visible:ring-ring flex flex-col gap-2 rounded-sm outline-none focus-visible:ring-2"
         >
           <h3 className="group-hover:text-primary line-clamp-2 leading-snug font-semibold">{listing.title}</h3>
-          <p className="text-primary text-lg font-semibold">{formatListingPrice(listing.price, listing.currency)}</p>
+          <p className="text-primary text-lg font-semibold">
+            {formatAttributeListingPrice(listing.price, listing.currency, listing.category.slug ?? '', {
+              pricePeriod: listing.pricePeriod ?? null,
+              priceNegotiable: listing.priceNegotiable ?? false
+            })}
+          </p>
           <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{listing.description}</p>
         </Link>
         {location && (

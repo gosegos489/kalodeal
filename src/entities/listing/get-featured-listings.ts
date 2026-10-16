@@ -6,9 +6,13 @@ import { getPublicListingIds } from './public-eligibility'
 import type { ListingSummary } from './types'
 
 // Always request-time: time expiry must stop priority even without a webhook/cache purge.
-export async function getFeaturedListings(where: Prisma.ListingWhereInput, take: number) {
-  const now = new Date()
-  const candidates = await prisma.listing.findMany({
+export async function getFeaturedListings(
+  where: Prisma.ListingWhereInput,
+  take: number,
+  db: Pick<Prisma.TransactionClient, 'listing' | '$queryRaw'> = prisma,
+  now = new Date()
+) {
+  const candidates = await db.listing.findMany({
     where: {
       AND: [
         where,
@@ -27,7 +31,11 @@ export async function getFeaturedListings(where: Prisma.ListingWhereInput, take:
     orderBy: [{ featuredAt: 'asc' }, { id: 'asc' }],
     take: 50
   })
-  const visible = await getPublicListingIds(candidates.map(({ id }) => id))
+  const visible = await getPublicListingIds(
+    candidates.map(({ id }) => id),
+    db,
+    now
+  )
   const byOwner = new Map<string, number>()
   const result: ListingSummary[] = []
   for (const { userId, ...listing } of candidates) {

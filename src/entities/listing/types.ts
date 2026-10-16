@@ -1,5 +1,5 @@
 import type { ListingLocation } from '@/entities/location/catalog'
-import type { ListingCurrency, ListingStatus } from '@/generated/prisma/enums'
+import type { ListingCurrency, ListingPricePeriod, ListingStatus } from '@/generated/prisma/enums'
 
 export type ListingSummary = ListingLocation & {
   id: string
@@ -7,8 +7,10 @@ export type ListingSummary = ListingLocation & {
   description: string
   price: number | null
   currency: ListingCurrency
+  pricePeriod?: ListingPricePeriod | null
+  priceNegotiable?: boolean
   createdAt: Date
-  category: { name: string }
+  category: { name: string; slug?: string }
   coverUrl: string | null
 }
 

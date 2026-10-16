@@ -1,54 +1,73 @@
-import { cacheLife, cacheTag } from 'next/cache'
 import 'server-only'
-import { getPublicCategory } from '@/entities/category/get-category-tree'
-import { cacheTags } from '@/lib/cache-tags'
+import { getCategoryTaxonomy } from '@/entities/category/get-category-taxonomy'
+import { buildListingAttributeQuery } from '@/features/listing-attributes/filters'
+import { getCategoryAttributeProfile } from '@/features/listing-attributes/rules'
+import { Prisma } from '@/generated/prisma/client'
+import { getPagination } from '@/lib/pagination'
 import prisma from '@/lib/prisma'
 import { HOMEPAGE_LISTINGS_LIMIT, SEARCH_RESULTS_LIMIT } from './constants'
-import { mergeFeaturedListings } from './featured-ranking'
 import { getFeaturedListings } from './get-featured-listings'
 import { listingSummarySelect, toListingSummary } from './listing-summary'
-import { getListingWhere } from './listing-where'
-import { getPublicListingIds } from './public-eligibility'
+import { publicListingEligibilitySql } from './public-eligibility'
 import { type ListingFilters, listingFiltersSchema } from './schema'
+import { listingSearchPageSql, listingSearchWhereSql } from './search-where-sql'
+import type { ListingSummary } from './types'
 
 export async function getListings(filters: ListingFilters = {}) {
-  const result = listingFiltersSchema.safeParse(filters)
-  if (!result.success) return []
+  return (
+    await getListingSearchResults(
+      filters,
+      {},
+      undefined,
+      filters.query || filters.category || filters.district ? SEARCH_RESULTS_LIMIT : HOMEPAGE_LISTINGS_LIMIT
+    )
+  ).listings
+}
 
-  const { query, category, district, area } = result.data
-  // Only known public categories can create shared cache entries. Keep other
-  // filters request-time without changing the existing category visibility policy.
-  const take = query || category || district ? SEARCH_RESULTS_LIMIT : HOMEPAGE_LISTINGS_LIMIT
-  const [organic, featured] = await Promise.all([
-    query || (category && !(await getPublicCategory(category)))
-      ? readListings({ query, category, district, area }, take)
-      : getBrowseListings(category, district, area),
-    getFeaturedListings(getListingWhere({ query, category, district, area }), take)
-  ])
-  const visible = await getPublicListingIds([...organic, ...featured].map(({ id }) => id))
-  return mergeFeaturedListings(
-    organic.filter(({ id }) => visible.has(id)),
-    featured.filter(({ id }) => visible.has(id)),
-    take
+// Arbitrary searches are request-time. Homepage feeds/recent listings and the
+// category catalogue retain their tagged caches. Time-based entitlements and
+// bans must participate in both count and pagination at the current request.
+export async function getListingSearchResults(
+  base: ListingFilters,
+  attributes: unknown = {},
+  pageParam?: string | string[],
+  pageSize = SEARCH_RESULTS_LIMIT
+) {
+  pageSize = Math.max(1, Math.min(SEARCH_RESULTS_LIMIT, Math.floor(pageSize) || SEARCH_RESULTS_LIMIT))
+  const parsed = listingFiltersSchema.safeParse(base)
+  if (!parsed.success) return { listings: [] as ListingSummary[], pagination: getPagination({ totalItems: 0, pageSize }) }
+  const taxonomy = await getCategoryTaxonomy()
+  const category = taxonomy.find((category) => category.slug === parsed.data.category)
+  const profile = getCategoryAttributeProfile(category?.slug ?? '')
+  const now = new Date()
+  const { where, orderBy } = buildListingAttributeQuery(parsed.data, profile, attributes, now)
+  const predicate = Prisma.sql`${listingSearchWhereSql(where)} AND ${publicListingEligibilitySql(now)}`
+  return prisma.$transaction(
+    async (tx) => {
+      const [counts] = await tx.$queryRaw<{ count: number }[]>(Prisma.sql`
+      SELECT COUNT(*)::int AS count FROM listing eligible_listing WHERE ${predicate}
+    `)
+      const pagination = getPagination({ pageParam, totalItems: counts.count, pageSize })
+      if (!pagination.totalItems) return { listings: [] as ListingSummary[], pagination }
+      const featured = await getFeaturedListings(where, SEARCH_RESULTS_LIMIT, tx, now)
+      const featuredIds = featured.map(({ id }) => id)
+      // Rank before slicing, so Featured placements never repeat on page 2.
+      // Organic sortDate preserves Boost, and price order uses it to break ties.
+      const rows = await tx.$queryRaw<{ id: string }[]>(listingSearchPageSql(predicate, orderBy, featuredIds, pagination))
+      const listings = await tx.listing.findMany({
+        where: { AND: [where, { id: { in: rows.map(({ id }) => id) } }] },
+        select: listingSummarySelect,
+        take: pagination.take
+      })
+      const byId = new Map(listings.map((row) => [row.id, toListingSummary(row)]))
+      return {
+        listings: rows.flatMap(({ id }) => {
+          const row = byId.get(id)
+          return row ? [row] : []
+        }),
+        pagination
+      }
+    },
+    { isolationLevel: 'RepeatableRead' }
   )
-}
-
-async function getBrowseListings(category: string | undefined, district: string | undefined, area: string | undefined) {
-  'use cache'
-
-  cacheTag(cacheTags.listings)
-  cacheLife('hours')
-
-  return readListings({ category, district, area }, category || district ? SEARCH_RESULTS_LIMIT : HOMEPAGE_LISTINGS_LIMIT)
-}
-
-async function readListings(filters: ListingFilters, take: number) {
-  const listings = await prisma.listing.findMany({
-    where: getListingWhere(filters),
-    select: listingSummarySelect,
-    orderBy: [{ sortDate: 'desc' }, { id: 'desc' }],
-    take
-  })
-
-  return listings.map(toListingSummary)
 }

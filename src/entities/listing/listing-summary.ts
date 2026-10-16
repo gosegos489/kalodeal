@@ -8,10 +8,12 @@ export const listingSummarySelect = {
   description: true,
   price: true,
   currency: true,
+  pricePeriod: true,
+  priceNegotiable: true,
   district: true,
   area: true,
   createdAt: true,
-  category: { select: { name: true } },
+  category: { select: { name: true, slug: true } },
   images: {
     select: { key: true },
     orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],

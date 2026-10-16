@@ -1,22 +1,21 @@
 import 'server-only'
 import { cache } from 'react'
+import { getCategoryTaxonomy } from '@/entities/category/get-category-taxonomy'
 import { getPublicCategory } from '@/entities/category/get-category-tree'
-import { listingFiltersSchema } from '@/entities/listing/schema'
 import { formatLocation } from '@/entities/location/catalog'
+import { getCategoryAttributeProfile } from '@/features/listing-attributes/rules'
+import { parseListingSearch } from '@/features/listing-search/model/search-params'
 import { getCategoryPath, seoConfig } from '@/lib/metadata'
 
 export type HomePageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 
 export const getBrowseContext = cache(async (searchParams: HomePageProps['searchParams']) => {
   const raw = await searchParams
-  const optionalValue = (value: string | string[] | undefined) => (typeof value === 'string' && !value.trim() ? undefined : value)
-  const result = listingFiltersSchema.safeParse({
-    query: optionalValue(raw.q),
-    category: optionalValue(raw.category),
-    district: optionalValue(raw.district),
-    area: optionalValue(raw.area)
-  })
-  const filters = result.success ? result.data : {}
+  const taxonomy = await getCategoryTaxonomy()
+  const selected = taxonomy.find((category) => category.slug === raw.category)
+  const profile = getCategoryAttributeProfile(selected?.slug ?? '')
+  const result = parseListingSearch(raw, profile)
+  const filters = result.success ? result.base : {}
   const category = filters.category ? await getPublicCategory(filters.category) : null
   const isSearch = 'q' in raw || Object.keys(raw).some((key) => key !== 'category') || !result.success || ('category' in raw && !category)
   const location = formatLocation({ district: filters.district ?? null, area: filters.area ?? null })
@@ -37,6 +36,9 @@ export const getBrowseContext = cache(async (searchParams: HomePageProps['search
 
   return {
     filters,
+    attributes: result.success ? result.attributes : undefined,
+    pageParam: raw.page,
+    filterError: result.success ? null : result.message,
     category,
     isSearch,
     invalidFilters: !result.success,

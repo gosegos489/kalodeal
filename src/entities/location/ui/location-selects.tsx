@@ -32,7 +32,7 @@ export function DistrictSelect({
   'aria-describedby': describedBy,
   className
 }: LocationSelectProps) {
-  const items = allowAll ? [{ value: '', label: 'All districts' }, ...districts] : districts
+  const items = allowAll ? [{ value: '', label: 'All Cyprus' }, ...districts] : districts
   return (
     <Select value={value || (allowAll ? '' : null)} onValueChange={(value) => onValueChange(value ?? '')} items={items} disabled={disabled}>
       <SelectTrigger
@@ -44,7 +44,7 @@ export function DistrictSelect({
         aria-describedby={describedBy}
         className={className ?? 'w-full'}
       >
-        <SelectValue placeholder="Choose a district" />
+        <SelectValue placeholder={allowAll ? 'All Cyprus' : 'Choose a district'} />
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false}>
         {items.map((item) => (
