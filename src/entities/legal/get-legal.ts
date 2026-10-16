@@ -1,12 +1,13 @@
+import { cacheLife, cacheTag } from 'next/cache'
 import type { LegalDocumentType } from '@/generated/prisma/enums'
 import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'
-import { cacheLife, cacheTag } from 'next/cache'
+import { sanitizeLegalHtml } from './sanitize'
 
 export async function getLegal(type: LegalDocumentType) {
   'use cache'
 
-  cacheTag(cacheTags.legal)
+  cacheTag(cacheTags.legal, cacheTags.legalDocument(type))
   cacheLife('weeks')
 
   const legal = await prisma.legalDocument.findUnique({
@@ -15,5 +16,5 @@ export async function getLegal(type: LegalDocumentType) {
     }
   })
 
-  return legal
+  return legal ? { ...legal, content: sanitizeLegalHtml(legal.content) } : null
 }

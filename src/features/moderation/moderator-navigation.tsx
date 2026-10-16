@@ -1,6 +1,6 @@
 'use client'
 
-import { Flag, Gift, Images, LayoutDashboard, List, Mail, Tags, Users } from 'lucide-react'
+import { FileText, Flag, Gift, Images, LayoutDashboard, List, Mail, Tags, Users } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { z } from 'zod'
@@ -17,13 +17,22 @@ export const moderatorNavigation = [
   { label: 'Access grants', href: '/moderator/access-grants', icon: Gift },
   { label: 'Contact requests', href: '/moderator/contact', icon: Mail },
   { label: 'Chat reports', href: '/moderator/chat-reports', icon: Flag },
+  { label: 'Legal Documents', href: '/moderator/legal', icon: FileText, legalOnly: true },
   { label: 'Category icons', href: '/moderator/categories', icon: Tags, categoryIconsOnly: true }
 ]
 
 const countsSchema = z.object({ pendingListings: z.number().int().min(0), pendingAvatars: z.number().int().min(0) })
 type QueueCounts = z.infer<typeof countsSchema>
 
-export function ModeratorNavigation({ canEditCategoryIcons = false, initialCounts }: { canEditCategoryIcons?: boolean; initialCounts: QueueCounts }) {
+export function ModeratorNavigation({
+  canEditCategoryIcons = false,
+  canEditLegal = false,
+  initialCounts
+}: {
+  canEditCategoryIcons?: boolean
+  canEditLegal?: boolean
+  initialCounts: QueueCounts
+}) {
   const pathname = usePathname()
   const [latest, setLatest] = useState<{ baseline: QueueCounts; counts: QueueCounts } | null>(null)
   const counts = latest?.baseline === initialCounts ? latest.counts : initialCounts
@@ -67,7 +76,7 @@ export function ModeratorNavigation({ canEditCategoryIcons = false, initialCount
   return (
     <nav aria-label="Moderator navigation" className="grid min-w-0 gap-1 p-2 sm:grid-cols-2 lg:grid-cols-1">
       {moderatorNavigation
-        .filter((item) => !item.categoryIconsOnly || canEditCategoryIcons)
+        .filter((item) => (!item.categoryIconsOnly || canEditCategoryIcons) && (!item.legalOnly || canEditLegal))
         .map(({ label, href, icon: Icon }) => {
           const active = pathname === href || (href !== '/moderator' && pathname.startsWith(`${href}/`))
 

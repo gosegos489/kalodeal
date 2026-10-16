@@ -5,7 +5,8 @@ const statement = {
   ...defaultStatements,
 
   listing: ['create', 'update', 'delete', 'moderate'],
-  category: ['update-icon']
+  category: ['update-icon'],
+  legal: ['update']
 } as const
 
 export const ac = createAccessControl(statement)
@@ -15,6 +16,7 @@ export const userRole = ac.newRole({
 })
 
 export const moderatorRole = ac.newRole({
+  legal: ['update'],
   listing: ['create', 'update', 'delete', 'moderate'],
   category: ['update-icon'],
 
@@ -22,6 +24,7 @@ export const moderatorRole = ac.newRole({
 })
 
 export const adminRole = ac.newRole({
+  legal: ['update'],
   ...adminAc.statements,
 
   listing: ['create', 'update', 'delete', 'moderate'],
@@ -31,4 +34,9 @@ export const adminRole = ac.newRole({
 export function canManageCategoryIcons(role: string | null | undefined) {
   const permissions = role === 'admin' ? adminRole : role === 'moderator' ? moderatorRole : null
   return permissions?.authorize({ category: ['update-icon'] }).success ?? false
+}
+
+export function canManageLegalDocuments(role: string | null | undefined) {
+  const permissions = role === 'admin' ? adminRole : role === 'moderator' ? moderatorRole : null
+  return permissions?.authorize({ legal: ['update'] }).success ?? false
 }
