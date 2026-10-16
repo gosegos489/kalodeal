@@ -20,7 +20,7 @@ export function HomeLoading() {
   const t = useTranslations('Home')
   return (
     <div className="flex min-w-0 flex-col gap-12 sm:gap-16">
-      <LoadingStatus label={t('loadingCategories')} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <LoadingStatus label={t('loadingCategories')} className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
         {Array.from({ length: 6 }, (_, index) => (
           <div key={index} className="bg-card flex flex-col items-center gap-3 rounded-xl border p-4">
             <Skeleton className="size-12 rounded-xl" />

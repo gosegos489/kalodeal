@@ -21,9 +21,12 @@ export async function HomeCategories({ categories }: { categories: HomepageCateg
         </Button>
       </div>
       {categories.length ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {categories.map((category) => (
-            <div key={category.id} className="bg-card overflow-hidden rounded-xl border">
+            <div
+              key={category.id}
+              className="bg-card row-span-3 grid grid-rows-subgrid overflow-hidden rounded-xl border [&>a]:row-span-3 [&>a]:grid-rows-subgrid"
+            >
               <CategoryCard {...category} image={category.icon} />
             </div>
           ))}

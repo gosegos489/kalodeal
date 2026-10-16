@@ -30,7 +30,7 @@ export default function MobileMenu({ isAuth, currentYear, role }: Props) {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         render={
-          <Button variant="ghost" size="icon" className="relative size-10 md:hidden" aria-label={t('openMenu')}>
+          <Button variant="ghost" size="icon" className="relative size-10 xl:hidden" aria-label={t('openMenu')}>
             <Menu className="size-5" />
             {isAuth && role !== 'moderator' && <UnreadMessagesBadge className="absolute -top-1 -right-1 text-[10px]" />}
           </Button>

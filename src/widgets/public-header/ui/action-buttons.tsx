@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Plus, UserRound } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { canUseMarketplace } from '@/lib/account-role'
@@ -19,7 +19,7 @@ export default async function ActionButtons({ isAuth, role }: Props) {
           <Link
             key={item.href}
             href={item.href}
-            className="text-foreground hover:bg-muted relative hidden size-10 items-center justify-center rounded-lg transition-colors sm:inline-flex"
+            className="text-foreground hover:bg-muted relative hidden size-10 items-center justify-center rounded-lg transition-colors md:inline-flex"
           >
             <item.icon className="size-5" strokeWidth={2} />
             <span className="sr-only">{item.label === 'Moderator panel' ? item.label : t(item.label)}</span>
@@ -27,22 +27,31 @@ export default async function ActionButtons({ isAuth, role }: Props) {
           </Link>
         ))
       ) : (
-        <Link href="/login" className="hover:text-primary hidden h-10 items-center px-3 text-sm font-medium transition-colors sm:inline-flex">
+        <Link
+          href="/login"
+          className="hover:text-primary hidden h-10 items-center px-3 text-sm font-medium whitespace-nowrap transition-colors md:inline-flex"
+        >
           {t('signIn')}
         </Link>
       )}
       {canUseMarketplace(role) ? (
         <Link
           href={isAuth ? '/sell' : '/login'}
-          className="bg-primary text-primary-foreground hover:bg-primary/80 inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors sm:px-4"
+          className="bg-primary text-primary-foreground hover:bg-primary/80 inline-flex size-10 items-center justify-center gap-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors sm:w-auto sm:px-3 md:px-4"
         >
           <Plus className="size-4 shrink-0" strokeWidth={2} />
-          <span className="hidden sm:inline">{t('postListing')}</span>
-          <span className="sm:hidden">{t('post')}</span>
+          <span className="sr-only md:not-sr-only">{t('postListing')}</span>
+          <span className="hidden sm:inline md:hidden" aria-hidden="true">
+            {t('post')}
+          </span>
         </Link>
       ) : (
-        <Link href="/moderator" className="bg-primary text-primary-foreground inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold">
-          Moderator panel
+        <Link
+          href="/moderator"
+          className="bg-primary text-primary-foreground inline-flex size-10 items-center justify-center rounded-lg text-sm font-semibold whitespace-nowrap sm:w-auto sm:px-3"
+        >
+          <UserRound className="size-4 shrink-0 sm:hidden" aria-hidden="true" />
+          <span className="sr-only sm:not-sr-only">Moderator panel</span>
         </Link>
       )}
     </div>

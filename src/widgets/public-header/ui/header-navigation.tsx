@@ -17,7 +17,7 @@ export function NavigationLinks({ mobile = false, onNavigate }: NavigationLinksP
   const t = useTranslations('Navigation')
 
   return (
-    <ul className={mobile ? 'flex flex-col gap-1' : 'flex items-center gap-7 text-sm'}>
+    <ul className={mobile ? 'flex flex-col gap-1' : 'flex items-center gap-5 text-sm whitespace-nowrap 2xl:gap-7'}>
       {navigation.map((item) => {
         const isActive = item.href === '/' ? pathname === '/' : pathname === item.href || pathname.startsWith(`${item.href}/`)
 
