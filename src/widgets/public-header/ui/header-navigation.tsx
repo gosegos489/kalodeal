@@ -3,15 +3,17 @@
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import type { ReactNode } from 'react'
 import { localizeHref, stripLocale } from '@/i18n/routing'
 import { navigation } from '../mocks/mocks'
 
 type NavigationLinksProps = {
   mobile?: boolean
   onNavigate?: () => void
+  categoriesControl: ReactNode
 }
 
-export function NavigationLinks({ mobile = false, onNavigate }: NavigationLinksProps) {
+export function NavigationLinks({ mobile = false, onNavigate, categoriesControl }: NavigationLinksProps) {
   const pathname = stripLocale(usePathname())
   const locale = useLocale()
   const t = useTranslations('Navigation')
@@ -19,10 +21,11 @@ export function NavigationLinks({ mobile = false, onNavigate }: NavigationLinksP
   return (
     <ul className={mobile ? 'flex flex-col gap-1' : 'flex items-center gap-5 text-sm whitespace-nowrap 2xl:gap-7'}>
       {navigation.map((item) => {
+        if (item.label === 'categories') return <li key={item.label}>{categoriesControl}</li>
         const isActive = item.href === '/' ? pathname === '/' : pathname === item.href || pathname.startsWith(`${item.href}/`)
 
         return (
-          <li key={t(item.label)}>
+          <li key={item.label}>
             <Link
               href={localizeHref(item.href, locale)}
               onClick={onNavigate}

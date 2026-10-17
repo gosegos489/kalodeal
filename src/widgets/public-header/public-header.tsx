@@ -6,7 +6,7 @@ import { ClientMessages } from '@/i18n/client-messages'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import ActionButtonsWithSession from './ui/action-buttons-with-session'
-import { NavigationLinks } from './ui/header-navigation'
+import { CategoryHeaderNavigation } from './ui/category-header-navigation'
 import { LanguageSwitcher } from './ui/language-switcher'
 import MobileMenuWithSession from './ui/mobile-menu-with-session'
 
@@ -14,7 +14,10 @@ export async function PublicHeader({ locale = 'en' }: { locale?: Locale }) {
   const messages = await getMessages({ locale })
   const t = await getTranslations({ locale, namespace: 'Navigation' })
   return (
-    <ClientMessages locale={locale} messages={{ Navigation: messages.Navigation }}>
+    <ClientMessages
+      locale={locale}
+      messages={{ Navigation: messages.Navigation, Search: { updateError: messages.Search.updateError, retry: messages.Search.retry } }}
+    >
       <header className="border-border bg-card border-b">
         <div className="container flex items-center justify-between gap-3 py-3 sm:py-4">
           <div className="flex min-w-0 items-center gap-6 2xl:gap-10">
@@ -24,7 +27,7 @@ export async function PublicHeader({ locale = 'en' }: { locale?: Locale }) {
 
             <nav aria-label={t('primary')} className="hidden xl:block">
               <Suspense fallback={<Skeleton className="h-5 w-64" />}>
-                <NavigationLinks />
+                <CategoryHeaderNavigation locale={locale} />
               </Suspense>
             </nav>
           </div>
@@ -43,7 +46,7 @@ export async function PublicHeader({ locale = 'en' }: { locale?: Locale }) {
               <LanguageSwitcher />
             </Suspense>
             <Suspense fallback={<Skeleton className="size-10 xl:hidden" />}>
-              <MobileMenuWithSession />
+              <MobileMenuWithSession locale={locale} />
             </Suspense>
           </div>
         </div>

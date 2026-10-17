@@ -1,13 +1,7 @@
 export const footerLinks = [
   {
     title: 'marketplace',
-    links: [
-      ['browse', '/'],
-      ['categories', '/categories'],
-      ['pricing', '/pricing'],
-      ['postListing', '/sell'],
-      ['saved', '/account/favorites'] as const
-    ] as const
+    links: [['browse', '/'], ['pricing', '/pricing'], ['postListing', '/sell'], ['saved', '/account/favorites'] as const] as const
   },
   {
     title: 'company',

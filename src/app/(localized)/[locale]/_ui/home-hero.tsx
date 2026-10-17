@@ -18,7 +18,7 @@ export async function HomeHero({ searchParams, categories }: HomePageProps & { c
   const { category, location, title, description, path, isSearch } = await getBrowseContext(searchParams)
   const breadcrumbs = category ? getCategoryBreadcrumbs(category.category, category.ancestors, locale, messages.CategoryNames) : []
   const searchCategories = categories.map((category) => ({ slug: category.slug, name: categoryName(category, messages.CategoryNames) }))
-  // Nested categories remain available through /categories. Keep an incoming
+  // Nested categories remain available through the header menu. Keep an incoming
   // nested selection visible without shipping the entire tree to the client.
   if (category && !searchCategories.some(({ slug }) => slug === category.category.slug)) {
     searchCategories.push({
@@ -34,7 +34,13 @@ export async function HomeHero({ searchParams, categories }: HomePageProps & { c
       {category && (
         <BreadCrumbs items={breadcrumbs.map((item, index) => ({ ...item, ...(index === breadcrumbs.length - 1 && { href: undefined }) }))} />
       )}
-      <section id="search-filters" aria-labelledby="hero-heading" className="bg-card min-w-0 scroll-mt-6 rounded-2xl border p-4 shadow-sm sm:p-6">
+      <section
+        id="search-filters"
+        data-search-category={category?.category.slug ?? ''}
+        tabIndex={-1}
+        aria-labelledby="hero-heading"
+        className="bg-card focus-visible:ring-ring/50 min-w-0 scroll-mt-24 rounded-2xl border p-4 shadow-sm outline-none focus-visible:ring-3 sm:p-6"
+      >
         <div className="mb-5 flex items-center gap-3">
           {category && <CategoryIcon value={category.category.image} size={28} />}
           <div className="min-w-0">

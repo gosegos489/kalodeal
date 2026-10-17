@@ -18,7 +18,18 @@ export function useListingSearch() {
 
   async function updateFilters(values: FilterUpdates, limitUrlUpdates = defaultRateLimit, history: 'push' | 'replace' = 'push', replaceAll = false) {
     try {
-      await setFilters(replaceAll ? values : getFilterUpdate(filters, values), { limitUrlUpdates, history })
+      await setFilters(
+        (current) =>
+          replaceAll
+            ? values
+            : getFilterUpdate(current, {
+                // Flush pending text with the category, cancelling its debounce
+                // so one navigation contains both changes.
+                ...('category' in values && { q: current.q || null }),
+                ...values
+              }),
+        { limitUrlUpdates, history }
+      )
       return true
     } catch {
       toast.add({ type: 'error', title: t('updateError'), description: t('retry') })

@@ -20,7 +20,6 @@ export function isLocalizedPath(pathname: string) {
   return (
     [
       '/',
-      '/categories',
       '/pricing',
       '/how-it-works',
       '/safety',
