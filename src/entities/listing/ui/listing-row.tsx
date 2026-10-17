@@ -1,9 +1,10 @@
 import { ImageIcon } from 'lucide-react'
+import { useLocale, useMessages, useTranslations } from 'next-intl'
 import Image from 'next/image'
-import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { formatLocation } from '@/entities/location/catalog'
 import { formatAttributeListingPrice } from '@/features/listing-attributes/format-price'
+import { localizedLocation } from '@/i18n/location-name'
+import { Link } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 import type { ListingSummary } from '../types'
 
@@ -21,7 +22,11 @@ type ListingRowProps = {
 }
 
 export function ListingRow({ listing, href, metadata, status, actions, actionsClassName, feedback, cornerAction }: ListingRowProps) {
-  const location = formatLocation(listing)
+  const t = useTranslations('Workspace')
+
+  const locale = useLocale()
+  const messages = useMessages()
+  const location = localizedLocation(listing, messages.Locations)
   const thumbnailClassName =
     'bg-muted focus-visible:ring-ring relative row-span-2 size-16 overflow-hidden rounded-lg outline-none focus-visible:ring-2 xl:row-span-1'
   const thumbnail = listing.coverUrl ? (
@@ -41,7 +46,7 @@ export function ListingRow({ listing, href, metadata, status, actions, actionsCl
     >
       {cornerAction && <div className="absolute top-3 right-3 sm:top-4 sm:right-4">{cornerAction}</div>}
       {href ? (
-        <Link href={href} aria-label={`View listing: ${listing.title}`} className={thumbnailClassName}>
+        <Link href={href} aria-label={t('viewListingValue', { value0: listing.title })} className={thumbnailClassName}>
           {thumbnail}
         </Link>
       ) : (
@@ -62,10 +67,16 @@ export function ListingRow({ listing, href, metadata, status, actions, actionsCl
         </h3>
         <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs wrap-anywhere">
           <span className="text-foreground font-medium">
-            {formatAttributeListingPrice(listing.price, listing.currency, listing.category?.slug ?? '', {
-              pricePeriod: listing.pricePeriod ?? null,
-              priceNegotiable: listing.priceNegotiable ?? false
-            })}
+            {formatAttributeListingPrice(
+              listing.price,
+              listing.currency,
+              listing.category?.slug ?? '',
+              {
+                pricePeriod: listing.pricePeriod ?? null,
+                priceNegotiable: listing.priceNegotiable ?? false
+              },
+              { locale, labels: messages.Listing }
+            )}
           </span>
           {metadata}
         </div>

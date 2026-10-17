@@ -2,6 +2,7 @@
 
 import 'server-only'
 import z from 'zod'
+import { localizeHref, routing } from '@/i18n/routing'
 import { canUseMarketplace } from '@/lib/account-role'
 import type { ActionResult } from '@/lib/action-result'
 import { isActiveMarketplaceUser } from '@/lib/active-user'
@@ -15,9 +16,11 @@ import { isOpenSubscription } from './subscription-state'
 
 class BillingError extends Error {}
 
-export async function startPlanCheckout(input: unknown): Promise<ActionResult<{ url: string }>> {
+export async function startPlanCheckout(input: unknown, localeInput: unknown = 'en'): Promise<ActionResult<{ url: string }>> {
   const parsed = z.enum(PAID_PLANS).safeParse(input)
   if (!parsed.success) return { success: false, message: 'Choose a valid paid plan.' }
+  const locale = z.enum(routing.locales).safeParse(localeInput)
+  if (!locale.success) return { success: false, message: 'Choose a valid paid plan.' }
   const plan = parsed.data
   try {
     const session = await getMutationSession()
@@ -59,7 +62,13 @@ export async function startPlanCheckout(input: unknown): Promise<ActionResult<{ 
           if (checkout.customer !== customerId) throw new Error('Checkout customer mismatch.')
           if (checkout.status === 'open' && checkout.url && checkout.expires_at * 1000 > Date.now()) {
             const lines = await getStripe().checkout.sessions.listLineItems(checkout.id, { limit: 2 })
-            if (lines.data.length === 1 && lines.data[0].price?.id === price.id) return checkout.url
+            if (
+              lines.data.length === 1 &&
+              lines.data[0].price?.id === price.id &&
+              checkout.success_url === `${origin}${localizeHref('/account/subscription?checkout=success', locale.data)}` &&
+              checkout.cancel_url === `${origin}${localizeHref('/account/subscription?checkout=canceled', locale.data)}`
+            )
+              return checkout.url
             // Replacing a still-open checkout cannot create a second subscription.
             await getStripe().checkout.sessions.expire(checkout.id)
           }
@@ -71,8 +80,8 @@ export async function startPlanCheckout(input: unknown): Promise<ActionResult<{ 
             mode: 'subscription',
             customer: customerId,
             line_items: [{ price: price.id, quantity: 1 }],
-            success_url: `${origin}/account/subscription?checkout=success`,
-            cancel_url: `${origin}/account/subscription?checkout=canceled`,
+            success_url: `${origin}${localizeHref('/account/subscription?checkout=success', locale.data)}`,
+            cancel_url: `${origin}${localizeHref('/account/subscription?checkout=canceled', locale.data)}`,
             // No client ownership, plan, amount or currency is accepted.
             client_reference_id: userId
           },
@@ -94,7 +103,9 @@ export async function startPlanCheckout(input: unknown): Promise<ActionResult<{ 
   }
 }
 
-export async function manageSubscription(): Promise<ActionResult<{ url: string }>> {
+export async function manageSubscription(localeInput: unknown = 'en'): Promise<ActionResult<{ url: string }>> {
+  const locale = z.enum(routing.locales).safeParse(localeInput)
+  if (!locale.success) return { success: false, message: 'Subscription management is temporarily unavailable. Please try again.' }
   try {
     const session = await getMutationSession()
     if (!session) return { success: false, message: 'Sign in to manage your subscription.' }
@@ -111,7 +122,7 @@ export async function manageSubscription(): Promise<ActionResult<{ url: string }
     const portal = await getStripe().billingPortal.sessions.create({
       customer: subscription.stripeCustomerId,
       configuration: configuration.id,
-      return_url: `${getBillingOrigin()}/account/subscription`
+      return_url: `${getBillingOrigin()}${localizeHref('/account/subscription', locale.data)}`
     })
     return { success: true, data: { url: portal.url } }
   } catch (error) {

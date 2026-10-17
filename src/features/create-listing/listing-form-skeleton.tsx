@@ -1,9 +1,12 @@
+import { useTranslations } from 'next-intl'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LoadingStatus } from '@/shared/ui/loading-status'
 
 export function ListingFormSkeleton() {
+  const t = useTranslations('Workspace')
+
   return (
-    <LoadingStatus label="Loading listing form" className="grid items-start gap-6 lg:grid-cols-3 lg:gap-8">
+    <LoadingStatus label={t('loadingListingForm')} className="grid items-start gap-6 lg:grid-cols-3 lg:gap-8">
       <div aria-hidden="true" className="space-y-6 lg:col-span-2">
         <Skeleton className="h-16 w-full rounded-xl" />
         <div className="bg-card space-y-6 rounded-2xl border p-5 sm:p-7">

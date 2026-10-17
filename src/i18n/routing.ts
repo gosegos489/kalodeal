@@ -17,13 +17,34 @@ export function stripLocale(pathname: string) {
 }
 
 export function isLocalizedPath(pathname: string) {
-  return pathname === '/' || pathname === '/categories' || (/^\/listings\/[^/]+$/.test(pathname) && !pathname.endsWith('.xml'))
+  return (
+    [
+      '/',
+      '/categories',
+      '/pricing',
+      '/how-it-works',
+      '/safety',
+      '/contact-us',
+      '/legal/privacy-policy',
+      '/legal/terms-of-use',
+      '/login',
+      '/register',
+      '/forgot-password',
+      '/reset-password'
+    ].includes(pathname) ||
+    pathname === '/sell' ||
+    pathname === '/messages' ||
+    pathname === '/account' ||
+    pathname.startsWith('/account/') ||
+    (/^\/(listings|sellers)\/[^/]+$/.test(pathname) && !pathname.endsWith('.xml'))
+  )
 }
 
 export function localizeHref(href: string, locale: Locale) {
   if (!href.startsWith('/') || href.startsWith('//')) return href
-  const pathname = href.split(/[?#]/, 1)[0]
+  const originalPathname = href.split(/[?#]/, 1)[0]
+  const pathname = stripLocale(originalPathname)
   if (!isLocalizedPath(pathname)) return href
-  if (locale === 'en') return href
-  return `/el${pathname === '/' ? '' : pathname}${href.slice(pathname.length)}`
+  const prefix = locale === routing.defaultLocale ? '' : `/${locale}`
+  return `${prefix}${pathname === '/' && prefix ? '' : pathname}${href.slice(originalPathname.length)}`
 }

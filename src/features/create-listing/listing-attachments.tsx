@@ -1,6 +1,7 @@
 'use client'
 
 import { ImagePlus, Loader2, Upload, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import {
   Attachment,
@@ -16,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { FieldDescription } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
 import { cn } from '@/lib/utils'
 import { IMAGE_TYPES, listingImageSchema } from './schema'
 
@@ -35,6 +37,8 @@ function imageId(file: File) {
 }
 
 function ImagePreview({ file }: { file: File }) {
+  const t = useTranslations('Workspace')
+
   const imageRef = useRef<HTMLImageElement>(null)
 
   useEffect(() => {
@@ -43,11 +47,16 @@ function ImagePreview({ file }: { file: File }) {
     return () => URL.revokeObjectURL(url)
   }, [file])
 
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img ref={imageRef} alt={`Preview of ${file.name}`} width={160} height={160} className="aspect-square w-full object-cover" />
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img ref={imageRef} alt={t('previewOfValue', { value0: file.name })} width={160} height={160} className="aspect-square w-full object-cover" />
+  )
 }
 
 export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImages, disabled, isSubmitting, invalid }: ListingAttachmentsProps) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const pickerRef = useRef<HTMLInputElement>(null)
   const timers = useRef(new Set<ReturnType<typeof setTimeout>>())
   const [isDragging, setIsDragging] = useState(false)
@@ -69,7 +78,7 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
     for (const file of files) {
       const result = listingImageSchema.safeParse(file)
       if (!result.success) {
-        for (const issue of result.error.issues) errors.add(`${file.name}: ${issue.message}`)
+        for (const issue of result.error.issues) errors.add(`${file.name}: ${copy(issue.message, true)}`)
         continue
       }
       const id = imageId(file)
@@ -79,11 +88,11 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
     }
 
     const remaining = Math.max(0, maxImages - value.length)
-    if (accepted.length > remaining) errors.add(`Your plan allows up to ${maxImages} photos per listing.`)
+    if (accepted.length > remaining) errors.add(t('yourPlanAllowsUpToValuePhotosPerListing', { value0: maxImages }))
     const additions = accepted.slice(0, remaining)
     if (additions.length) onChange([...value, ...additions])
     onBlur()
-    if (errors.size) toast.add({ title: 'Some photos were not added', description: [...errors].join(' '), type: 'error' })
+    if (errors.size) toast.add({ title: t('somePhotosWereNotAdded'), description: [...errors].join(' '), type: 'error' })
   }
 
   function removeFile(file: File) {
@@ -129,8 +138,10 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
           <ImagePlus className="size-6" />
         </span>
         <div className="flex flex-col gap-1">
-          <p className="text-sm font-medium">Drop your photos here</p>
-          <p className="text-muted-foreground text-xs">Or choose up to {maxImages} photos from your device</p>
+          <p className="text-sm font-medium">{t('dropYourPhotosHere')}</p>
+          <p className="text-muted-foreground text-xs">
+            {t('orChooseUpTo')} {maxImages} {t('photosFromYourDevice')}
+          </p>
         </div>
         <Input
           id="images"
@@ -160,13 +171,13 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
           disabled={disabled || value.length >= maxImages}
           onClick={() => pickerRef.current?.click()}
         >
-          <Upload className="size-4" /> Choose photos
+          <Upload className="size-4" /> {t('choosePhotos')}
         </Button>
       </div>
 
-      <FieldDescription id="images-description">JPEG, PNG or WebP, up to 5 MB each. The first photo will be your cover.</FieldDescription>
+      <FieldDescription id="images-description">{t('jPEGPNGOrWebPUpTo5MBEachTheFirstPhotoWillBeYourCover')}</FieldDescription>
       <p className="text-muted-foreground text-xs">
-        {value.length}/{maxImages} photos selected
+        {value.length}/{maxImages} {t('photosSelected')}
       </p>
 
       {visibleFiles.length > 0 && (
@@ -191,14 +202,14 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
                   <AttachmentTitle className="motion-reduce:animate-none" title={file.name}>
                     {file.name}
                   </AttachmentTitle>
-                  <AttachmentDescription>{isSubmitting ? 'Uploading...' : `${(file.size / 1024 / 1024).toFixed(1)} MB`}</AttachmentDescription>
+                  <AttachmentDescription>{isSubmitting ? t('uploadingPending') : `${(file.size / 1024 / 1024).toFixed(1)} MB`}</AttachmentDescription>
                 </AttachmentContent>
                 <AttachmentActions>
                   <AttachmentAction
                     type="button"
                     variant="outline"
                     className="bg-background/90"
-                    title={`Remove ${file.name}`}
+                    title={t('removeValue', { value0: file.name })}
                     disabled={disabled || removing}
                     onClick={() => removeFile(file)}
                   >

@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, updateTag } from 'next/cache'
+import { updateTag } from 'next/cache'
 import 'server-only'
 import z from 'zod'
 import { getEditedListingStatus, needsListingResubmission } from '@/entities/listing/lifecycle'
@@ -16,6 +16,7 @@ import {
 import { getCategoryAttributeProfile } from '@/features/listing-attributes/rules'
 import { listingAttributeInputSchema } from '@/features/listing-attributes/schema'
 import type { ListingStatus } from '@/generated/prisma/enums'
+import { revalidateLocalizedPath as revalidatePath } from '@/i18n/revalidate-path'
 import { canUseMarketplace } from '@/lib/account-role'
 import { isActiveMarketplaceUser } from '@/lib/active-user'
 import { getMutationSession } from '@/lib/auth-utils'

@@ -1,7 +1,8 @@
 'use server'
 
 import { APIError } from 'better-auth/api'
-import { revalidatePath, updateTag } from 'next/cache'
+import { updateTag } from 'next/cache'
+import { revalidateLocalizedPath as revalidatePath } from '@/i18n/revalidate-path'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { auth } from '@/lib/auth'
 import { getAuthHeaders } from '@/lib/auth-utils'

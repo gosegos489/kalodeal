@@ -67,12 +67,16 @@ export const getPublicSeller = cache(async (input: string) => {
   if (!content) return null
   const business = user.accountType === 'BUSINESS'
   const premiumBranding = PLAN_LIMITS[getPaidListingPlan(user.subscription)].businessNameEnabled
+  const profileName = business && content.businessName ? content.businessName : content.name
+  const listingName = premiumBranding && content.businessName ? content.businessName : content.name
   return {
     id,
     accountType: user.accountType,
     createdAt: user.createdAt,
-    name: business && content.businessName ? getSellerName(content.businessName) : getSellerName(content.name),
-    listingName: premiumBranding && content.businessName ? getSellerName(content.businessName) : getSellerName(content.name),
+    name: getSellerName(profileName),
+    hasName: !!getSellerName(profileName, ''),
+    listingName: getSellerName(listingName),
+    hasListingName: !!getSellerName(listingName, ''),
     image: getApprovedAvatarUrl(id, content.image),
     listingImage: business && !premiumBranding ? null : getApprovedAvatarUrl(id, content.image),
     details: business ? content.businessProfile : null,

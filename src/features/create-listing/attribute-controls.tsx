@@ -1,11 +1,14 @@
 'use client'
 
+import { useMessages, useTranslations } from 'next-intl'
 import { Controller, type FieldPath, useWatch } from 'react-hook-form'
 import { ComboboxSelect } from '@/components/ui/combobox'
-import { Field, FieldError, FieldLabel } from '@/components/ui/field'
+import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { attributeLabel } from '@/features/listing-attributes/labels'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
+import { WorkspaceFieldError as FieldError } from '@/shared/ui/workspace-field-error'
 import type { CreateListingInput, ListingFormApi } from './types'
 
 type ControlProps = {
@@ -39,7 +42,14 @@ export function AttributeSelect({
   displayValue?: string
   allowEmpty?: boolean
 }) {
-  const items = allowEmpty ? [{ value: '', label: placeholder }, ...options] : options
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
+  const messages = useMessages()
+  const search = useTranslations('Search')
+  const values: Record<string, string> = messages.Attributes.values
+  const translatedOptions = options.map((item) => ({ ...item, label: values[item.value] ?? copy(item.label) }))
+  const items = allowEmpty ? [{ value: '', label: copy(placeholder) }, ...translatedOptions] : translatedOptions
   return (
     <Controller
       name={name}
@@ -52,17 +62,19 @@ export function AttributeSelect({
         }
         return (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={name}>{label}</FieldLabel>
+            <FieldLabel htmlFor={name}>{copy(label)}</FieldLabel>
             {searchable ? (
               <ComboboxSelect
                 id={name}
                 inputRef={field.ref}
                 onBlur={field.onBlur}
-                label={label}
+                label={copy(label)}
                 items={items}
+                searchPlaceholder={search('searchOptions', { label: copy(label) })}
+                emptyMessage={search('noMatches')}
                 value={displayValue ?? (typeof field.value === 'string' ? field.value : '')}
                 onValueChange={change}
-                placeholder={placeholder}
+                placeholder={copy(placeholder)}
                 disabled={disabled}
                 invalid={fieldState.invalid}
                 aria-describedby={fieldState.error ? `${name}-error` : undefined}
@@ -82,12 +94,12 @@ export function AttributeSelect({
                   aria-invalid={fieldState.invalid}
                   aria-describedby={fieldState.error ? `${name}-error` : undefined}
                 >
-                  <SelectValue placeholder={placeholder} />
+                  <SelectValue placeholder={copy(placeholder)} />
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false}>
                   {items.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
-                      {item.label}
+                      {copy(item.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -111,13 +123,16 @@ export function AttributeNumber({
   max,
   step = 1
 }: ControlProps & { min?: number; max: number; step?: number }) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   return (
     <Controller
       name={name}
       control={form.control}
       render={({ field, fieldState }) => (
         <Field data-invalid={fieldState.invalid}>
-          <FieldLabel htmlFor={name}>{label}</FieldLabel>
+          <FieldLabel htmlFor={name}>{copy(label)}</FieldLabel>
           <Input
             id={name}
             name={name}
@@ -145,13 +160,16 @@ export function AttributeNumber({
 }
 
 export function AttributeText({ form, name, label, disabled, beforeChange, maxLength }: ControlProps & { maxLength: number }) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   return (
     <Controller
       name={name}
       control={form.control}
       render={({ field, fieldState }) => (
         <Field data-invalid={fieldState.invalid}>
-          <FieldLabel htmlFor={name}>{label}</FieldLabel>
+          <FieldLabel htmlFor={name}>{copy(label)}</FieldLabel>
           <Input
             id={name}
             name={name}

@@ -1,8 +1,10 @@
 import { ArrowRight, Loader2 } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { needsListingResubmission } from '@/entities/listing/lifecycle'
 import type { ListingStatus } from '@/generated/prisma/enums'
+import { localizeHref } from '@/i18n/routing'
 
 type PublishListingCardProps = {
   isSubmitting: boolean
@@ -11,36 +13,39 @@ type PublishListingCardProps = {
 }
 
 export function PublishListingCard({ isSubmitting, disabled, editingStatus }: PublishListingCardProps) {
+  const t = useTranslations('Workspace')
+  const locale = useLocale()
+
   const editing = editingStatus !== undefined
   const resubmitting = editingStatus !== undefined && needsListingResubmission(editingStatus)
   return (
     <section className="bg-card flex flex-col gap-4 rounded-2xl border p-6 shadow-xs">
-      <h2 className="font-semibold">{editing ? 'Save your changes' : 'Ready to publish?'}</h2>
+      <h2 className="font-semibold">{editing ? t('saveYourChanges') : t('readyToPublish')}</h2>
       <p className="text-muted-foreground text-sm leading-relaxed">
         {resubmitting
-          ? 'Apply the requested corrections, including any photo changes, then submit the completed listing for review.'
+          ? t('applyTheRequestedCorrectionsIncludingAnyPhotoChangesThenSubmitTheCompletedListingForR')
           : editingStatus === 'ACTIVE' || editingStatus === 'INACTIVE'
-            ? 'Changing listing details or photos sends it back to moderation. It will be visible to buyers again after approval.'
+            ? t('changingListingDetailsOrPhotosSendsItBackToModerationItWillBeVisibleToBuyersAgainAfte')
             : editing
-              ? 'Check your updated details before saving. Your current listing status will be kept.'
-              : 'Check your details one last time. Your listing will be visible to buyers after moderator approval.'}
+              ? t('checkYourUpdatedDetailsBeforeSavingYourCurrentListingStatusWillBeKept')
+              : t('checkYourDetailsOneLastTimeYourListingWillBeVisibleToBuyersAfterModeratorApproval')}
       </p>
       <Button className="h-11 w-full cursor-pointer gap-2" size="lg" type="submit" disabled={disabled}>
         {isSubmitting ? <Loader2 className="size-4 motion-safe:animate-spin" /> : <ArrowRight className="size-4" />}
         {isSubmitting
           ? resubmitting
-            ? 'Submitting...'
+            ? t('submittingPending')
             : editing
-              ? 'Saving...'
-              : 'Publishing...'
+              ? t('savingPending')
+              : t('publishingPending')
           : resubmitting
-            ? 'Submit for review'
+            ? t('submitForReview')
             : editing
-              ? 'Save changes'
-              : 'Publish listing'}
+              ? t('saveChanges')
+              : t('publishListing')}
       </Button>
       <p className="text-muted-foreground text-center text-xs">
-        You can manage your listing in <Link href="/account/listings">My listings</Link>.
+        {t('youCanManageYourListingIn')} <Link href={localizeHref('/account/listings', locale)}>{t('myListings')}</Link>.
       </p>
     </section>
   )

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useSyncExternalStore, useTransition } from 'react'
 import { useMessaging, useMessagingRealtime } from '@/app/chat-provider'
@@ -24,6 +25,8 @@ export function useRealtimeStatus(subscriptionState: RealtimeAvailability) {
 }
 
 export function MessagesRealtime({ children, conversationId, otherId }: { children: React.ReactNode; conversationId?: string; otherId?: string }) {
+  const t = useTranslations('Workspace')
+
   const { realtime, revision, selectConversation, refreshInbox, inboxStatus } = useMessaging()
   const router = useRouter()
   const status = useRealtimeStatus(inboxStatus)
@@ -49,7 +52,7 @@ export function MessagesRealtime({ children, conversationId, otherId }: { childr
     <>
       {status === 'unavailable' && (
         <p role="status" className="bg-muted rounded-lg px-4 py-2 text-xs">
-          Realtime updates are temporarily unavailable. Messages remain available and refresh automatically.
+          {t('realtimeUpdatesAreTemporarilyUnavailableMessagesRemainAvailableAndRefreshAutomaticall')}
         </p>
       )}
       {children}

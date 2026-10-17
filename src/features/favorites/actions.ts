@@ -1,7 +1,8 @@
 'use server'
 
-import { refresh, revalidatePath } from 'next/cache'
+import { refresh } from 'next/cache'
 import 'server-only'
+import { revalidateLocalizedPath as revalidatePath } from '@/i18n/revalidate-path'
 import { canUseMarketplace } from '@/lib/account-role'
 import { getMutationSession } from '@/lib/auth-utils'
 import prisma from '@/lib/prisma'

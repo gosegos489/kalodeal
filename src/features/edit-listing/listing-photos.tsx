@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowLeft, ArrowRight, ImageOff, ImagePlus, Loader2, RefreshCw, Trash2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
 import { needsListingResubmission } from '@/entities/listing/lifecycle'
 import { IMAGE_TYPES, listingImageSchema } from '@/features/create-listing/schema'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
 import { updateListingPhotos } from './photo-actions'
 import type { ListingPhotoState, PhotoMutation } from './photo-schema'
@@ -22,11 +24,13 @@ type Props = {
 }
 
 function PhotoPreview({ image, position }: { image: ListingPhotoState['images'][number]; position: number }) {
+  const t = useTranslations('Workspace')
+
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
   return image.url && image.url !== failedUrl ? (
     <Image
       src={image.url}
-      alt={`Listing photo ${position}`}
+      alt={t('listingPhotoValue', { value0: position })}
       fill
       sizes="(max-width: 640px) 42vw, (max-width: 1024px) 28vw, 180px"
       className="object-cover"
@@ -34,12 +38,15 @@ function PhotoPreview({ image, position }: { image: ListingPhotoState['images'][
     />
   ) : (
     <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-3 text-center text-xs">
-      <ImageOff aria-hidden="true" className="size-6" /> Preview unavailable
+      <ImageOff aria-hidden="true" className="size-6" /> {t('previewUnavailable')}
     </div>
   )
 }
 
 export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingChange }: Props) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const addInput = useRef<HTMLInputElement>(null)
   const replaceInput = useRef<HTMLInputElement>(null)
   const replaceTarget = useRef<string | null>(null)
@@ -58,26 +65,26 @@ export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingCh
     try {
       const result = await updateListingPhotos(listingId, mutation)
       if (!result.success) {
-        setError(result.message)
-        toast.add({ title: 'Could not update photos', description: result.message, type: 'error' })
+        setError(copy(result.message, true))
+        toast.add({ title: t('couldNotUpdatePhotos'), description: copy(result.message, true), type: 'error' })
         return
       }
       onSaved(result.data)
       toast.add({
-        title: 'Photos updated',
+        title: t('photosUpdated'),
         description:
           result.warning ??
           (needsListingResubmission(result.data.status)
-            ? 'Photos saved. Complete your corrections, then select Submit for review.'
+            ? t('photosSavedCompleteYourCorrectionsThenSelectSubmitForReview')
             : result.data.status === 'PENDING'
-              ? 'Your listing is awaiting moderation.'
-              : 'Your listing status is unchanged.'),
+              ? t('yourListingIsAwaitingModeration')
+              : t('yourListingStatusIsUnchanged')),
         type: result.warning ? 'warning' : 'success'
       })
     } catch {
-      const message = 'Could not confirm your photo changes. Check your connection and reload before trying again.'
+      const message = t('couldNotConfirmYourPhotoChangesCheckYourConnectionAndReloadBeforeTryingAgain')
       setError(message)
-      toast.add({ title: 'Could not update photos', description: message, type: 'error' })
+      toast.add({ title: t('couldNotUpdatePhotos'), description: message, type: 'error' })
     } finally {
       requestPending.current = false
       setPending(null)
@@ -90,20 +97,23 @@ export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingCh
     for (const file of files) {
       const parsed = listingImageSchema.safeParse(file)
       if (!parsed.success) {
-        const message = `${file.name}: ${parsed.error.issues[0].message}`
+        const message = `${file.name}: ${copy(parsed.error.issues[0].message, true)}`
         setError(message)
-        toast.add({ title: 'Choose valid photos', description: message, type: 'error' })
+        toast.add({ title: t('chooseValidPhotos'), description: message, type: 'error' })
         return
       }
     }
     if (!imageId && state.images.length + files.length > maxImages) {
-      const message = `Your plan allows up to ${maxImages} photos. Choose no more than ${Math.max(0, maxImages - state.images.length)} additional photos.`
+      const message = t('yourPlanAllowsUpToValuePhotosChooseNoMoreThanValueAdditionalPhotos', {
+        value0: maxImages,
+        value1: Math.max(0, maxImages - state.images.length)
+      })
       setError(message)
-      toast.add({ title: 'Photo limit reached', description: message, type: 'error' })
+      toast.add({ title: t('photoLimitReached'), description: message, type: 'error' })
       return
     }
-    if (imageId) void mutate({ operation: 'replace', imageId, images: [files[0]], updatedAt: state.updatedAt }, 'Replacing photo...')
-    else void mutate({ operation: 'add', images: files, updatedAt: state.updatedAt }, 'Uploading photos...')
+    if (imageId) void mutate({ operation: 'replace', imageId, images: [files[0]], updatedAt: state.updatedAt }, t('replacingPhoto'))
+    else void mutate({ operation: 'add', images: files, updatedAt: state.updatedAt }, t('uploadingPhotos'))
   }
 
   function move(index: number, offset: number) {
@@ -113,15 +123,15 @@ export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingCh
     const movedId = imageIds[index]
     imageIds[index] = imageIds[target]
     imageIds[target] = movedId
-    void mutate({ operation: 'reorder', imageIds, updatedAt: state.updatedAt }, 'Updating photo order...')
+    void mutate({ operation: 'reorder', imageIds, updatedAt: state.updatedAt }, t('updatingPhotoOrder'))
   }
 
   return (
     <Field aria-busy={pending !== null}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <FieldLabel htmlFor="listing-add-photos">Photos</FieldLabel>
+        <FieldLabel htmlFor="listing-add-photos">{t('photos259')}</FieldLabel>
         <p className="text-muted-foreground text-xs" aria-live="polite">
-          {state.images.length} / {maxImages} photos
+          {state.images.length} / {maxImages} {t('photos')}
         </p>
       </div>
       <Input
@@ -144,7 +154,7 @@ export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingCh
         accept={IMAGE_TYPES.join(',')}
         className="sr-only"
         disabled={locked || state.images.length > maxImages}
-        aria-label="Choose replacement photo"
+        aria-label={t('chooseReplacementPhoto')}
         onChange={(event) => {
           if (replaceTarget.current) upload(Array.from(event.currentTarget.files ?? []), replaceTarget.current)
           replaceTarget.current = null
@@ -157,7 +167,7 @@ export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingCh
             <div className="bg-muted relative aspect-square">
               <PhotoPreview image={image} position={index + 1} />
               <span className="bg-background/90 absolute top-2 left-2 rounded-md px-2 py-1 text-xs font-medium">
-                {index === 0 ? 'Main photo' : `Photo ${index + 1}`}
+                {index === 0 ? t('mainPhoto') : t('photoValue', { value0: index + 1 })}
               </span>
               {pending?.imageId === image.id && (
                 <div className="bg-background/60 absolute inset-0 flex items-center justify-center">
@@ -171,13 +181,13 @@ export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingCh
                 variant="outline"
                 size="sm"
                 disabled={locked || state.images.length > maxImages}
-                aria-label={`Replace photo ${index + 1}`}
+                aria-label={t('replacePhotoValue', { value0: index + 1 })}
                 onClick={() => {
                   replaceTarget.current = image.id
                   replaceInput.current?.click()
                 }}
               >
-                <RefreshCw aria-hidden="true" /> Replace
+                <RefreshCw aria-hidden="true" /> {t('replace')}
               </Button>
               <div className="flex items-center justify-between gap-1">
                 <Button
@@ -185,7 +195,7 @@ export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingCh
                   variant="outline"
                   size="icon-sm"
                   disabled={locked || index === 0}
-                  aria-label={`Move photo ${index + 1} earlier`}
+                  aria-label={t('movePhotoValueEarlier', { value0: index + 1 })}
                   onClick={() => move(index, -1)}
                 >
                   <ArrowLeft aria-hidden="true" />
@@ -195,7 +205,7 @@ export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingCh
                   variant="outline"
                   size="icon-sm"
                   disabled={locked || index === state.images.length - 1}
-                  aria-label={`Move photo ${index + 1} later`}
+                  aria-label={t('movePhotoValueLater', { value0: index + 1 })}
                   onClick={() => move(index, 1)}
                 >
                   <ArrowRight aria-hidden="true" />
@@ -205,8 +215,8 @@ export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingCh
                   variant="destructive"
                   size="icon-sm"
                   disabled={locked}
-                  aria-label={`Delete photo ${index + 1}`}
-                  title="Delete photo"
+                  aria-label={t('deletePhotoValue', { value0: index + 1 })}
+                  title={t('deletePhoto')}
                   onClick={() => void mutate({ operation: 'delete', imageId: image.id, updatedAt: state.updatedAt }, 'Deleting photo...')}
                 >
                   <Trash2 aria-hidden="true" />
@@ -222,19 +232,19 @@ export function ListingPhotos({ listingId, state, disabled, onSaved, onPendingCh
           disabled={locked || state.images.length >= maxImages}
           onClick={() => addInput.current?.click()}
         >
-          <ImagePlus aria-hidden="true" className="size-7" /> Add photo
+          <ImagePlus aria-hidden="true" className="size-7" /> {t('addPhoto')}
         </Button>
       </div>
       <FieldDescription id="listing-photo-description">
-        JPEG, PNG or WebP, up to 5 MB each. The first photo is your cover. Photo changes are saved immediately.
+        {t('jPEGPNGOrWebPUpTo5MBEachTheFirstPhotoIsYourCoverPhotoChangesAreSavedImmediately')}
       </FieldDescription>
-      {state.images.length > maxImages && <p className="text-muted-foreground text-xs">Remove extra photos to upload under your current plan.</p>}
-      {!state.images.length && <p className="text-muted-foreground text-sm">No photos yet. Your listing shows the no-photo placeholder.</p>}
+      {state.images.length > maxImages && <p className="text-muted-foreground text-xs">{t('removeExtraPhotosToUploadUnderYourCurrentPlan')}</p>}
+      {!state.images.length && <p className="text-muted-foreground text-sm">{t('noPhotosYetYourListingShowsTheNoPhotoPlaceholder')}</p>}
       <div role="status" aria-live="polite" className="text-muted-foreground text-sm">
         {pending && (
           <span className="flex items-center gap-2">
             <Loader2 aria-hidden="true" className="size-4 motion-safe:animate-spin" />
-            {pending.label}
+            {copy(pending.label)}
           </span>
         )}
       </div>

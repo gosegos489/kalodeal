@@ -62,6 +62,7 @@ export async function getListing(id: unknown): Promise<ListingDetails | null> {
     seller: {
       id: seller.id,
       name: seller.listingName,
+      hasName: seller.hasListingName,
       image: seller.listingImage,
       createdAt: seller.createdAt,
       activeAds: seller.activeAds

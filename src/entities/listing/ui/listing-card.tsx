@@ -81,6 +81,7 @@ export async function ListingCard({
         )}
         {showFavorite && (
           <FavoriteButton
+            loginHref={localizeHref('/login', locale)}
             labels={favoriteLabels}
             listingId={listing.id}
             title={listing.title}

@@ -1,6 +1,6 @@
 import { Plus, UserRound } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { canUseMarketplace } from '@/lib/account-role'
 import { getHeaderAccountNavigation } from '../mocks/mocks'
 import { HeaderUnreadMessagesBadge as UnreadMessagesBadge } from './header-unread-messages-badge'

@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@/generated/prisma/client'
-import type { ActionMessageResult } from '@/lib/action-result'
 import { contactUsSchema } from './schema'
+import type { ContactUsResult } from './types'
 
 type Dependencies = {
   db: Pick<PrismaClient, 'contactUs'>
@@ -9,20 +9,20 @@ type Dependencies = {
 }
 
 // Keep the public boundary's existing rate-limit-before-validation behavior.
-export async function submitContactUs(payload: unknown, { db, limit, reportUnexpectedError }: Dependencies): Promise<ActionMessageResult> {
+export async function submitContactUs(payload: unknown, { db, limit, reportUnexpectedError }: Dependencies): Promise<ContactUsResult> {
   try {
     const rateLimit = await limit()
-    if (!rateLimit.success) return { success: false, message: rateLimit.message ?? 'Please try again later.' }
+    if (!rateLimit.success) return { success: false, code: 'rateLimited', message: rateLimit.message ?? 'Please try again later.' }
     const parsed = contactUsSchema.safeParse(payload)
-    if (!parsed.success) return { success: false, message: 'Invalid data' }
+    if (!parsed.success) return { success: false, code: 'invalidData', message: 'Invalid data' }
     await db.contactUs.create({ data: { ...parsed.data, status: 'OPEN' }, select: { id: true } })
-    return { success: true, message: 'Contact us form submitted successfully' }
+    return { success: true, code: 'submitted', message: 'Contact us form submitted successfully' }
   } catch (error) {
     try {
       await reportUnexpectedError?.(error)
     } catch {
       // Monitoring must preserve the form's safe failure response.
     }
-    return { success: false, message: 'Could not submit your message. Please try again.' }
+    return { success: false, code: 'failed', message: 'Could not submit your message. Please try again.' }
   }
 }

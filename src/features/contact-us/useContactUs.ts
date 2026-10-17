@@ -1,15 +1,25 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import { toast } from '@/components/ui/toast'
 import { createContactUs } from './action'
-import { contactUsSchema } from './schema'
+import { createContactUsSchema } from './schema'
 import type { ContactUsSchemaTypes } from './types'
 
 export const useContactUs = () => {
+  const t = useTranslations('ContactUs')
   const form = useForm<ContactUsSchemaTypes>({
-    resolver: zodResolver(contactUsSchema),
+    resolver: zodResolver(
+      createContactUsSchema({
+        emailInvalid: t('validation.emailInvalid'),
+        emailTooLong: t('validation.emailTooLong'),
+        topicInvalid: t('validation.topicInvalid'),
+        messageTooShort: t('validation.messageTooShort'),
+        messageTooLong: t('validation.messageTooLong')
+      })
+    ),
     defaultValues: {
       contactEmail: '',
       question: 'GENERAL',
@@ -24,7 +34,7 @@ export const useContactUs = () => {
     try {
       result = await createContactUs(values)
     } catch {
-      toast.add({ title: 'Error', description: 'Could not submit your message. Please try again.', type: 'error' })
+      toast.add({ title: t('feedback.error'), description: t('feedback.failed'), type: 'error' })
       return
     }
 
@@ -32,16 +42,16 @@ export const useContactUs = () => {
       form.reset()
 
       toast.add({
-        title: 'Success',
-        description: result.message,
+        title: t('feedback.success'),
+        description: t('feedback.submitted'),
         type: 'success'
       })
 
       return
     }
     toast.add({
-      title: 'Error',
-      description: result.message,
+      title: t('feedback.error'),
+      description: t(`feedback.${result.code}`),
       type: 'error'
     })
   })

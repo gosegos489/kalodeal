@@ -11,13 +11,14 @@ import { revealListingPhone } from './actions'
 type PhoneLabels = { reveal: string; revealing: string; revealLabel: string; signIn: string; error: string; connection: string }
 
 type Props = {
+  loginHref?: string
   labels?: PhoneLabels
   listingId: string
   maskedPhone: string
   isAuthenticated: boolean
 }
 
-export function RevealListingPhoneButton({ listingId, maskedPhone, isAuthenticated, labels }: Props) {
+export function RevealListingPhoneButton({ listingId, maskedPhone, isAuthenticated, labels, loginHref = '/login' }: Props) {
   const router = useRouter()
   const [phone, setPhone] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -32,11 +33,11 @@ export function RevealListingPhoneButton({ listingId, maskedPhone, isAuthenticat
         const result = await revealListingPhone(listingId)
         if (!result.success) {
           if ('requiresLogin' in result && result.requiresLogin) {
-            router.push('/login')
+            router.push(loginHref)
             return
           }
 
-          toast.add({ title: labels?.error ?? 'Could not reveal phone', description: result.message, type: 'error' })
+          toast.add({ title: labels?.error ?? 'Could not reveal phone', description: labels?.error ?? result.message, type: 'error' })
           return
         }
 
@@ -61,7 +62,7 @@ export function RevealListingPhoneButton({ listingId, maskedPhone, isAuthenticat
         size="lg"
         className="w-full"
         aria-label={labels?.signIn ?? `Sign in to reveal phone number ${maskedPhone}`}
-        render={<Link href="/login" />}
+        render={<Link href={loginHref} />}
       >
         <Phone aria-hidden="true" /> {maskedPhone}
       </Button>

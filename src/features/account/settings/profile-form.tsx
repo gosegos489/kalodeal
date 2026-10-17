@@ -2,13 +2,16 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
 import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
+import { WorkspaceFieldError as FieldError } from '@/shared/ui/workspace-field-error'
 import { saveProfile } from './actions'
 import { AwaitingModeration, PendingNameNotice, ProfileModerationFeedback } from './profile-moderation-notice'
 import { ProfilePhotoForm } from './profile-photo-form'
@@ -37,6 +40,9 @@ export function ProfileForm({
   cleanupPending,
   business = false
 }: Props) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const router = useRouter()
   const currentName = pendingName ?? name
   const form = useForm<z.infer<typeof profileSchema>>({ resolver: zodResolver(profileSchema), values: { name: currentName } })
@@ -49,8 +55,8 @@ export function ProfileForm({
         try {
           const saved = await saveProfile(data)
           toast.add({
-            title: saved.success ? 'Profile saved' : 'Could not save your profile',
-            description: saved.message,
+            title: saved.success ? t('profileSaved') : t('couldNotSaveYourProfile'),
+            description: copy(saved.message, true),
             type: saved.success ? 'success' : 'error'
           })
           if (saved.success) {
@@ -58,7 +64,7 @@ export function ProfileForm({
             router.refresh()
           }
         } catch {
-          toast.add({ title: 'Could not save your profile', description: 'Please try again.', type: 'error' })
+          toast.add({ title: t('couldNotSaveYourProfile'), description: t('pleaseTryAgain'), type: 'error' })
         }
       })}
     >
@@ -78,7 +84,7 @@ export function ProfileForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <div className="flex flex-wrap items-center gap-2">
-                <FieldLabel htmlFor="display-name">Display name</FieldLabel>
+                <FieldLabel htmlFor="display-name">{t('displayName')}</FieldLabel>
                 {pendingName && <AwaitingModeration />}
               </div>
               <Input
@@ -91,7 +97,7 @@ export function ProfileForm({
                 aria-describedby="display-name-help"
               />
               <FieldDescription id="display-name-help">
-                Optional. Leave empty to appear as Seller. Name changes are reviewed before becoming public. Your email is never shown publicly.
+                {t('optionalLeaveEmptyToAppearAsSellerNameChangesAreReviewedBeforeBecomingPublicYourEmail')}
               </FieldDescription>
               <PendingNameNotice name={name} pendingName={pendingName} />
               <ProfileModerationFeedback kind="name" message={nameModerationMessage} />
@@ -102,7 +108,8 @@ export function ProfileForm({
       </FieldGroup>
       <div className="mt-auto border-t pt-5">
         <Button type="submit" disabled={busy} className="w-full sm:w-auto">
-          {form.formState.isSubmitting && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}Save profile
+          {form.formState.isSubmitting && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
+          {t('saveProfile')}
         </Button>
       </div>
     </form>

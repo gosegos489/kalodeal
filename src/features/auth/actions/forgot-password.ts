@@ -1,9 +1,11 @@
+import type { Locale } from '@/i18n/routing'
 import { authClient } from '@/lib/auth-client'
+import { getAuthHref } from '../login-redirect'
 import type { ForgotPasswordInput } from '../types/auth'
 
-export function requestPasswordReset({ email }: ForgotPasswordInput) {
+export function requestPasswordReset({ email }: ForgotPasswordInput, locale: Locale = 'en', returnTo?: string | null) {
   return authClient.requestPasswordReset({
     email: email.trim().toLowerCase(),
-    redirectTo: '/reset-password'
+    redirectTo: getAuthHref('/reset-password', locale, returnTo)
   })
 }

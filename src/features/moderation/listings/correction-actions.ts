@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, updateTag } from 'next/cache'
+import { updateTag } from 'next/cache'
 import 'server-only'
 import { AvatarError } from '@/features/account/settings/avatar-lifecycle'
 import { getSettingsActor } from '@/features/account/settings/server'
@@ -13,6 +13,7 @@ import {
   serializeListingAttributes
 } from '@/features/listing-attributes/persistence'
 import { getCategoryAttributeProfile } from '@/features/listing-attributes/rules'
+import { revalidateLocalizedPath as revalidatePath } from '@/i18n/revalidate-path'
 import { hasActiveBan } from '@/lib/ban-status'
 import { cacheTags } from '@/lib/cache-tags'
 import prisma from '@/lib/prisma'

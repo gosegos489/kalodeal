@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { LoadingStatus } from '@/shared/ui/loading-status'
@@ -31,8 +32,10 @@ export function ConversationSkeleton({ readOnly = false }: { readOnly?: boolean 
 }
 
 export function ConversationLoading() {
+  const t = useTranslations('Workspace')
+
   return (
-    <LoadingStatus label="Loading conversation history">
+    <LoadingStatus label={t('loadingConversationHistory')}>
       <ConversationSkeleton readOnly />
     </LoadingStatus>
   )

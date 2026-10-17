@@ -58,7 +58,7 @@ async function ListingDetails({ params }: Props) {
   ]
   const isJobListing = category && [...category.ancestors, category.category].some(({ slug }) => slug === 'jobs')
 
-  const sellerName = listing.seller.name
+  const sellerName = listing.seller.hasName ? listing.seller.name : t('seller')
   const initials = getSellerInitials(sellerName)
   const publishedAt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Nicosia' }).format(
     listing.createdAt
@@ -106,6 +106,7 @@ async function ListingDetails({ params }: Props) {
               <div className="flex items-center gap-3">
                 {listing.canUseMarketplace && listing.publiclyVisible && (
                   <FavoriteButton
+                    loginHref={localizeHref('/login', locale)}
                     labels={favoriteLabels}
                     listingId={listing.id}
                     title={listing.title}
@@ -159,6 +160,7 @@ async function ListingDetails({ params }: Props) {
               </Link>
               {listing.maskedPhone && (
                 <RevealListingPhoneButton
+                  loginHref={localizeHref('/login', locale)}
                   labels={{
                     reveal: t('reveal'),
                     revealing: t('revealing'),
@@ -197,7 +199,7 @@ async function ListingDetails({ params }: Props) {
               )}
               {!listing.canUseMarketplace ? (
                 <Button nativeButton={false} size="lg" className="w-full" render={<Link href={`/moderator/listings/${listing.id}`} />}>
-                  Review listing
+                  {t('reviewListing')}
                 </Button>
               ) : listing.isOwner ? (
                 <div className="flex flex-col gap-2">
@@ -208,6 +210,8 @@ async function ListingDetails({ params }: Props) {
                 </div>
               ) : (
                 <MessageSellerButton
+                  locale={locale}
+                  loginHref={localizeHref('/login', locale)}
                   labels={{ message: t('messageSeller'), opening: t('opening'), error: t('conversationError'), retry: t('conversationRetry') }}
                   listingId={listing.id}
                   isAuthenticated={listing.isAuthenticated}

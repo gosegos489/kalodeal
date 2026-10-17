@@ -1,6 +1,7 @@
 'use client'
 
 import { Loader2, UserRound } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import z from 'zod'
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
 import { removeAvatar, retryAvatarCleanup } from './actions'
 import { AwaitingModeration, ProfileModerationFeedback } from './profile-moderation-notice'
 import { avatarFileSchema } from './schema'
@@ -24,17 +26,20 @@ export type ProfilePhotoProps = {
 }
 
 export function ProfilePhotoForm({ userId, avatarModerationMessage, image, pending, cleanupPending, business = false }: ProfilePhotoProps) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const router = useRouter()
   const fileInput = useRef<HTMLInputElement>(null)
   const [avatarAction, setAvatarAction] = useState<'upload' | 'remove' | 'cleanup' | null>(null)
   const busy = avatarAction !== null
-  const avatarAlt = pending ? 'Profile photo awaiting moderation' : 'Current approved avatar'
+  const avatarAlt = pending ? t('profilePhotoAwaitingModeration') : t('currentApprovedAvatar')
 
   async function upload(file: File | undefined) {
     if (!file) return
     const parsed = avatarFileSchema.safeParse(file)
     if (!parsed.success) {
-      toast.add({ title: 'Could not upload your photo', description: parsed.error.issues[0].message, type: 'error' })
+      toast.add({ title: t('couldNotUploadYourPhoto'), description: copy(parsed.error.issues[0].message, true), type: 'error' })
       return
     }
     setAvatarAction('upload')
@@ -45,15 +50,15 @@ export function ProfilePhotoForm({ userId, avatarModerationMessage, image, pendi
       const uploaded = z.object({ success: z.boolean(), message: z.string() }).parse(await response.json())
       if (response.ok && uploaded.success) {
         toast.add({
-          title: 'Photo sent for moderation',
-          description: 'Your profile photo will appear publicly once it is approved.',
+          title: t('photoSentForModeration'),
+          description: t('yourProfilePhotoWillAppearPubliclyOnceItIsApproved'),
           type: 'success'
         })
       } else {
-        toast.add({ title: 'Could not upload your photo', description: uploaded.message, type: 'error' })
+        toast.add({ title: t('couldNotUploadYourPhoto'), description: copy(uploaded.message, true), type: 'error' })
       }
     } catch {
-      toast.add({ title: 'Could not upload your photo', description: 'Please try again.', type: 'error' })
+      toast.add({ title: t('couldNotUploadYourPhoto'), description: t('pleaseTryAgain'), type: 'error' })
     } finally {
       setAvatarAction(null)
       router.refresh()
@@ -65,12 +70,12 @@ export function ProfilePhotoForm({ userId, avatarModerationMessage, image, pendi
     try {
       const updated = await (cleanup ? retryAvatarCleanup(userId) : removeAvatar())
       toast.add({
-        title: updated.success ? (cleanup ? 'Photo cleanup completed' : 'Profile photo removed') : 'Could not update your photo',
-        description: updated.message,
+        title: updated.success ? (cleanup ? t('photoCleanupCompleted') : t('profilePhotoRemoved')) : t('couldNotUpdateYourPhoto'),
+        description: copy(updated.message, true),
         type: updated.success ? 'success' : 'error'
       })
     } catch {
-      toast.add({ title: 'Could not update your photo', description: 'Please try again.', type: 'error' })
+      toast.add({ title: t('couldNotUpdateYourPhoto'), description: t('pleaseTryAgain'), type: 'error' })
     } finally {
       setAvatarAction(null)
       router.refresh()
@@ -80,7 +85,7 @@ export function ProfilePhotoForm({ userId, avatarModerationMessage, image, pendi
   return (
     <Field>
       <div className="flex flex-wrap items-center gap-2">
-        <FieldLabel htmlFor="avatar-upload">{business ? 'Business logo' : 'Profile photo'}</FieldLabel>
+        <FieldLabel htmlFor="avatar-upload">{business ? t('businessLogo') : t('profilePhoto')}</FieldLabel>
         {pending && <AwaitingModeration />}
       </div>
       <div className="flex flex-wrap items-center gap-4">
@@ -99,7 +104,7 @@ export function ProfilePhotoForm({ userId, avatarModerationMessage, image, pendi
             className="hidden"
             tabIndex={-1}
             disabled={busy || cleanupPending}
-            aria-label="Choose an avatar image"
+            aria-label={t('chooseAnAvatarImage')}
             onChange={(event) => {
               void upload(event.target.files?.[0])
               event.target.value = ''
@@ -113,7 +118,7 @@ export function ProfilePhotoForm({ userId, avatarModerationMessage, image, pendi
             onClick={() => fileInput.current?.click()}
           >
             {avatarAction === 'upload' && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
-            {business ? 'Change logo' : 'Change photo'}
+            {business ? t('changeLogo') : t('changePhoto')}
           </Button>
           <Button
             type="button"
@@ -123,19 +128,18 @@ export function ProfilePhotoForm({ userId, avatarModerationMessage, image, pendi
             onClick={() => void manageAvatar()}
           >
             {avatarAction === 'remove' && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
-            {business ? 'Remove logo' : 'Remove photo'}
+            {business ? t('removeLogo') : t('removePhoto')}
           </Button>
         </div>
       </div>
-      <FieldDescription>
-        JPEG, PNG or WebP, up to 5 MB. Only approved images appear publicly. This image is shared by your seller profile and business logo.
-      </FieldDescription>
+      <FieldDescription>{t('jPEGPNGOrWebPUpTo5MBOnlyApprovedImagesAppearPubliclyThisImageIsSharedByYourSellerProf')}</FieldDescription>
       <ProfileModerationFeedback kind="avatar" message={avatarModerationMessage} />
       {cleanupPending && (
         <div className="flex flex-col items-start gap-2">
-          <p className="text-muted-foreground text-sm">Storage cleanup is pending. Complete it before uploading another avatar.</p>
+          <p className="text-muted-foreground text-sm">{t('storageCleanupIsPendingCompleteItBeforeUploadingAnotherAvatar')}</p>
           <Button type="button" variant="outline" disabled={busy} aria-busy={avatarAction === 'cleanup'} onClick={() => void manageAvatar(true)}>
-            {avatarAction === 'cleanup' && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}Retry cleanup
+            {avatarAction === 'cleanup' && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
+            {t('retryCleanup')}
           </Button>
         </div>
       )}

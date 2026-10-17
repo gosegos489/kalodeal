@@ -1,8 +1,9 @@
 import { Eye, Pencil } from 'lucide-react'
-import Link from 'next/link'
+import { useLocale, useMessages, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { ListingRow } from '@/entities/listing/ui/listing-row'
-import { dayjs } from '@/lib/dayjs'
+import { categoryName } from '@/i18n/category-name'
+import { Link } from '@/i18n/navigation'
 import { BoostListingButton } from './boost-listing-button'
 import type { getMyListings } from './data'
 import { DeleteListingButton } from './delete-listing-button'
@@ -19,6 +20,14 @@ type MyListingRowProps = {
 }
 
 export function MyListingRow({ listing, boostsRemaining, canBoost, canFeature }: MyListingRowProps) {
+  const t = useTranslations('Workspace')
+  const locale = useLocale()
+  const messages = useMessages()
+  const category = categoryName(listing.category, messages.CategoryNames)
+  const date = (value: Date, time = false) =>
+    new Intl.DateTimeFormat(locale, { dateStyle: 'medium', ...(time ? { timeStyle: 'short' as const } : {}), timeZone: 'UTC' }).format(value) +
+    (time ? ' UTC' : '')
+
   const href = `/listings/${listing.id}`
 
   return (
@@ -27,13 +36,13 @@ export function MyListingRow({ listing, boostsRemaining, canBoost, canFeature }:
       href={href}
       metadata={
         <>
-          <span className="max-w-full truncate" title={listing.category.name}>
-            {listing.category.name}
+          <span className="max-w-full truncate" title={category}>
+            {category}
           </span>
-          <time dateTime={listing.createdAt.toISOString()}>{dayjs.utc(listing.createdAt).format('D MMM YYYY')}</time>
+          <time dateTime={listing.createdAt.toISOString()}>{date(listing.createdAt)}</time>
           {listing.boostedAt && (
             <span className="basis-full">
-              Last boosted: <time dateTime={listing.boostedAt.toISOString()}>{dayjs.utc(listing.boostedAt).format('D MMM YYYY, HH:mm [UTC]')}</time>
+              {t('lastBoosted')} <time dateTime={listing.boostedAt.toISOString()}>{date(listing.boostedAt, true)}</time>
             </span>
           )}
         </>
@@ -41,7 +50,7 @@ export function MyListingRow({ listing, boostsRemaining, canBoost, canFeature }:
       status={
         <div className="flex flex-col gap-1">
           <ListingStatusBadge status={listing.status} />
-          {listing.planLimited && <span className="text-muted-foreground text-xs">Not public: plan limit</span>}
+          {listing.planLimited && <span className="text-muted-foreground text-xs">{t('notPublicPlanLimit')}</span>}
         </div>
       }
       actionsClassName="xl:self-start"
@@ -57,17 +66,23 @@ export function MyListingRow({ listing, boostsRemaining, canBoost, canFeature }:
       actions={
         <div className="flex w-full min-w-0 flex-col gap-2 xl:w-72">
           <div className="flex flex-wrap items-center gap-2">
-            <Button nativeButton={false} variant="outline" size="sm" aria-label={`View listing: ${listing.title}`} render={<Link href={href} />}>
-              <Eye aria-hidden="true" /> View
+            <Button
+              nativeButton={false}
+              variant="outline"
+              size="sm"
+              aria-label={t('viewListingValue', { value0: listing.title })}
+              render={<Link href={href} />}
+            >
+              <Eye aria-hidden="true" /> {t('view')}
             </Button>
             <Button
               nativeButton={false}
               variant="outline"
               size="sm"
-              aria-label={`Edit listing: ${listing.title}`}
+              aria-label={t('editListingValue', { value0: listing.title })}
               render={<Link href={`/account/listings/${listing.id}/edit`} />}
             >
-              <Pencil aria-hidden="true" /> {listing.status === 'CHANGES_REQUESTED' || listing.status === 'HIDDEN' ? 'Edit listing' : 'Edit'}
+              <Pencil aria-hidden="true" /> {listing.status === 'CHANGES_REQUESTED' || listing.status === 'HIDDEN' ? t('editListing') : t('edit')}
             </Button>
             <DeleteListingButton listingId={listing.id} title={listing.title} />
           </div>

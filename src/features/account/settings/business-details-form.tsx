@@ -1,14 +1,17 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
+import { WorkspaceFieldError as FieldError } from '@/shared/ui/workspace-field-error'
 import { saveBusinessDetails } from './actions'
 import { type BusinessDetails, businessDetailsSchema } from './business-schema'
 
@@ -26,6 +29,9 @@ const fields = [
 ] as const
 
 export function BusinessDetailsForm({ values, pending, feedback }: { values: BusinessDetails; pending: boolean; feedback: string | null }) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const form = useForm<BusinessDetails>({ resolver: zodResolver(businessDetailsSchema), values })
@@ -36,15 +42,15 @@ export function BusinessDetailsForm({ values, pending, feedback }: { values: Bus
         setError(null)
         try {
           const result = await saveBusinessDetails(data)
-          if (!result.success) setError(result.message)
+          if (!result.success) setError(copy(result.message, true))
           toast.add({
-            title: result.success ? 'Business profile saved' : 'Could not save business profile',
-            description: result.message,
+            title: result.success ? t('businessProfileSaved') : t('couldNotSaveBusinessProfile'),
+            description: copy(result.message, true),
             type: result.success ? 'success' : 'error'
           })
           if (result.success) router.refresh()
         } catch {
-          setError('Could not save business details. Please try again.')
+          setError(t('couldNotSaveBusinessDetailsPleaseTryAgain'))
         }
       })}
     >
@@ -64,13 +70,13 @@ export function BusinessDetailsForm({ values, pending, feedback }: { values: Bus
             }
             return (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={props.id}>{label}</FieldLabel>
+                <FieldLabel htmlFor={props.id}>{copy(label)}</FieldLabel>
                 {multiline ? (
                   <Textarea {...props} rows={name === 'description' ? 5 : 3} />
                 ) : (
                   <Input {...props} type={name === 'website' ? 'url' : 'text'} />
                 )}
-                <FieldDescription id={`business-${name}-help`}>{help}</FieldDescription>
+                <FieldDescription id={`business-${name}-help`}>{copy(help)}</FieldDescription>
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )
@@ -79,12 +85,12 @@ export function BusinessDetailsForm({ values, pending, feedback }: { values: Bus
       ))}
       {pending && (
         <p role="status" className="text-muted-foreground text-sm">
-          Awaiting moderation. Only previously approved details are public. Clearing a field removes it immediately.
+          {t('awaitingModerationOnlyPreviouslyApprovedDetailsArePublicClearingAFieldRemovesItImmedi')}
         </p>
       )}
       {feedback && (
         <p role="status" className="text-muted-foreground text-sm">
-          Moderator feedback: {feedback}
+          {t('moderatorFeedback')} {feedback}
         </p>
       )}
       {error && (
@@ -93,7 +99,7 @@ export function BusinessDetailsForm({ values, pending, feedback }: { values: Bus
         </p>
       )}
       <Button type="submit" disabled={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? 'Saving...' : 'Save business profile'}
+        {form.formState.isSubmitting ? t('savingPending') : t('saveBusinessProfile')}
       </Button>
     </form>
   )

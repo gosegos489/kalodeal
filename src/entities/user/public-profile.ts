@@ -1,7 +1,7 @@
 // Email-shaped legacy names must never become a public account identifier.
-export function getSellerName(displayName: string | null | undefined) {
+export function getSellerName(displayName: string | null | undefined, fallback = 'Seller') {
   const name = displayName?.trim()
-  return name && !name.includes('@') ? name : 'Seller'
+  return name && !name.includes('@') ? name : fallback
 }
 
 export function getSellerInitials(displayName: string | null | undefined) {

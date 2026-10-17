@@ -1,6 +1,7 @@
 'use client'
 
 import type { PresenceMessage, Realtime } from 'ably'
+import { useLocale, useTranslations } from 'next-intl'
 import { createContext, useContext, useEffect, useState, useSyncExternalStore } from 'react'
 import { useConversationRealtime } from '@/app/chat-provider'
 import { presenceChannel } from './channels'
@@ -8,6 +9,9 @@ import { ChatAvatar } from './chat-presentation'
 import { formatLastSeen } from './format-time'
 
 export function useParticipantPresence(userId: string, conversationId: string) {
+  const t = useTranslations('Workspace')
+  const locale = useLocale()
+
   const realtime = useConversationRealtime(conversationId)
   const connected = useSyncExternalStore(
     (callback) => {
@@ -106,7 +110,14 @@ export function useParticipantPresence(userId: string, conversationId: string) {
   const online = connected && state.source === realtime ? state.online : null
   return {
     online: online === true,
-    label: online === null ? 'Status unavailable' : online ? 'Online' : state.lastSeen && now ? formatLastSeen(state.lastSeen, now) : 'Offline'
+    label:
+      online === null
+        ? t('statusUnavailable')
+        : online
+          ? t('online')
+          : state.lastSeen && now
+            ? formatLastSeen(state.lastSeen, now, locale, t)
+            : t('offline')
   }
 }
 
@@ -122,12 +133,14 @@ export function useConversationPresence() {
 }
 
 export function ConversationAvatar({ userId, name, url }: { userId: string; name: string; url: string | null }) {
+  const t = useTranslations('Workspace')
+
   const presence = useConversationPresence()
   const online = presence.userId === userId && presence.online
   return (
     <span>
       <ChatAvatar name={name} url={url} online={online} />
-      {online && <span className="sr-only">Online</span>}
+      {online && <span className="sr-only">{t('online')}</span>}
     </span>
   )
 }

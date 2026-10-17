@@ -1,39 +1,43 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useLocale, useTranslations } from 'next-intl'
+import { useSearchParams } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { toast } from '@/components/ui/toast'
 import { requestPasswordReset } from '../actions/forgot-password'
 import { forgotPasswordSchema } from '../schemas/forgot-password'
 import type { ForgotPasswordInput } from '../types/auth'
-import { toast } from '@/components/ui/toast'
+import { AuthValidationError } from './auth-validation-error'
 
 export default function ForgotPasswordForm() {
+  const t = useTranslations('Auth')
+  const locale = useLocale()
+  const returnTo = useSearchParams().get('returnTo')
   const form = useForm<ForgotPasswordInput>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: { email: '' }
   })
   const isSubmitting = form.formState.isSubmitting
   const onSubmit = form.handleSubmit(async (data) => {
-    const { error } = await requestPasswordReset(data)
-
-    if (error) {
-      toast.add({
-        title: 'Unable to send reset link',
-        description: error.status === 429 ? 'Too many attempts. Please try again later.' : 'Something went wrong',
-        type: 'error'
-      })
-      return
+    try {
+      const { error } = await requestPasswordReset(data, locale, returnTo)
+      if (error) {
+        toast.add({
+          title: t('feedback.resetLinkFailed'),
+          description: t(error.status === 429 ? 'feedback.tooManyAttempts' : 'feedback.retry'),
+          type: 'error'
+        })
+        return
+      }
+      form.reset()
+      toast.add({ title: t('feedback.checkEmail'), description: t('feedback.resetEmailSent'), type: 'success' })
+    } catch {
+      toast.add({ title: t('feedback.resetLinkFailed'), description: t('feedback.retry'), type: 'error' })
     }
-
-    form.reset()
-    toast.add({
-      title: 'Check your email',
-      description: 'If an account exists with this email, we sent a password reset link.',
-      type: 'success'
-    })
   })
 
   return (
@@ -44,16 +48,23 @@ export default function ForgotPasswordForm() {
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-              <Input {...field} id={field.name} type="email" aria-invalid={fieldState.invalid} placeholder="Enter your email" autoComplete="email" />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              <FieldLabel htmlFor={field.name}>{t('common.email')}</FieldLabel>
+              <Input
+                {...field}
+                id={field.name}
+                type="email"
+                aria-invalid={fieldState.invalid}
+                placeholder={t('common.emailPlaceholder')}
+                autoComplete="email"
+              />
+              {fieldState.invalid && <AuthValidationError error={fieldState.error} />}
             </Field>
           )}
         />
       </FieldGroup>
 
       <Button className="w-full max-w-50 cursor-pointer" type="submit" disabled={isSubmitting}>
-        Reset password
+        {isSubmitting ? t('common.sending') : t('common.sendResetLink')}
       </Button>
     </form>
   )

@@ -2,18 +2,24 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import type z from 'zod'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
+import { WorkspaceFieldError as FieldError } from '@/shared/ui/workspace-field-error'
 import { saveBusinessName } from './actions'
 import { businessNameSchema } from './schema'
 
 export function BusinessNameForm({ name, pendingName, feedback }: { name: string | null; pendingName: string | null; feedback: string | null }) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const form = useForm<z.infer<typeof businessNameSchema>>({
@@ -27,15 +33,15 @@ export function BusinessNameForm({ name, pendingName, feedback }: { name: string
         setError(null)
         try {
           const result = await saveBusinessName(data)
-          if (!result.success) setError(result.message)
+          if (!result.success) setError(copy(result.message, true))
           toast.add({
-            title: result.success ? 'Business name saved' : 'Could not save business name',
-            description: result.message,
+            title: result.success ? t('businessNameSaved') : t('couldNotSaveBusinessName'),
+            description: copy(result.message, true),
             type: result.success ? 'success' : 'error'
           })
           router.refresh()
         } catch {
-          setError('Could not save business name. Please try again.')
+          setError(t('couldNotSaveBusinessNamePleaseTryAgain'))
         }
       })}
     >
@@ -44,7 +50,7 @@ export function BusinessNameForm({ name, pendingName, feedback }: { name: string
         control={form.control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor="business-name">Business display name</FieldLabel>
+            <FieldLabel htmlFor="business-name">{t('businessDisplayName')}</FieldLabel>
             <Input
               {...field}
               id="business-name"
@@ -54,8 +60,7 @@ export function BusinessNameForm({ name, pendingName, feedback }: { name: string
               aria-describedby="business-name-help"
             />
             <FieldDescription id="business-name-help">
-              Reviewed before becoming public. Available on your seller page on any plan; branding on listings requires an active Business Plan. This
-              is a display name, not a verified company identity. Leave empty to remove.
+              {t('reviewedBeforeBecomingPublicAvailableOnYourSellerPageOnAnyPlanBrandingOnListingsRequi')}
             </FieldDescription>
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
@@ -63,12 +68,12 @@ export function BusinessNameForm({ name, pendingName, feedback }: { name: string
       />
       {pendingName && (
         <p role="status" className="text-muted-foreground text-sm">
-          Awaiting moderation. Approved name: {name ?? 'None'}
+          {t('awaitingModerationApprovedName')} {name ?? t('none')}
         </p>
       )}
       {feedback && (
         <p role="status" className="text-muted-foreground text-sm">
-          Moderator feedback: {feedback}
+          {t('moderatorFeedback')} {feedback}
         </p>
       )}
       {error && (
@@ -77,7 +82,8 @@ export function BusinessNameForm({ name, pendingName, feedback }: { name: string
         </p>
       )}
       <Button type="submit" disabled={form.formState.isSubmitting} className="w-fit">
-        {form.formState.isSubmitting && <Loader2 aria-hidden="true" className="motion-safe:animate-spin" />}Save business name
+        {form.formState.isSubmitting && <Loader2 aria-hidden="true" className="motion-safe:animate-spin" />}
+        {t('saveBusinessName')}
       </Button>
     </form>
   )

@@ -1,9 +1,10 @@
 'use client'
 
+import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { Controller, useWatch } from 'react-hook-form'
 import { useRef, useState } from 'react'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,7 +14,10 @@ import { ListingPhotos } from '@/features/edit-listing/listing-photos'
 import type { ListingPhotoState } from '@/features/edit-listing/photo-schema'
 import type { EditableListing } from '@/features/edit-listing/types'
 import { getCategoryAttributeProfile } from '@/features/listing-attributes/rules'
+import { localizeHref } from '@/i18n/routing'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
 import { type ListingPlan, PLAN_LIMITS } from '@/lib/plan-limits'
+import { WorkspaceFieldError as FieldError } from '@/shared/ui/workspace-field-error'
 import { ListingAllowanceCard } from './listing-allowance-card'
 import { ListingAttachments } from './listing-attachments'
 import { ListingCategoryFields } from './listing-category-fields'
@@ -33,6 +37,11 @@ type ListingFormProps = {
 const currencyOptions = LISTING_CURRENCIES.map((currency) => ({ value: currency, label: currency }))
 
 export function ListingForm(props: ListingFormProps) {
+  const locale = useLocale()
+
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const { categories } = props
   const [photoState, setPhotoState] = useState<ListingPhotoState | undefined>(() => {
     if (props.mode !== 'edit') return undefined
@@ -64,9 +73,9 @@ export function ListingForm(props: ListingFormProps) {
     >
       <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
         <div className="bg-muted/50 rounded-xl border p-4 text-sm leading-relaxed">
-          Duplicate listings are not allowed. You can manage your existing listings in{' '}
-          <Link href="/account/listings" className="text-primary underline underline-offset-4">
-            My Listings
+          {t('duplicateListingsAreNotAllowedYouCanManageYourExistingListingsIn')}{' '}
+          <Link href={localizeHref('/account/listings', locale)} className="text-primary underline underline-offset-4">
+            {t('myListings212')}
           </Link>
           .
         </div>
@@ -86,8 +95,8 @@ export function ListingForm(props: ListingFormProps) {
           <div className="flex items-start gap-3 border-b pb-5">
             <span className="bg-primary/8 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold">01</span>
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold">About your item</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">Start with the details buyers will want to know.</p>
+              <h2 className="text-lg font-semibold">{t('aboutYourItem')}</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">{t('startWithTheDetailsBuyersWillWantToKnow')}</p>
             </div>
           </div>
           <FieldGroup>
@@ -96,13 +105,13 @@ export function ListingForm(props: ListingFormProps) {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Title</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>{t('title')}</FieldLabel>
                   <Input
                     {...field}
                     id={field.name}
                     aria-invalid={fieldState.invalid}
                     aria-describedby={fieldState.error ? `${field.name}-error` : undefined}
-                    placeholder="e.g. iPhone 15 in excellent condition"
+                    placeholder={t('eGIPhone15InExcellentCondition')}
                     maxLength={120}
                     disabled={disabled}
                   />
@@ -120,19 +129,19 @@ export function ListingForm(props: ListingFormProps) {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>{t('description')}</FieldLabel>
                   <Textarea
                     {...field}
                     id={field.name}
                     aria-invalid={fieldState.invalid}
                     aria-describedby={fieldState.error ? `${field.name}-error` : undefined}
-                    placeholder="Describe the condition, features and anything buyers should know."
+                    placeholder={t('describeTheConditionFeaturesAndAnythingBuyersShouldKnow')}
                     rows={6}
                     maxLength={3000}
                     className="min-h-36"
                     disabled={disabled}
                   />
-                  <FieldDescription>Use at least 20 characters. Include useful details about your item.</FieldDescription>
+                  <FieldDescription>{t('useAtLeast20CharactersIncludeUsefulDetailsAboutYourItem')}</FieldDescription>
                   {fieldState.invalid && <FieldError id={`${field.name}-error`} errors={[fieldState.error]} />}
                 </Field>
               )}
@@ -147,8 +156,8 @@ export function ListingForm(props: ListingFormProps) {
           <div className="flex items-start gap-3 border-b pb-5">
             <span className="bg-primary/8 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold">02</span>
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold">Make it stand out</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">Clear photos help buyers picture your item in their life.</p>
+              <h2 className="text-lg font-semibold">{t('makeItStandOut')}</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">{t('clearPhotosHelpBuyersPictureYourItemInTheirLife')}</p>
             </div>
           </div>
           <FieldGroup>
@@ -170,7 +179,7 @@ export function ListingForm(props: ListingFormProps) {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>
-                      Photos <span className="text-muted-foreground font-normal">(optional)</span>
+                      {t('photos259')} <span className="text-muted-foreground font-normal">{t('optional')}</span>
                     </FieldLabel>
                     <ListingAttachments
                       value={field.value ?? []}
@@ -194,7 +203,7 @@ export function ListingForm(props: ListingFormProps) {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={field.name}>
-                    YouTube link <span className="text-muted-foreground font-normal">(optional)</span>
+                    {t('youTubeLink')} <span className="text-muted-foreground font-normal">{t('optional')}</span>
                   </FieldLabel>
                   <Input
                     {...field}
@@ -216,8 +225,8 @@ export function ListingForm(props: ListingFormProps) {
           <div className="flex items-start gap-3 border-b pb-5">
             <span className="bg-primary/8 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold">03</span>
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold">Price &amp; contact</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">Set your asking price and let buyers know how to reach you.</p>
+              <h2 className="text-lg font-semibold">{t('priceContact')}</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">{t('setYourAskingPriceAndLetBuyersKnowHowToReachYou')}</p>
             </div>
           </div>
           <FieldGroup>
@@ -229,7 +238,7 @@ export function ListingForm(props: ListingFormProps) {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor={field.name}>
-                        Price <span className="text-muted-foreground font-normal">(optional)</span>
+                        {t('price')} <span className="text-muted-foreground font-normal">{t('optional')}</span>
                       </FieldLabel>
                       <Input
                         {...field}
@@ -250,7 +259,7 @@ export function ListingForm(props: ListingFormProps) {
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor={field.name}>Currency</FieldLabel>
+                      <FieldLabel htmlFor={field.name}>{t('currency')}</FieldLabel>
                       <Select value={field.value} onValueChange={(value) => field.onChange(value ?? '')} disabled={disabled} items={currencyOptions}>
                         <SelectTrigger
                           ref={field.ref}
@@ -265,7 +274,7 @@ export function ListingForm(props: ListingFormProps) {
                         <SelectContent alignItemWithTrigger={false}>
                           {currencyOptions.map(({ value, label }) => (
                             <SelectItem key={value} value={value}>
-                              {label}
+                              {copy(label)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -281,7 +290,7 @@ export function ListingForm(props: ListingFormProps) {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Phone number</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>{t('phoneNumber')}</FieldLabel>
                     <Input
                       {...field}
                       id={field.name}
@@ -305,7 +314,7 @@ export function ListingForm(props: ListingFormProps) {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>
-                      Facebook <span className="text-muted-foreground font-normal">(optional)</span>
+                      Facebook <span className="text-muted-foreground font-normal">{t('optional')}</span>
                     </FieldLabel>
                     <Input
                       {...field}
@@ -317,7 +326,7 @@ export function ListingForm(props: ListingFormProps) {
                       maxLength={500}
                       disabled={disabled}
                     />
-                    <FieldDescription>Link to your Facebook profile or page.</FieldDescription>
+                    <FieldDescription>{t('linkToYourFacebookProfileOrPage')}</FieldDescription>
                     {fieldState.invalid && <FieldError id={`${field.name}-error`} errors={[fieldState.error]} />}
                   </Field>
                 )}
@@ -328,7 +337,7 @@ export function ListingForm(props: ListingFormProps) {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>
-                      WhatsApp <span className="text-muted-foreground font-normal">(optional)</span>
+                      WhatsApp <span className="text-muted-foreground font-normal">{t('optional')}</span>
                     </FieldLabel>
                     <Input
                       {...field}
@@ -340,7 +349,7 @@ export function ListingForm(props: ListingFormProps) {
                       maxLength={500}
                       disabled={disabled}
                     />
-                    <FieldDescription>Use a wa.me or api.whatsapp.com link.</FieldDescription>
+                    <FieldDescription>{t('useAWaMeOrApiWhatsappComLink')}</FieldDescription>
                     {fieldState.invalid && <FieldError id={`${field.name}-error`} errors={[fieldState.error]} />}
                   </Field>
                 )}

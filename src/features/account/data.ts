@@ -1,3 +1,4 @@
+import { getLocale } from 'next-intl/server'
 import 'server-only'
 import { cache } from 'react'
 import { listingSummarySelect, toListingSummary } from '@/entities/listing/listing-summary'
@@ -9,7 +10,7 @@ import prisma from '@/lib/prisma'
 import { getUserAccess } from '@/lib/user-access'
 
 export const getAccount = cache(async function getAccount() {
-  const session = await requireMarketplaceUser()
+  const session = await requireMarketplaceUser(await getLocale())
   const userId = session.user.id
 
   const [access, listingSlotCount, featuredUsed] = await Promise.all([
@@ -49,7 +50,7 @@ export const getAccount = cache(async function getAccount() {
 })
 
 export async function getMyListings(pageParam?: string | string[]) {
-  const session = await requireMarketplaceUser()
+  const session = await requireMarketplaceUser(await getLocale())
   const where = { userId: session.user.id }
   const totalItems = await prisma.listing.count({ where })
   const pagination = getPagination({ pageParam, totalItems })

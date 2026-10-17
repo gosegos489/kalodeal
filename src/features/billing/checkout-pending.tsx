@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
 
@@ -7,6 +8,8 @@ const MAX_REFRESHES = 10
 const REFRESH_DELAY_MS = 2000
 
 export function CheckoutPending() {
+  const t = useTranslations('Workspace')
+
   const router = useRouter()
   const [attempts, setAttempts] = useState(0)
   const [pending, startTransition] = useTransition()
@@ -23,8 +26,8 @@ export function CheckoutPending() {
   return (
     <p>
       {attempts >= MAX_REFRESHES && !pending
-        ? 'Payment confirmation is taking longer than expected. Your plan will be available once confirmation is received.'
-        : 'Payment confirmation is being processed. Your plan will appear here automatically once it is confirmed.'}
+        ? t('paymentConfirmationIsTakingLongerThanExpectedYourPlanWillBeAvailableOnceConfirmationI')
+        : t('paymentConfirmationIsBeingProcessedYourPlanWillAppearHereAutomaticallyOnceItIsConfirm')}
     </p>
   )
 }

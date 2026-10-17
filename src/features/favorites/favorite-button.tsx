@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { setListingFavorite } from './actions'
 
 export type FavoriteLabels = {
+  errors?: Record<string, string>
   add: string
   remove: string
   signIn: string
@@ -28,6 +29,7 @@ const defaultLabels: FavoriteLabels = {
 }
 
 type FavoriteButtonProps = {
+  loginHref?: string
   labels?: FavoriteLabels
   listingId: string
   title: string
@@ -44,7 +46,8 @@ export function FavoriteButton({
   isAuthenticated,
   removalOnly = false,
   className,
-  labels = defaultLabels
+  labels = defaultLabels,
+  loginHref = '/login'
 }: FavoriteButtonProps) {
   const router = useRouter()
 
@@ -53,7 +56,7 @@ export function FavoriteButton({
 
   function updateFavorite() {
     if (!isAuthenticated) {
-      router.push('/login')
+      router.push(loginHref)
       return
     }
 
@@ -70,13 +73,13 @@ export function FavoriteButton({
           setFavorite(previousFavorite)
 
           if ('requiresLogin' in result && result.requiresLogin) {
-            router.push('/login')
+            router.push(loginHref)
             return
           }
 
           toast.add({
             title: labels.error,
-            description: result.message,
+            description: labels.errors?.[result.message] ?? (labels === defaultLabels ? result.message : labels.error),
             type: 'error'
           })
         }

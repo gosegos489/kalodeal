@@ -1,9 +1,11 @@
+import { useTranslations } from 'next-intl'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LoadingStatus } from '@/shared/ui/loading-status'
 
 export function ListingSearchSkeleton() {
+  const t = useTranslations('Search')
   return (
-    <LoadingStatus label="Loading search controls" className="space-y-4">
+    <LoadingStatus label={t('loadingControls')} className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row">
         <Skeleton className="h-12 flex-1" />
         <Skeleton className="h-12 sm:w-28" />

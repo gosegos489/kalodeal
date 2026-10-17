@@ -91,7 +91,7 @@ export default function MobileMenu({ isAuth, currentYear, role }: Props) {
                 </ul>
               ) : (
                 <Link
-                  href="/login"
+                  href={localizeHref('/login', locale)}
                   onClick={closeMenu}
                   className="text-muted-foreground hover:bg-muted hover:text-primary flex h-11 items-center rounded-lg px-3 text-sm font-medium transition-colors"
                 >

@@ -1,6 +1,7 @@
 'use client'
 
 import { CheckCheck, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { useRef, useState, useTransition } from 'react'
 import {
@@ -18,9 +19,13 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 import { type OwnerListingAction, getOwnerStatusTransition } from '@/entities/listing/lifecycle'
 import type { ListingStatus } from '@/generated/prisma/enums'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
 import { changeListingVisibility } from './listing-actions'
 
 export function ListingOwnerActions({ id, title, status, updatedAt }: { id: string; title: string; status: ListingStatus; updatedAt: string }) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const router = useRouter()
   const inFlight = useRef(false)
   const [pending, startTransition] = useTransition()
@@ -40,16 +45,16 @@ export function ListingOwnerActions({ id, title, status, updatedAt }: { id: stri
       try {
         const result = await changeListingVisibility({ id, updatedAt, action })
         if (result.success) setSoldOpen(false)
-        else setError(result.message)
+        else setError(copy(result.message, true))
         toast.add({
-          title: result.success ? 'Listing updated' : 'Could not update listing',
-          description: result.message,
+          title: result.success ? t('listingUpdated') : t('couldNotUpdateListing'),
+          description: copy(result.message, true),
           type: result.success ? 'success' : 'error'
         })
       } catch {
-        const message = 'Could not confirm this change. Reload to check your listing before retrying.'
+        const message = t('couldNotConfirmThisChangeReloadToCheckYourListingBeforeRetrying')
         setError(message)
-        toast.add({ title: 'Could not update listing', description: message, type: 'error' })
+        toast.add({ title: t('couldNotUpdateListing'), description: message, type: 'error' })
       } finally {
         router.refresh()
         setPendingAction(null)
@@ -67,7 +72,7 @@ export function ListingOwnerActions({ id, title, status, updatedAt }: { id: stri
             size="sm"
             disabled={pending}
             aria-busy={pendingAction === visibilityAction}
-            aria-label={`${visibilityAction === 'hide' ? 'Hide' : 'Unhide'} listing: ${title}`}
+            aria-label={`${visibilityAction === 'hide' ? t('hide') : t('unhide')} listing: ${title}`}
             onClick={() => submit(visibilityAction)}
           >
             {pendingAction === visibilityAction ? (
@@ -77,7 +82,7 @@ export function ListingOwnerActions({ id, title, status, updatedAt }: { id: stri
             ) : (
               <Eye aria-hidden="true" />
             )}
-            {pendingAction === visibilityAction ? 'Updating...' : visibilityAction === 'hide' ? 'Hide' : 'Unhide'}
+            {pendingAction === visibilityAction ? t('updating') : visibilityAction === 'hide' ? t('hide') : t('unhide')}
           </Button>
         )}
         {canMarkSold && (
@@ -90,14 +95,18 @@ export function ListingOwnerActions({ id, title, status, updatedAt }: { id: stri
               }
             }}
           >
-            <AlertDialogTrigger render={<Button variant="outline" size="sm" disabled={pending} />} aria-label={`Mark as sold: ${title}`}>
-              <CheckCheck aria-hidden="true" /> Mark as sold
+            <AlertDialogTrigger
+              render={<Button variant="outline" size="sm" disabled={pending} />}
+              aria-label={t('markAsSoldValue', { value0: title })}
+            >
+              <CheckCheck aria-hidden="true" /> {t('markAsSold')}
             </AlertDialogTrigger>
             <AlertDialogContent className="w-[calc(100vw-2rem)]" aria-busy={pending}>
               <AlertDialogHeader>
-                <AlertDialogTitle>Mark this listing as sold?</AlertDialogTitle>
+                <AlertDialogTitle>{t('markThisListingAsSold')}</AlertDialogTitle>
                 <AlertDialogDescription className="wrap-anywhere">
-                  &ldquo;{title}&rdquo; will leave public browsing. Sold listings cannot be unhidden.
+                  &ldquo;{title}
+                  {t('willLeavePublicBrowsingSoldListingsCannotBeUnhidden')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               {error && (
@@ -106,10 +115,10 @@ export function ListingOwnerActions({ id, title, status, updatedAt }: { id: stri
                 </p>
               )}
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+                <AlertDialogCancel disabled={pending}>{t('cancel')}</AlertDialogCancel>
                 <AlertDialogAction disabled={pending} onClick={() => submit('mark-sold')}>
                   {pending && <Loader2 aria-hidden="true" className="motion-safe:animate-spin" />}
-                  {pending ? 'Updating...' : 'Mark as sold'}
+                  {pending ? t('updating') : t('markAsSold')}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

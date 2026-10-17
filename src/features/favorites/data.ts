@@ -1,3 +1,4 @@
+import { getLocale } from 'next-intl/server'
 import 'server-only'
 import { getListingImageUrl, listingSummarySelect } from '@/entities/listing/listing-summary'
 import { canUseMarketplace } from '@/lib/account-role'
@@ -24,7 +25,7 @@ export async function getFavoriteState(listingIds: string[]) {
 }
 
 export async function getMyFavorites(pageParam?: string | string[]) {
-  const session = await requireMarketplaceUser()
+  const session = await requireMarketplaceUser(await getLocale())
   const where = { userId: session.user.id }
 
   // Count, page clamping and rows share a snapshot, including during concurrent removals.

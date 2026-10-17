@@ -1,12 +1,15 @@
 'use client'
 
 import { ArrowDown, ArrowLeft, Loader2, Send } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { useEffect, useLayoutEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useConversationRealtime, useMessaging } from '@/app/chat-provider'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
+import { localizeHref } from '@/i18n/routing'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
 import { markConversationRead, sendConversationMessage } from './actions'
 import { conversationChannel } from './channels'
 import { ChatMessageList, ChatParticipantHeader, type DisplayMessage } from './chat-presentation'
@@ -24,6 +27,11 @@ function isAtBottom(container: HTMLDivElement | null) {
 type PendingMessage = DisplayMessage & { delivery: 'sending' | 'failed' }
 
 export function ChatView({ conversation, reference }: { conversation: ConversationDetails; reference: string }) {
+  const locale = useLocale()
+
+  const t = useTranslations('Workspace')
+  const copy = useMemo(() => createWorkspaceCopy(t), [t])
+
   const realtime = useConversationRealtime(conversation.id)
   const { refreshInbox } = useMessaging()
   const presence = useConversationPresence()
@@ -108,10 +116,10 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
           if (result.success) {
             readThrough = through
             if (result.data.changed) refreshInbox()
-          } else setSyncError(result.message)
+          } else setSyncError(copy(result.message, true))
         }
       } catch {
-        if (!disposed) setSyncError('Could not update read state. Retrying when your connection recovers.')
+        if (!disposed) setSyncError(t('couldNotUpdateReadStateRetryingWhenYourConnectionRecovers'))
       } finally {
         readBusy = false
         // Messages can commit while the previous acknowledgement is in flight.
@@ -132,7 +140,7 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
           const result = await loadConversationMessages({ conversationId: conversation.id, after: afterSequence.current }, controller.signal)
           if (disposed) return
           if (!result.success) {
-            setSyncError(result.message)
+            setSyncError(copy(result.message, true))
             return
           }
           setOtherReadSequence((current) => Math.max(current, result.data.otherReadSequence))
@@ -155,7 +163,7 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
         if (!disposed) setSyncError(null)
         await markVisibleRead()
       } catch {
-        if (!disposed) setSyncError('Could not refresh messages. Check your connection or try again.')
+        if (!disposed) setSyncError(t('couldNotRefreshMessagesCheckYourConnectionOrTryAgain'))
       } finally {
         busy = false
         if (queued && !disposed) {
@@ -184,7 +192,7 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
       ?.subscribe('changed', onChanged)
       .then(onChanged)
       .catch(() => {
-        if (!disposed) setSyncError('Realtime is unavailable. Messages will refresh automatically.')
+        if (!disposed) setSyncError(t('realtimeIsUnavailableMessagesWillRefreshAutomatically'))
       })
     channel?.on('attached', onChanged)
     const interval = setInterval(onChanged, 30000)
@@ -208,7 +216,7 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
       document.removeEventListener('visibilitychange', onChanged)
       acknowledge.current = async () => {}
     }
-  }, [conversation.id, conversation.userId, realtime, refreshInbox])
+  }, [conversation.id, conversation.userId, realtime, refreshInbox, copy, t])
 
   async function loadOlder() {
     if (olderBusy.current || !messages[0]) return
@@ -218,7 +226,7 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
     try {
       const result = await loadConversationMessages({ conversationId: conversation.id, before: messages[0].sequence })
       if (!result.success) {
-        setError(result.message)
+        setError(copy(result.message, true))
         return
       }
       const container = scroll.current
@@ -227,7 +235,7 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
       setOtherReadSequence((current) => Math.max(current, result.data.otherReadSequence))
       setHasOlder(result.data.hasMore)
     } catch {
-      setError('Could not load older messages. Please try again.')
+      setError(t('couldNotLoadOlderMessagesPleaseTryAgain'))
     } finally {
       olderBusy.current = false
       setOlderPending(false)
@@ -239,7 +247,7 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
     if (sendBusy.current || !conversation.canSend) return
     const parsed = messageContentSchema.safeParse(retryMessage.current?.content ?? content)
     if (!parsed.success) {
-      setError(parsed.error.issues[0].message)
+      setError(copy(parsed.error.issues[0].message, true))
       return
     }
     const draft: PendingMessage = retryMessage.current ?? {
@@ -261,7 +269,7 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
         const result = await sendConversationMessage({ conversationId: conversation.id, messageId: draft.id, content: draft.content })
         if (!result.success) {
           if (retryMessage.current?.id === draft.id) {
-            setError(result.message)
+            setError(copy(result.message, true))
             setOptimistic({ ...draft, delivery: 'failed' })
           }
           return
@@ -272,14 +280,14 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
         setContent((current) => (current.trim() === draft.content ? '' : current))
         retryMessage.current = null
         if (!result.data.realtimeDelivered)
-          toast.add({ title: 'Message saved', description: 'Realtime delivery is delayed. Your message is safely stored.', type: 'info' })
+          toast.add({ title: t('messageSaved'), description: t('realtimeDeliveryIsDelayedYourMessageIsSafelyStored'), type: 'info' })
         // Reconcile gaps before advancing the cursor/watermark past intervening messages.
         await synchronize.current()
         refreshInbox()
       } catch {
         if (retryMessage.current?.id === draft.id) {
           setOptimistic({ ...draft, delivery: 'failed' })
-          setError('Could not confirm sending. Retry to check the same message safely.')
+          setError(t('couldNotConfirmSendingRetryToCheckTheSameMessageSafely'))
         }
       } finally {
         sendBusy.current = false
@@ -295,15 +303,18 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
   }
 
   return (
-    <section aria-label={`Conversation with ${conversation.otherName}`} className="bg-card flex min-w-0 flex-col overflow-hidden rounded-xl border">
+    <section
+      aria-label={t('conversationWithValue', { value0: conversation.otherName })}
+      className="bg-card flex min-w-0 flex-col overflow-hidden rounded-xl border"
+    >
       <header className="flex flex-wrap items-center gap-3 border-b p-4">
         <Button
           nativeButton={false}
           variant="ghost"
           size="icon"
-          aria-label="Back to conversations"
+          aria-label={t('backToConversations')}
           className="xl:hidden"
-          render={<Link href="/account/messages" />}
+          render={<Link href={localizeHref('/account/messages', locale)} />}
         >
           <ArrowLeft aria-hidden="true" />
         </Button>
@@ -314,11 +325,16 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
             status={presence.label}
           />
           {conversation.listingId && conversation.listingAvailable ? (
-            <Link href={`/listings/${conversation.listingId}`} className="text-muted-foreground hover:text-primary mt-2 block truncate text-xs">
+            <Link
+              href={localizeHref(`/listings/${conversation.listingId}`, locale)}
+              className="text-muted-foreground hover:text-primary mt-2 block truncate text-xs"
+            >
               {conversation.listingTitle}
             </Link>
           ) : (
-            <p className="text-muted-foreground mt-2 truncate text-xs">{conversation.listingTitle} · Listing unavailable</p>
+            <p className="text-muted-foreground mt-2 truncate text-xs">
+              {conversation.listingTitle} {t('listingUnavailable')}
+            </p>
           )}
         </div>
         <ReportUserButton conversationId={conversation.id} otherName={conversation.otherName} />
@@ -333,7 +349,7 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
               void synchronize.current()
             }}
           >
-            Retry
+            {t('retry')}
           </Button>
         </div>
       )}
@@ -341,7 +357,7 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
         <div
           ref={scroll}
           tabIndex={0}
-          aria-label="Message history"
+          aria-label={t('messageHistory')}
           className="flex h-[min(28rem,55dvh)] min-h-56 min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto overscroll-contain p-4 [overflow-anchor:none] sm:h-[28rem]"
           onFocus={() => {
             void acknowledge.current()
@@ -362,12 +378,12 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
                 void loadOlder()
               }}
             >
-              {olderPending ? 'Loading...' : 'Load older messages'}
+              {olderPending ? t('loadingPending') : t('loadOlderMessages')}
             </Button>
           )}
           {!messages.length && !pending && (
             <div className="text-muted-foreground flex flex-1 items-center justify-center text-center text-sm">
-              Start the conversation with a question about this listing.
+              {t('startTheConversationWithAQuestionAboutThisListing')}
             </div>
           )}
           <ChatMessageList
@@ -385,18 +401,18 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
         </div>
         {newMessages && (
           <Button size="sm" variant="secondary" className="absolute bottom-3 left-1/2 -translate-x-1/2 shadow-md" onClick={showLatest}>
-            New messages <ArrowDown aria-hidden="true" />
+            {t('newMessages')} <ArrowDown aria-hidden="true" />
           </Button>
         )}
       </div>
       <form ref={form} onSubmit={send} className="flex flex-col gap-2 border-t p-3 sm:p-4">
         {!conversation.canSend && (
           <p role="status" className="text-destructive text-sm">
-            Your account cannot send messages.
+            {t('yourAccountCannotSendMessages')}
           </p>
         )}
         <label htmlFor="chat-message" className="sr-only">
-          Message
+          {t('message')}
         </label>
         <Textarea
           ref={textarea}
@@ -409,7 +425,7 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
               form.current?.requestSubmit()
             }
           }}
-          placeholder="Write a message..."
+          placeholder={t('writeAMessage')}
           rows={1}
           className="max-h-40 min-h-11 resize-none overflow-y-auto"
           maxLength={2000}
@@ -425,12 +441,12 @@ export function ChatView({ conversation, reference }: { conversation: Conversati
         <div className="flex items-center justify-between gap-3">
           <span id="chat-hint" className="text-muted-foreground text-xs">
             {pending?.delivery === 'failed'
-              ? 'Retry the pending message before sending another.'
-              : `${content.length}/2000 · Shift+Enter for a new line`}
+              ? t('retryThePendingMessageBeforeSendingAnother')
+              : t('value2000ShiftEnterForANewLine', { value0: content.length })}
           </span>
           <Button type="submit" disabled={sending || !conversation.canSend || (!content.trim() && !pending)} aria-busy={sending}>
             {sending ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Send aria-hidden="true" />}
-            {sending ? 'Sending...' : pending?.delivery === 'failed' ? 'Retry' : 'Send'}
+            {sending ? t('sendingPending') : pending?.delivery === 'failed' ? t('retry') : t('send')}
           </Button>
         </div>
       </form>

@@ -11,6 +11,12 @@ export async function getFavoriteLabels(): Promise<FavoriteLabels> {
     removing: t('removing'),
     removeButton: t('remove'),
     error: t('favoriteError'),
-    connection: t('connectionError')
+    connection: t('connectionError'),
+    errors: {
+      'Invalid favorite request.': t('errors.favoriteInvalid'),
+      'Moderator accounts cannot use marketplace actions.': t('errors.marketplaceOnly'),
+      'This listing is no longer available.': t('errors.unavailable'),
+      'Could not update your favorites. Please try again.': t('errors.favoriteFailed')
+    }
   }
 }

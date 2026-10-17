@@ -1,10 +1,11 @@
 'use server'
 
-import { revalidatePath, updateTag } from 'next/cache'
+import { updateTag } from 'next/cache'
 import 'server-only'
 import z from 'zod'
 import { getOwnerStatusTransition } from '@/entities/listing/lifecycle'
 import { listingIdSchema } from '@/entities/listing/schema'
+import { revalidateLocalizedPath as revalidatePath } from '@/i18n/revalidate-path'
 import { canUseMarketplace } from '@/lib/account-role'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { isActiveMarketplaceUser } from '@/lib/active-user'

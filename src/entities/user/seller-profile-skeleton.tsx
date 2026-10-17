@@ -1,10 +1,12 @@
+import { useTranslations } from 'next-intl'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ListingGridSkeleton } from '@/entities/listing/ui/listing-skeleton'
 import { LoadingStatus } from '@/shared/ui/loading-status'
 
 export function SellerProfileSkeleton() {
+  const t = useTranslations('Sellers')
   return (
-    <LoadingStatus label="Loading seller profile" className="space-y-8">
+    <LoadingStatus label={t('loading')} className="space-y-8">
       <Skeleton className="h-5 w-48 max-w-full" />
       <div aria-hidden="true" className="bg-card space-y-6 rounded-xl border p-6 sm:p-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
