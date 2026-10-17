@@ -1,5 +1,5 @@
 import { ImageIcon, MapPin } from 'lucide-react'
-import { getLocale, getMessages, getTranslations } from 'next-intl/server'
+import { getFormatter, getLocale, getMessages, getTranslations } from 'next-intl/server'
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
 import { FavoriteButton } from '@/features/favorites/favorite-button'
@@ -35,6 +35,7 @@ export async function ListingCard({
   imageSizes = '(max-width: 639px) calc(100vw - 32px), (max-width: 767px) calc((100vw - 48px) / 2), (max-width: 1279px) calc((100vw - 64px) / 3), calc((100vw - 80px) / 4)'
 }: ListingCardProps) {
   const locale = await getLocale()
+  const format = await getFormatter({ locale })
   const messages = await getMessages({ locale })
   const t = await getTranslations({ locale, namespace: 'Listing' })
   const favoriteLabels = await getFavoriteLabels()
@@ -128,7 +129,7 @@ export async function ListingCard({
         )}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs">
           <time dateTime={listing.createdAt.toISOString()} className="text-muted-foreground">
-            {new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Nicosia' }).format(listing.createdAt)}
+            {format.dateTime(listing.createdAt, 'listingDate')}
           </time>
           <Link
             href={href}

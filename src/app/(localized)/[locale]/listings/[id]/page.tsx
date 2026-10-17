@@ -1,6 +1,6 @@
 import { List, ShieldCheck } from 'lucide-react'
 import type { Metadata } from 'next'
-import { getLocale, getMessages, getTranslations } from 'next-intl/server'
+import { getFormatter, getLocale, getMessages, getTranslations } from 'next-intl/server'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
@@ -41,6 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 async function ListingDetails({ params }: Props) {
   const locale = await getLocale()
+  const format = await getFormatter({ locale })
   const messages = await getMessages({ locale })
   const t = await getTranslations({ locale, namespace: 'Listing' })
   const nav = await getTranslations({ locale, namespace: 'Categories' })
@@ -60,9 +61,7 @@ async function ListingDetails({ params }: Props) {
 
   const sellerName = listing.seller.hasName ? listing.seller.name : t('seller')
   const initials = getSellerInitials(sellerName)
-  const publishedAt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Nicosia' }).format(
-    listing.createdAt
-  )
+  const publishedAt = format.dateTime(listing.createdAt, 'listingDate')
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
@@ -148,9 +147,7 @@ async function ListingDetails({ params }: Props) {
               <div className="text-muted-foreground space-y-1 text-sm">
                 <p>
                   {t('postingSince', {
-                    date: new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric', timeZone: 'Asia/Nicosia' }).format(
-                      listing.seller.createdAt
-                    )
+                    date: format.dateTime(listing.seller.createdAt, 'monthYear')
                   })}
                 </p>
                 <p>{t('activeAds', { count: listing.seller.activeAds })}</p>

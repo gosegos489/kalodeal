@@ -1,7 +1,7 @@
 'use client'
 
 import { ImagePlus, Loader2, Upload, X } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import {
   Attachment,
@@ -56,6 +56,7 @@ function ImagePreview({ file }: { file: File }) {
 export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImages, disabled, isSubmitting, invalid }: ListingAttachmentsProps) {
   const t = useTranslations('Workspace')
   const copy = createWorkspaceCopy(t)
+  const format = useFormatter()
 
   const pickerRef = useRef<HTMLInputElement>(null)
   const timers = useRef(new Set<ReturnType<typeof setTimeout>>())
@@ -202,7 +203,11 @@ export function ListingAttachments({ value, onChange, onBlur, inputRef, maxImage
                   <AttachmentTitle className="motion-reduce:animate-none" title={file.name}>
                     {file.name}
                   </AttachmentTitle>
-                  <AttachmentDescription>{isSubmitting ? t('uploadingPending') : `${(file.size / 1024 / 1024).toFixed(1)} MB`}</AttachmentDescription>
+                  <AttachmentDescription>
+                    {isSubmitting
+                      ? t('uploadingPending')
+                      : `${format.number(file.size / 1024 / 1024, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB`}
+                  </AttachmentDescription>
                 </AttachmentContent>
                 <AttachmentActions>
                   <AttachmentAction

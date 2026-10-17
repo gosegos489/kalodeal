@@ -1,6 +1,6 @@
 import { Building2, Clock, ExternalLink, MapPin } from 'lucide-react'
 import type { Metadata } from 'next'
-import { getLocale, getMessages, getTranslations } from 'next-intl/server'
+import { getFormatter, getLocale, getMessages, getTranslations } from 'next-intl/server'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
@@ -47,6 +47,7 @@ async function SellerProfile({ params, searchParams }: Props) {
   if (!seller) notFound()
   const result = await getSellerListings(seller.id, filters)
   const locale = await getLocale()
+  const format = await getFormatter({ locale })
   const t = await getTranslations('Sellers')
   const sellerName = seller.hasName ? seller.name : t('sellerName')
   const messages = await getMessages()
@@ -89,7 +90,7 @@ async function SellerProfile({ params, searchParams }: Props) {
               <div className="text-muted-foreground flex flex-wrap gap-x-5 gap-y-1 text-sm">
                 <p>
                   {t('postingSince', {
-                    date: new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(seller.createdAt)
+                    date: format.dateTime(seller.createdAt, 'monthYear')
                   })}
                 </p>
                 <p>{t('activeAds', { count: result.total })}</p>

@@ -1,7 +1,7 @@
 import { ReceiptText } from 'lucide-react'
 import type { Metadata } from 'next'
 import { useTranslations } from 'next-intl'
-import { getLocale, getTranslations } from 'next-intl/server'
+import { getFormatter, getLocale, getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -27,6 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 async function Orders({ searchParams }: Props) {
   const t = await getTranslations('Workspace')
   const locale = await getLocale()
+  const format = await getFormatter({ locale })
   const copy = createWorkspaceCopy(t)
 
   const params = await searchParams
@@ -74,9 +75,7 @@ async function Orders({ searchParams }: Props) {
             {payments.map((payment) => (
               <tr key={payment.id} className="border-b last:border-0">
                 <td className="px-4 py-4 whitespace-nowrap">
-                  <time dateTime={payment.paidAt.toISOString()}>
-                    {new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' }).format(payment.paidAt)}
-                  </time>
+                  <time dateTime={payment.paidAt.toISOString()}>{format.dateTime(payment.paidAt, 'utcDate')}</time>
                 </td>
                 <td className="min-w-48 px-4 py-4">{payment.description}</td>
                 <td className="px-4 py-4 font-medium whitespace-nowrap">{formatPaymentAmount(payment.amount, payment.currency, locale)}</td>
@@ -84,10 +83,7 @@ async function Orders({ searchParams }: Props) {
                   <Badge variant="secondary">{t('paid')}</Badge>
                 </td>
                 <td className="px-4 py-4">
-                  <InvoiceActions
-                    paymentId={payment.id}
-                    label={`${payment.description}, ${new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' }).format(payment.paidAt)}`}
-                  />
+                  <InvoiceActions paymentId={payment.id} label={`${payment.description}, ${format.dateTime(payment.paidAt, 'utcDate')}`} />
                 </td>
               </tr>
             ))}

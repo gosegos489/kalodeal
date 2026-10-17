@@ -4,9 +4,10 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { localizeHref } from '@/i18n/routing'
-import { LISTING_PLANS, type ListingPlan, PLAN_LIMITS, type PaidPlan, formatPlanPrice } from '@/lib/plan-limits'
+import { LISTING_PLANS, type ListingPlan, PLAN_LIMITS, type PaidPlan } from '@/lib/plan-limits'
 import { cn } from '@/lib/utils'
 import { BillingButton } from './billing-button'
+import { formatPlanPrice } from './format-plan-price'
 import { getBillingLabels } from './get-billing-labels'
 import { pricingCtaClassName } from './pricing-cta'
 
@@ -37,7 +38,7 @@ export async function PlanComparison({
         {LISTING_PLANS.map((plan) => {
           const limits = PLAN_LIMITS[plan]
           const isCurrent = authenticated && currentPlan === plan
-          const price = formatPlanPrice(plan, 'symbol', locale)
+          const price = formatPlanPrice(plan, locale)
           const isSelected = selectedPlan === plan
           return (
             <Card key={plan} className={cn('flex h-full flex-col', isSelected && 'ring-primary ring-2')}>

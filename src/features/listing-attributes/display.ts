@@ -1,3 +1,4 @@
+import { getDisplayFormatter } from '@/i18n/formatter'
 import messages from '@/i18n/messages/en.json'
 import { getCategoryAttributeProfile } from './rules'
 import type { ListingAttributes, PropertyAttributes, VehicleAttributes } from './schema'
@@ -6,11 +7,11 @@ import { OTHER_VEHICLE_MAKE, OTHER_VEHICLE_MODEL, getVehicleMakes, getVehicleMod
 type Detail = { label: string; value: string }
 export type AttributeSection = { title: string; details: Detail[] }
 type DisplayOptions = { locale: string; fields: Record<string, string>; values: Record<string, string> }
-const defaults: DisplayOptions = { locale: 'en-GB', ...messages.Attributes }
+const defaults: DisplayOptions = { locale: 'en', ...messages.Attributes }
 function display(options: DisplayOptions) {
-  const number = new Intl.NumberFormat(options.locale, { maximumFractionDigits: 2 })
+  const format = getDisplayFormatter(options.locale)
   return {
-    numeric: (value: number | null | undefined, unit = '') => (value == null ? null : `${number.format(value)}${unit}`),
+    numeric: (value: number | null | undefined, unit = '') => (value == null ? null : `${format.number(value, { maximumFractionDigits: 2 })}${unit}`),
     boolean: (value: boolean | null | undefined) => (value == null ? null : options.values[String(value)]),
     label: (value: string | null | undefined) => (value ? (options.values[value] ?? value) : null),
     details: (rows: [string, string | null | undefined][]): Detail[] =>

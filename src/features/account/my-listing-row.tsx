@@ -1,5 +1,5 @@
 import { Eye, Pencil } from 'lucide-react'
-import { useLocale, useMessages, useTranslations } from 'next-intl'
+import { useFormatter, useMessages, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { ListingRow } from '@/entities/listing/ui/listing-row'
 import { categoryName } from '@/i18n/category-name'
@@ -21,12 +21,9 @@ type MyListingRowProps = {
 
 export function MyListingRow({ listing, boostsRemaining, canBoost, canFeature }: MyListingRowProps) {
   const t = useTranslations('Workspace')
-  const locale = useLocale()
+  const format = useFormatter()
   const messages = useMessages()
   const category = categoryName(listing.category, messages.CategoryNames)
-  const date = (value: Date, time = false) =>
-    new Intl.DateTimeFormat(locale, { dateStyle: 'medium', ...(time ? { timeStyle: 'short' as const } : {}), timeZone: 'UTC' }).format(value) +
-    (time ? ' UTC' : '')
 
   const href = `/listings/${listing.id}`
 
@@ -39,10 +36,10 @@ export function MyListingRow({ listing, boostsRemaining, canBoost, canFeature }:
           <span className="max-w-full truncate" title={category}>
             {category}
           </span>
-          <time dateTime={listing.createdAt.toISOString()}>{date(listing.createdAt)}</time>
+          <time dateTime={listing.createdAt.toISOString()}>{format.dateTime(listing.createdAt, 'listingDate')}</time>
           {listing.boostedAt && (
             <span className="basis-full">
-              {t('lastBoosted')} <time dateTime={listing.boostedAt.toISOString()}>{date(listing.boostedAt, true)}</time>
+              {t('lastBoosted')} <time dateTime={listing.boostedAt.toISOString()}>{format.dateTime(listing.boostedAt, 'utcDateTime') + ' UTC'}</time>
             </span>
           )}
         </>

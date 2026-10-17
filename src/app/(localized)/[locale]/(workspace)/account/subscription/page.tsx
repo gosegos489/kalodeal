@@ -1,4 +1,4 @@
-import { getLocale, getTranslations } from 'next-intl/server'
+import { getFormatter, getLocale, getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -7,9 +7,9 @@ import { AccountPlanSkeleton } from '@/features/account/account-skeleton'
 import { getAccount } from '@/features/account/data'
 import { BillingButton } from '@/features/billing/billing-button'
 import { CheckoutPending } from '@/features/billing/checkout-pending'
+import { formatPlanPrice } from '@/features/billing/format-plan-price'
 import { getBillingLabels } from '@/features/billing/get-billing-labels'
 import { Link } from '@/i18n/navigation'
-import { formatPlanPrice } from '@/lib/plan-limits'
 import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
@@ -17,6 +17,7 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 async function AccountSubscription({ searchParams }: Props) {
   const t = await getTranslations('Workspace')
   const locale = await getLocale()
+  const format = await getFormatter({ locale })
 
   const billingLabels = await getBillingLabels()
   const account = await getAccount()
@@ -55,7 +56,7 @@ async function AccountSubscription({ searchParams }: Props) {
               <span className="text-muted-foreground text-base font-normal">{t('complimentaryProAccess')}</span>
             ) : (
               <>
-                {formatPlanPrice(account.plan, 'code', locale)}
+                {formatPlanPrice(account.plan, locale)}
                 <span className="text-muted-foreground text-sm font-normal"> {t('monthStandardPlanPrice')}</span>
               </>
             )}
@@ -95,10 +96,7 @@ async function AccountSubscription({ searchParams }: Props) {
             {account.boostPeriodEndsAt && (
               <div>
                 <dt className="text-muted-foreground text-sm">{t('currentPlanBoostWindowEnds')}</dt>
-                <dd className="mt-1 font-medium">
-                  {new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(account.boostPeriodEndsAt)}{' '}
-                  UTC
-                </dd>
+                <dd className="mt-1 font-medium">{format.dateTime(account.boostPeriodEndsAt, 'utcDateTime')} UTC</dd>
               </div>
             )}
             {account.limits.featuredSlots > 0 && (
@@ -122,10 +120,7 @@ async function AccountSubscription({ searchParams }: Props) {
               <p className="text-muted-foreground mt-1 text-sm">
                 {t('availableUntil')}{' '}
                 <time dateTime={account.complimentaryGrant.endsAt.toISOString()}>
-                  {new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(
-                    account.complimentaryGrant.endsAt
-                  )}{' '}
-                  UTC
+                  {format.dateTime(account.complimentaryGrant.endsAt, 'utcDateTime')} UTC
                 </time>
                 {t('complimentaryBoostsRenewEvery30DaysDuringThisAccessWithoutCarryover')}
                 {account.planBoostSource === 'paid' && t('yourPaidSubscriptionSuppliesThePlanBoostAllowanceWhileItIsActive')}
@@ -161,10 +156,7 @@ async function AccountSubscription({ searchParams }: Props) {
                   </dt>
                   <dd className="mt-1 font-medium">
                     <time dateTime={account.subscription.currentPeriodEnd.toISOString()}>
-                      {new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(
-                        account.subscription.currentPeriodEnd
-                      )}{' '}
-                      UTC
+                      {format.dateTime(account.subscription.currentPeriodEnd, 'utcDateTime')} UTC
                     </time>
                   </dd>
                 </div>

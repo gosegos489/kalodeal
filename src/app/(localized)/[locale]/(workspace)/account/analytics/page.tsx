@@ -1,5 +1,5 @@
 import { LockKeyhole } from 'lucide-react'
-import { getLocale, getTranslations } from 'next-intl/server'
+import { getFormatter, getLocale, getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,6 +16,7 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 async function AccountAnalytics({ searchParams }: Props) {
   const t = await getTranslations('Workspace')
   const locale = await getLocale()
+  const format = await getFormatter({ locale })
   const copy = createWorkspaceCopy(t)
 
   const params = await searchParams
@@ -73,7 +74,7 @@ async function AccountAnalytics({ searchParams }: Props) {
               <CardTitle>{copy(label)}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-semibold tabular-nums">{value.toLocaleString(locale)}</p>
+              <p className="text-3xl font-semibold tabular-nums">{format.number(value)}</p>
             </CardContent>
           </Card>
         ))}
@@ -101,7 +102,7 @@ async function AccountAnalytics({ searchParams }: Props) {
           </nav>
           {overview.periodViews !== null && (
             <p role="status" className="text-sm font-medium">
-              {overview.periodViews.toLocaleString(locale)} {t('viewsAcrossYourListingsInTheLast')} {analytics.period} {t('days')}
+              {format.number(overview.periodViews)} {t('viewsAcrossYourListingsInTheLast')} {analytics.period} {t('days')}
             </p>
           )}
           {analytics.listings.length ? (
@@ -143,11 +144,11 @@ async function AccountAnalytics({ searchParams }: Props) {
                         <td className="p-3">
                           <ListingStatusBadge status={listing.status} />
                         </td>
-                        <td className="p-3 tabular-nums">{listing.views}</td>
+                        <td className="p-3 tabular-nums">{format.number(listing.views)}</td>
                         {analytics.advanced && (
                           <>
-                            <td className="p-3 tabular-nums">{listing.favorites}</td>
-                            <td className="p-3 tabular-nums">{listing.phoneReveals}</td>
+                            <td className="p-3 tabular-nums">{listing.favorites === null ? null : format.number(listing.favorites)}</td>
+                            <td className="p-3 tabular-nums">{listing.phoneReveals === null ? null : format.number(listing.phoneReveals)}</td>
                           </>
                         )}
                       </tr>
