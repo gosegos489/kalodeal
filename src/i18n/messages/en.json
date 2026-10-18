@@ -511,7 +511,7 @@
     "billingUnavailable": "Billing unavailable",
     "openError": "Could not open billing. Please try again.",
     "billingExplanation": "Pending listings and requested corrections also reserve listing slots. Boost Listing raises one active listing once and uses one shared Boost. Unused monthly Boosts do not carry over; bonus Boosts retain their own expiry. Featured Listing is separate and does not use Boosts. Cancel through billing; paid benefits remain until the paid period ends.",
-    "planChanges": "Plan changes are reviewed in Stripe billing. Upgrades are invoiced with proration; downgrades and cancellation take effect at the end of the paid period. Available changes depend on billing configuration.",
+    "planChanges": "Review plan changes here before confirming. Stripe calculates upgrade prorations and attempts payment immediately. Downgrades and cancellation take effect at the end of the paid period.",
     "errors": {
       "invalidPlan": "Choose a valid paid plan.",
       "signInUpgrade": "Sign in to upgrade your plan.",
@@ -521,7 +521,26 @@
       "existingSubscription": "A subscription already exists. Wait for payment confirmation or manage your billing before trying again.",
       "billingUnavailable": "Billing is temporarily unavailable. Please try again.",
       "noSubscription": "There is no Stripe subscription to manage.",
-      "managementUnavailable": "Subscription management is temporarily unavailable. Please try again later."
+      "managementUnavailable": "Subscription management is temporarily unavailable. Please try again later.",
+      "staleQuote": "Your billing state changed or the quote expired. Reload and review the change again.",
+      "reviewRequired": "Your billing setup needs review. Please contact support.",
+      "resolvePayment": "Wait for payment confirmation, resolve the outstanding invoice, or resume your subscription in Manage billing before changing plans.",
+      "removeSchedule": "First remove the scheduled downgrade using Keep current plan in My plan.",
+      "currentPlan": "You are already on this plan."
+    },
+    "manageBilling": "Manage billing",
+    "planChange": {
+      "review": "Review change to {plan}",
+      "upgrade": "Stripe will attempt to charge {amount} now. {plan} activates after payment confirmation. The billing date stays the same.",
+      "downgrade": "Keep {from} until {date} UTC, then renew on {plan}. No charge or credit is issued now. Existing listings and photos are retained.",
+      "cancel": "Keep {from} until {date} UTC. Your subscription will not renew. Any scheduled downgrade or unpaid upgrade will be removed.",
+      "keep": "Remove the scheduled downgrade and continue on {plan}. No payment is taken now.",
+      "renewal": "Next regular renewal: {amount} on {date} UTC, before any applicable taxes or discounts.",
+      "confirm": "Confirm change",
+      "back": "Go back",
+      "scheduled": "Scheduled change to {plan} on {date} UTC.",
+      "keepCurrent": "Keep current plan",
+      "scheduleUnavailable": "Scheduled plan changes could not be loaded. Please reload before making another change."
     }
   },
   "HowItWorks": {
@@ -987,7 +1006,7 @@
     "make": "Make",
     "makeItStandOut": "Make it stand out",
     "makeNameRequiredForOtherMake": "Make name (required for Other make)",
-    "managePaymentDetailsPlanChangesAndCancellationInSubscriptionBilling": "Manage payment details, plan changes and cancellation in subscription billing.",
+    "managePaymentDetailsPlanChangesAndCancellationInSubscriptionBilling": "Manage payment details and invoices in Stripe. Use View all plans for plan changes, or Cancel renewal to keep paid access until the period ends.",
     "manageYourListings": "Manage your listings",
     "manageYourPlan": "Manage your plan",
     "manageYourPublicBusinessInformationNewContentIsReviewedBeforePublication": "Manage your public business information. New content is reviewed before publication.",
@@ -1196,7 +1215,7 @@
     "yourAccountTypeIsIndependentOfYourSubscriptionABusinessAccountIncludesAPublicBusiness": "Your account type is independent of your subscription. A Business Account includes a public business profile on any plan.",
     "yourConfirmedSubscriptionPaymentsAndRenewalsWillAppearHere": "Your confirmed subscription payments and renewals will appear here.",
     "yourCurrentBenefitsAndUsageCompareSellingPlansOnThePricingPage": "Your current benefits and usage. Compare selling plans on the pricing page.",
-    "yourCurrentBillingAmountAndAnyScheduledPlanChangeAreShownInStripeBillingExistingSubsc": "Your current billing amount and any scheduled plan change are shown in Stripe billing. Existing subscription prices are retained.",
+    "yourCurrentBillingAmountAndAnyScheduledPlanChangeAreShownInStripeBillingExistingSubsc": "Use the pricing page to change plans. Scheduled downgrades are shown here. Manage billing opens Stripe for payment details and invoices.",
     "yourListingAllowance": "Your listing allowance",
     "yourListingIsAwaitingModeration": "Your listing is awaiting moderation.",
     "yourListingStatusIsUnchanged": "Your listing status is unchanged.",
@@ -1443,7 +1462,9 @@
     "carDetails": "Car details",
     "motorcycleDetails": "Motorcycle details",
     "vanDetails": "Van details",
-    "otherMake": "Other make"
+    "otherMake": "Other make",
+    "cancelRenewal": "Cancel renewal",
+    "loadingScheduledPlanChange": "Loading scheduled plan changes..."
   },
   "PricingError": {
     "heading": "Could not load plans",

@@ -9,6 +9,8 @@ import { BillingButton } from '@/features/billing/billing-button'
 import { CheckoutPending } from '@/features/billing/checkout-pending'
 import { formatPlanPrice } from '@/features/billing/format-plan-price'
 import { getBillingLabels } from '@/features/billing/get-billing-labels'
+import { PlanChangeButton } from '@/features/billing/plan-change-button'
+import { ScheduledPlanChange } from '@/features/billing/scheduled-plan-change'
 import { Link } from '@/i18n/navigation'
 import { RouteAutoRefresh } from '@/shared/ui/route-auto-refresh'
 
@@ -166,6 +168,17 @@ async function AccountSubscription({ searchParams }: Props) {
           {account.paidPlan !== 'FREE' && account.subscription?.status === 'CANCELED' && (
             <p className="text-muted-foreground text-sm">{t('yourPaidPlanRemainsAvailableUntilThePaidPeriodEndsYourSubscriptionWillNotRenew')}</p>
           )}
+          {account.paidPlan !== 'FREE' && account.subscription?.hasStripeSubscription && (
+            <Suspense
+              fallback={
+                <p role="status" className="text-muted-foreground text-sm">
+                  {t('loadingScheduledPlanChange')}
+                </p>
+              }
+            >
+              <ScheduledPlanChange />
+            </Suspense>
+          )}
           {account.subscription?.hasStripeSubscription && (
             <p className="text-muted-foreground text-sm">
               {t('yourCurrentBillingAmountAndAnyScheduledPlanChangeAreShownInStripeBillingExistingSubsc')}
@@ -177,6 +190,9 @@ async function AccountSubscription({ searchParams }: Props) {
             </Button>
             {account.subscription?.hasStripeSubscription && (
               <BillingButton intent="manage" locale={locale} upgradeLabel={t('manageSubscription')} labels={billingLabels} />
+            )}
+            {account.paidPlan !== 'FREE' && account.subscription?.status !== 'CANCELED' && account.subscription?.hasStripeSubscription && (
+              <PlanChangeButton plan="FREE" label={t('cancelRenewal')} errors={billingLabels.errors} />
             )}
             {account.limits.analyticsLevel !== 'none' && (
               <Button nativeButton={false} className="h-auto min-h-11 px-4 py-3" variant="outline" render={<Link href="/account/analytics" />}>

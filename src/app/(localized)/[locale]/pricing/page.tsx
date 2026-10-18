@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { getBillingAvailability } from '@/features/billing/config'
 import { PlanComparison } from '@/features/billing/plan-comparison'
 import { PlanComparisonSkeleton } from '@/features/billing/plan-comparison-skeleton'
+import { hasStripeSubscriptionToManage } from '@/features/billing/subscription-state'
 import { canUseMarketplace } from '@/lib/account-role'
 import { getSession } from '@/lib/auth-utils'
 import { buildMetadata } from '@/lib/metadata'
@@ -29,7 +30,7 @@ async function PricingPlans({ searchParams }: Props) {
       marketplaceAllowed={!session || canUseMarketplace(session.user.role)}
       currentPlan={access?.plan ?? 'FREE'}
       paidPlan={access?.paidPlan ?? 'FREE'}
-      hasSubscription={!!access?.subscription?.stripeSubscriptionId && access.subscription.status !== 'EXPIRED'}
+      hasSubscription={hasStripeSubscriptionToManage(access?.subscription ?? null)}
       available={available}
       selectedPlan={selectedPlan}
     />

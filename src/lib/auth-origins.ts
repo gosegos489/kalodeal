@@ -9,7 +9,7 @@ type AuthEnvironment = {
 const devPreviewHost = 'kalodeal-git-dev-gosegos489-2941s-projects.vercel.app'
 const projectDeploymentHost = /^kalodeal-[a-z0-9-]+-gosegos489-2941s-projects\.vercel\.app$/
 
-export function getAuthOriginOptions(env: AuthEnvironment): Pick<BetterAuthOptions, 'baseURL'> {
+export function getAuthAllowedHosts(env: AuthEnvironment) {
   const development = env.NODE_ENV === 'development'
   const allowedHosts = ['kalodeal.com', devPreviewHost]
 
@@ -18,10 +18,14 @@ export function getAuthOriginOptions(env: AuthEnvironment): Pick<BetterAuthOptio
   }
   if (development) allowedHosts.push('localhost:3000')
 
+  return [...new Set(allowedHosts)]
+}
+
+export function getAuthOriginOptions(env: AuthEnvironment): Pick<BetterAuthOptions, 'baseURL'> {
   return {
     baseURL: {
-      allowedHosts: [...new Set(allowedHosts)],
-      fallback: development ? 'http://localhost:3000' : 'https://kalodeal.com'
+      allowedHosts: getAuthAllowedHosts(env),
+      fallback: env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://kalodeal.com'
     }
   }
 }

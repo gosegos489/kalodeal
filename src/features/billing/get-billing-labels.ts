@@ -18,7 +18,12 @@ export async function getBillingLabels() {
       'Billing is temporarily unavailable. Please try again.': t('errors.billingUnavailable'),
       'There is no Stripe subscription to manage.': t('errors.noSubscription'),
       'Subscription management is temporarily unavailable. Please try again later.': t('errors.managementUnavailable'),
-      'Subscription management is temporarily unavailable. Please try again.': t('errors.managementUnavailable')
+      'Subscription management is temporarily unavailable. Please try again.': t('errors.managementUnavailable'),
+      'Your billing state changed. Reload the page and review the plan change again.': t('errors.staleQuote'),
+      'Billing needs review. Please contact support.': t('errors.reviewRequired'),
+      'Wait for payment confirmation or resolve your subscription in billing before changing plans.': t('errors.resolvePayment'),
+      'Remove the scheduled plan change before choosing an upgrade.': t('errors.removeSchedule'),
+      'You are already on this plan.': t('errors.currentPlan')
     }
   }
   return labels

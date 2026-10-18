@@ -1,16 +1,19 @@
 import 'server-only'
 import type Stripe from 'stripe'
+import { getPaidListingPlan } from '@/lib/plan-limits'
 import prisma from '@/lib/prisma'
 import { getStripe } from '@/lib/stripe'
 import { getRecognizedPrices } from './config'
 import { recordSubscriptionPayment } from './subscription-payments'
-import { getSubscriptionUpdate, hasPlanPrice, isOpenSubscription } from './subscription-state'
+import { getSubscriptionUpdate, hasPlanPrice, isOpenSubscription, recoverPaidSubscriptionPeriod } from './subscription-state'
 
 export const BILLING_EVENTS = new Set([
   'checkout.session.completed',
   'customer.subscription.created',
   'customer.subscription.updated',
   'customer.subscription.deleted',
+  'customer.subscription.pending_update_applied',
+  'customer.subscription.pending_update_expired',
   'invoice.paid',
   'invoice.payment_failed'
 ])
@@ -21,6 +24,8 @@ function getEventCustomer(event: Stripe.Event): string | null {
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
     case 'customer.subscription.deleted':
+    case 'customer.subscription.pending_update_applied':
+    case 'customer.subscription.pending_update_expired':
     case 'invoice.paid':
     case 'invoice.payment_failed': {
       const customer = event.data.object.customer
@@ -58,7 +63,10 @@ export async function reconcileBillingEvent(event: Stripe.Event) {
       // Inspect the customer's current subscriptions so events for a previous subscription cannot replace its successor.
       const subscriptions = await getStripe().subscriptions.list({ customer: customerId, status: 'all', limit: 100, expand: ['data.latest_invoice'] })
       if (subscriptions.has_more) throw new Error('Too many subscriptions to reconcile safely.')
+      if (subscriptions.data.some((subscription) => isOpenSubscription(subscription) && !hasPlanPrice(subscription, prices)))
+        throw new Error('An open subscription has an unrecognized price. Check the current and legacy price configuration.')
       const candidates = subscriptions.data.filter((subscription) => hasPlanPrice(subscription, prices))
+      if (candidates.filter(isOpenSubscription).length > 1) throw new Error('Multiple open subscriptions require billing review.')
       candidates.sort(
         (a, b) =>
           Number(b.status === 'active') - Number(a.status === 'active') ||
@@ -73,7 +81,24 @@ export async function reconcileBillingEvent(event: Stripe.Event) {
       if (current) {
         const currentCustomer = typeof current.customer === 'string' ? current.customer : current.customer.id
         if (currentCustomer !== customerId || current.livemode !== event.livemode) throw new Error('Subscription customer or mode mismatch.')
-        await tx.subscription.update({ where: { userId: owner.userId }, data: getSubscriptionUpdate(current, previous, prices) })
+        const invoice = current.latest_invoice
+        if (invoice && typeof invoice !== 'string' && invoice.lines.has_more) {
+          invoice.lines = await getStripe().invoices.listLineItems(invoice.id, { limit: 100 })
+          if (invoice.lines.has_more) throw new Error('Too many invoice lines to verify safely.')
+        }
+        let baseline = previous
+        if (
+          current.status === 'active' &&
+          getPaidListingPlan(previous) === 'FREE' &&
+          invoice &&
+          typeof invoice !== 'string' &&
+          invoice.lines.data.some((line) => line.parent?.subscription_item_details?.proration)
+        ) {
+          const paidInvoices = await getStripe().invoices.list({ subscription: current.id, status: 'paid', limit: 100 })
+          const recovered = recoverPaidSubscriptionPeriod(current, previous, prices, paidInvoices.data)
+          baseline = { ...previous, ...recovered }
+        }
+        await tx.subscription.update({ where: { userId: owner.userId }, data: getSubscriptionUpdate(current, baseline, prices) })
       }
       await tx.stripeWebhookEvent.create({ data: { id: event.id, type: event.type, stripeCreatedAt: new Date(event.created * 1000) } })
       return true

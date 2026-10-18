@@ -13,11 +13,17 @@ export async function POST(request: Request) {
   if (!secret) return Response.json({ error: 'Webhook is not configured.' }, { status: 503 })
   if (!signature) return Response.json({ error: 'Invalid signature.' }, { status: 400 })
 
+  let livemode: boolean
+  try {
+    livemode = getStripeLiveMode()
+  } catch {
+    return Response.json({ error: 'Webhook is not configured.' }, { status: 503 })
+  }
   let event: Stripe.Event
   try {
     // The effective deployment environment provides ONE secret; do not try local and deployed secrets interchangeably.
     event = getStripe().webhooks.constructEvent(await request.text(), signature, secret)
-    if (event.livemode !== getStripeLiveMode()) return Response.json({ error: 'Invalid event mode.' }, { status: 400 })
+    if (event.livemode !== livemode) return Response.json({ error: 'Invalid event mode.' }, { status: 400 })
   } catch {
     return Response.json({ error: 'Invalid signature.' }, { status: 400 })
   }

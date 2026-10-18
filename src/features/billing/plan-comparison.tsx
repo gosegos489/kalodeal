@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { BillingButton } from './billing-button'
 import { formatPlanPrice } from './format-plan-price'
 import { getBillingLabels } from './get-billing-labels'
+import { PlanChangeButton } from './plan-change-button'
 import { pricingCtaClassName } from './pricing-cta'
 
 type Props = {
@@ -108,13 +109,7 @@ export async function PlanComparison({
                         {t('yourPlan')}
                       </Button>
                     ) : hasSubscription ? (
-                      <BillingButton
-                        locale={locale}
-                        intent="manage"
-                        className={pricingCtaClassName}
-                        labels={billingLabels}
-                        upgradeLabel={t('switchFree')}
-                      />
+                      <PlanChangeButton plan="FREE" className={pricingCtaClassName} errors={billingLabels.errors} label={t('switchFree')} />
                     ) : (
                       <p className="text-muted-foreground text-sm">{t('complimentaryEnds')}</p>
                     )
@@ -122,13 +117,20 @@ export async function PlanComparison({
                     <Button disabled className={pricingCtaClassName}>
                       {t('yourPaidPlan')}
                     </Button>
+                  ) : hasSubscription && paidPlan !== 'FREE' ? (
+                    <PlanChangeButton
+                      plan={plan}
+                      className={pricingCtaClassName}
+                      errors={billingLabels.errors}
+                      label={t('changePlan', { plan: limits.name })}
+                    />
                   ) : hasSubscription ? (
                     <BillingButton
                       locale={locale}
                       intent="manage"
                       className={pricingCtaClassName}
                       labels={billingLabels}
-                      upgradeLabel={t('changePlan', { plan: limits.name })}
+                      upgradeLabel={t('manageBilling')}
                     />
                   ) : available[plan] ? (
                     <BillingButton
