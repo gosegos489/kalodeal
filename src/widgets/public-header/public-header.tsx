@@ -7,7 +7,6 @@ import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import ActionButtonsWithSession from './ui/action-buttons-with-session'
 import { CategoryHeaderNavigation } from './ui/category-header-navigation'
-import { LanguageSwitcher } from './ui/language-switcher'
 import MobileMenuWithSession from './ui/mobile-menu-with-session'
 
 export async function PublicHeader({ locale = 'en' }: { locale?: Locale }) {
@@ -41,9 +40,6 @@ export async function PublicHeader({ locale = 'en' }: { locale?: Locale }) {
               }
             >
               <ActionButtonsWithSession />
-            </Suspense>
-            <Suspense fallback={<Skeleton className="h-10 w-20 rounded-lg" />}>
-              <LanguageSwitcher />
             </Suspense>
             <Suspense fallback={<Skeleton className="size-10 xl:hidden" />}>
               <MobileMenuWithSession locale={locale} />
