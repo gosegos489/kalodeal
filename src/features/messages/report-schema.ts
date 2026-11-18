@@ -21,7 +21,7 @@ export const createChatReportSchema = z
 export const resolveChatReportSchema = z.object({ reportId: z.string().uuid() }).strict()
 export const chatReportQueueSchema = z.object({
   status: z.enum(ChatReportStatus).or(z.literal('ALL')).default('OPEN'),
-  page: z.string().optional()
+  page: z.union([z.string(), z.array(z.string())]).optional()
 })
 
 export const moderatorHistorySchema = z

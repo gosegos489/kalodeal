@@ -87,10 +87,47 @@ test('installed Better Auth persists both account types, defaults old clients, a
     assert.equal((await post('/update-user', { accountType: 'BUSINESS' }, cookie)).status, 400)
     assert.equal((await post('/update-user', { businessName: 'Unreviewed' }, cookie)).status, 400)
   }
+  const emailOfLength = (length: number) => 'a'.repeat(length - '@example.test'.length) + '@example.test'
+  const count = database.user.length
+  assert.equal((await post('/sign-up/email', { name: '', email: emailOfLength(65), password })).status, 400)
+  assert.equal(database.user.length, count)
   for (const extra of [{ accountType: 'ADMIN' }, { accountType: null }, { role: 'admin' }, { role: 'moderator' }]) {
     assert.equal((await post('/sign-up/email', { name: '', email: 'attacker@example.test', password, ...extra })).status, 400)
   }
   assert.equal(database.user.length, 3)
+  assert.equal((await post('/sign-up/email', { name: '', email: emailOfLength(64), password })).status, 200)
   assert.equal(auth.options.emailAndPassword?.requireEmailVerification, true)
   assert.equal(auth.options.rateLimit?.enabled, true)
+})
+
+test('a seller can recover an undelivered verification email by signing in with the correct password', async () => {
+  process.env.RESEND_API_KEY = 're_offline_test'
+  const { auth } = await import('@/lib/auth')
+  const db = { user: [], account: [], session: [], verification: [] }
+  let attempts = 0
+  const links: string[] = []
+  const offline = betterAuth({
+    ...auth.options,
+    baseURL: 'http://localhost:3000',
+    secret: 'offline-delivery-test-secret-at-least-32-characters',
+    database: memoryAdapter(db),
+    rateLimit: { enabled: false },
+    emailVerification: {
+      ...auth.options.emailVerification,
+      sendVerificationEmail: async ({ url }) => {
+        if (++attempts > 1) links.push(url)
+      }
+    }
+  })
+  const credentials = { email: 'retry@example.test', password: 'OfflinePassword123!' }
+  await offline.api.signUpEmail({ body: { ...credentials, name: '' } })
+  await assert.rejects(offline.api.signInEmail({ body: { ...credentials, password: 'Incorrect123!' } }))
+  assert.equal(attempts, 1)
+  await assert.rejects(offline.api.signInEmail({ body: credentials }))
+  assert.equal(links.length, 1)
+  assert.equal(db.user.length, 1)
+  assert.equal(db.account.length, 1)
+  assert.equal(db.session.length, 0)
+  await offline.handler(new Request(links[0]))
+  assert.equal(db.session.length, 1)
 })

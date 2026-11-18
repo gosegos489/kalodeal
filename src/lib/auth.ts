@@ -7,6 +7,7 @@ import 'server-only'
 import { accountTypeSchema } from '@/entities/user/account-type'
 import { guardAuthAccountType, guardAuthProfileData, prepareNewProfileName } from '@/features/account/settings/auth-profile'
 import { displayNameSchema } from '@/features/account/settings/schema'
+import { registrationEmailSchema } from '@/features/auth/schemas/register'
 import { captureServerExceptionAfterResponse } from '@/lib/sentry-server'
 import { sendAuthEmail } from './auth-email'
 import { getAuthOriginOptions } from './auth-origins'
@@ -28,6 +29,10 @@ export const auth = betterAuth({
       const banBody = await authorizeAuthMutation(ctx)
       if (banBody) return { context: { ...ctx, body: banBody } }
       const isSignUp = ctx.path === '/sign-up/email'
+      if (isSignUp) {
+        const email = registrationEmailSchema.safeParse(ctx.body?.email)
+        if (!email.success) throw new APIError('BAD_REQUEST', { message: email.error.issues[0].message })
+      }
       const isProfileUpdate = ctx.path === '/update-user'
       const isAdminProfile = ctx.path === '/admin/update-user' || ctx.path === '/admin/create-user'
       if (!isSignUp && !isProfileUpdate && !isAdminProfile) return
@@ -125,6 +130,7 @@ export const auth = betterAuth({
 
   emailVerification: {
     sendOnSignUp: true,
+    sendOnSignIn: true,
     autoSignInAfterVerification: true,
 
     async sendVerificationEmail({ user, url }, request) {

@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,6 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/components/ui/toast'
-import { localizeHref } from '@/i18n/routing'
 import { register } from '../actions/register'
 import { getPricingReturnTo } from '../login-redirect'
 import { registerSchema } from '../schemas/register'
@@ -21,7 +20,7 @@ import { AuthValidationError } from './auth-validation-error'
 export default function RegisterForm() {
   const t = useTranslations('Auth')
   const locale = useLocale()
-  const router = useRouter()
+  const [submitted, setSubmitted] = useState(false)
   const returnTo = getPricingReturnTo(useSearchParams().get('returnTo'))
   const registerForm = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -45,8 +44,7 @@ export default function RegisterForm() {
       }
 
       registerForm.reset()
-      toast.add({ title: t('feedback.checkEmail'), description: t('feedback.verifyEmail'), type: 'success' })
-      router.push(returnTo ?? localizeHref('/', locale))
+      setSubmitted(true)
     } catch {
       toast.add({ title: t('feedback.registrationFailed'), description: t('feedback.retry'), type: 'error' })
     }
@@ -61,6 +59,15 @@ export default function RegisterForm() {
 
   const handleToggleConfirmPassword = () => {
     setShowConfirmPassword((prev) => !prev)
+  }
+
+  if (submitted) {
+    return (
+      <div role="status" className="space-y-2">
+        <p className="font-medium">{t('feedback.checkEmail')}</p>
+        <p className="text-muted-foreground text-sm">{t('feedback.verifyEmail')}</p>
+      </div>
+    )
   }
 
   return (
@@ -128,7 +135,7 @@ export default function RegisterForm() {
                 id={field.name}
                 aria-invalid={fieldState.invalid}
                 placeholder={t('common.emailPlaceholder')}
-                autoComplete="name"
+                autoComplete="email"
                 type="email"
                 disabled={isSubmitting}
               />

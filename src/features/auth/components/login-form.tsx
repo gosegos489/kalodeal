@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -19,7 +20,8 @@ import { AuthValidationError } from './auth-validation-error'
 export default function LoginForm() {
   const t = useTranslations('Auth')
   const locale = useLocale()
-  const returnTo = useSearchParams().get('returnTo')
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get('returnTo')
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' }
@@ -42,6 +44,12 @@ export default function LoginForm() {
 
   return (
     <form className="flex flex-col items-center justify-center gap-6" onSubmit={onSubmit}>
+      {searchParams.get('error') === 'TOKEN_EXPIRED' && (
+        <Alert>
+          <AlertTitle>{t('feedback.verificationExpired')}</AlertTitle>
+          <AlertDescription>{t('feedback.signInForLink')}</AlertDescription>
+        </Alert>
+      )}
       <FieldGroup>
         <Controller
           name="email"

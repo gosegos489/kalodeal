@@ -48,7 +48,7 @@ export default function ResetPasswordForm({ token }: Props) {
       router.push(getAuthHref('/login', locale, returnTo))
       toast.add({ title: t('feedback.resetSuccess'), type: 'success' })
     } catch {
-      toast.add({ title: t('feedback.resetFailed'), description: t('feedback.retry'), type: 'error' })
+      toast.add({ title: t('feedback.resetFailed'), description: t('feedback.connectionError'), type: 'error' })
     }
   })
 

@@ -36,7 +36,7 @@ export default function ForgotPasswordForm() {
       form.reset()
       toast.add({ title: t('feedback.checkEmail'), description: t('feedback.resetEmailSent'), type: 'success' })
     } catch {
-      toast.add({ title: t('feedback.resetLinkFailed'), description: t('feedback.retry'), type: 'error' })
+      toast.add({ title: t('feedback.resetLinkFailed'), description: t('feedback.connectionError'), type: 'error' })
     }
   })
 
