@@ -1,10 +1,13 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Controller } from 'react-hook-form'
 import { ComboboxSelect } from '@/components/ui/combobox'
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { previewCategoryAttributeChange } from '@/features/listing-attributes/category-change'
 import { getCategoryAttributeProfile } from '@/features/listing-attributes/rules'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
+import { WorkspaceFieldError as FieldError } from '@/shared/ui/workspace-field-error'
 import type { ListingCategoryOption, ListingFormApi } from './types'
 import { getFormAttributes, useAttributeChange } from './use-attribute-change'
 
@@ -17,6 +20,10 @@ export function ListingCategoryFields({
   categories: ListingCategoryOption[]
   disabled: boolean
 }) {
+  const search = useTranslations('Search')
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const { requestChange, dialog } = useAttributeChange(form)
   function change(id: string) {
     const category = categories.find((item) => item.id === id)
@@ -50,20 +57,22 @@ export function ListingCategoryFields({
             <Field data-invalid={fieldState.invalid}>
               <div className="grid min-w-0 gap-4 sm:grid-cols-2">
                 {levels.map((items, index) => {
-                  const label = ['Main category', 'Subcategory', 'Listing type'][index] ?? 'Listing type'
+                  const label = [t('mainCategory'), t('subcategory'), t('listingType')][index] ?? t('listingType')
                   const id = index === 0 ? field.name : `${field.name}-${index}`
                   return (
                     <div className="min-w-0 space-y-2" key={items[0]?.parentId ?? 'main'}>
-                      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+                      <FieldLabel htmlFor={id}>{copy(label)}</FieldLabel>
                       <ComboboxSelect
                         id={id}
                         inputRef={index === 0 ? field.ref : undefined}
                         onBlur={field.onBlur}
-                        label={label}
+                        label={copy(label)}
                         items={items.map((item) => ({ value: item.id, label: item.name.split(' / ').at(-1) ?? item.name }))}
                         value={path[index]?.id ?? ''}
                         onValueChange={change}
-                        placeholder={`Choose ${label.toLowerCase()}`}
+                        placeholder={t('chooseCategory')}
+                        searchPlaceholder={search('searchOptions', { label: copy(label) })}
+                        emptyMessage={search('noMatches')}
                         disabled={disabled}
                         invalid={fieldState.invalid}
                         aria-describedby={fieldState.error ? 'category-error' : undefined}
@@ -72,7 +81,7 @@ export function ListingCategoryFields({
                   )
                 })}
               </div>
-              <FieldDescription>Choose the closest category and continue through its subcategories to find the right listing type.</FieldDescription>
+              <FieldDescription>{t('chooseTheClosestCategoryAndContinueThroughItsSubcategoriesToFindTheRightListingType')}</FieldDescription>
               {fieldState.error && <FieldError id="category-error" errors={[fieldState.error]} />}
             </Field>
           )

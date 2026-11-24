@@ -1,7 +1,9 @@
 import { Check, CheckCheck, Clock3, TriangleAlert } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { Fragment } from 'react'
 import { getSellerInitials } from '@/entities/user/public-profile'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
 import { cn } from '@/lib/utils'
 import { formatMessageClock, formatMessageDay, formatMessageTime, messageDay } from './format-time'
 import type { ChatMessage } from './types'
@@ -19,13 +21,14 @@ export function ChatAvatar({ name, url, online = false }: { name: string; url: s
 }
 
 export function ChatParticipantHeader({ participant, status, online }: { participant: ChatParticipant; status?: string; online?: boolean }) {
+  const copy = createWorkspaceCopy(useTranslations('Workspace'))
   return (
     <div className="flex min-w-0 items-center gap-3">
       <ChatAvatar name={participant.name} url={participant.avatar} online={online} />
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">
           {participant.name}
-          {participant.role && <span className="text-muted-foreground font-normal"> · {participant.role}</span>}
+          {participant.role && <span className="text-muted-foreground font-normal"> · {copy(participant.role)}</span>}
         </p>
         {status && (
           <p className="text-muted-foreground text-xs" role="status">
@@ -38,21 +41,27 @@ export function ChatParticipantHeader({ participant, status, online }: { partici
 }
 
 export function ChatReadStatus({ status }: { status: 'sending' | 'failed' | 'sent' | 'seen' }) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const Icon = status === 'seen' ? CheckCheck : status === 'sent' ? Check : status === 'sending' ? Clock3 : TriangleAlert
   const label = { seen: 'Seen', sent: 'Sent', sending: 'Sending', failed: 'Failed · retry below' }[status]
   return (
     <span className={cn('inline-flex items-center gap-1', status === 'failed' && 'text-destructive')}>
       <Icon aria-hidden="true" className="size-3" />
-      {label}
+      {copy(label)}
     </span>
   )
 }
 
 export function ChatDateSeparator({ value, reference }: { value: string; reference: string }) {
+  const t = useTranslations('Workspace')
+  const locale = useLocale()
+  const day = formatMessageDay(value, reference, locale, { today: t('today'), yesterday: t('yesterday') })
   return (
-    <li className="flex items-center gap-3 py-2" aria-label={formatMessageDay(value, reference)}>
+    <li className="flex items-center gap-3 py-2" aria-label={day}>
       <span className="bg-border h-px flex-1" />
-      <span className="text-muted-foreground shrink-0 text-xs">{formatMessageDay(value, reference)}</span>
+      <span className="text-muted-foreground shrink-0 text-xs">{day}</span>
       <span className="bg-border h-px flex-1" />
     </li>
   )
@@ -71,11 +80,15 @@ export function ChatMessageBubble({
   showLabel?: boolean
   status?: 'sent' | 'seen'
 }) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+  const locale = useLocale()
+
   return (
     <li className={cn('flex min-w-0 flex-col gap-1', right ? 'items-end' : 'items-start')}>
       {showLabel && participant && (
         <span className="text-muted-foreground max-w-[90%] text-xs wrap-anywhere">
-          {participant.name} · {participant.role}
+          {participant.name} · {participant.role && copy(participant.role)}
         </span>
       )}
       <p
@@ -89,9 +102,9 @@ export function ChatMessageBubble({
         {message.content}
       </p>
       <div className="text-muted-foreground flex max-w-[90%] flex-wrap items-center gap-x-2 text-[11px]">
-        <time dateTime={message.createdAt} title={formatMessageTime(message.createdAt)}>
-          <span className="sr-only">{participant?.name ?? (right ? 'You' : 'Participant')}, </span>
-          {formatMessageClock(message.createdAt)}
+        <time dateTime={message.createdAt} title={formatMessageTime(message.createdAt, locale)}>
+          <span className="sr-only">{participant?.name ?? (right ? t('you') : t('participant'))}, </span>
+          {formatMessageClock(message.createdAt, locale)}
         </time>
         {(message.delivery || status) && <ChatReadStatus status={message.delivery ?? status ?? 'sent'} />}
       </div>
@@ -117,6 +130,8 @@ export function ChatMessageList({
   showLabels?: boolean
   live?: boolean
 }) {
+  const t = useTranslations('Workspace')
+
   const lastSent = new Map<string, string>()
   const lastSeen = new Map<string, string>()
   for (const message of messages) {
@@ -126,7 +141,7 @@ export function ChatMessageList({
   }
   return (
     <ol
-      aria-label="Messages"
+      aria-label={t('messages')}
       aria-live={live ? 'polite' : undefined}
       aria-relevant={live ? 'additions' : undefined}
       className="flex min-w-0 flex-col gap-3"

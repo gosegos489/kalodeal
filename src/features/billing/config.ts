@@ -1,4 +1,5 @@
 import 'server-only'
+import { getAuthAllowedHosts } from '@/lib/auth-origins'
 import { PAID_PLANS, PLAN_LIMITS, type PaidPlan } from '@/lib/plan-limits'
 import { getStripe } from '@/lib/stripe'
 import { isSafePortalConfiguration } from './subscription-state'
@@ -31,27 +32,42 @@ export function getRecognizedPrices(): Partial<Record<string, PaidPlan>> {
   return prices
 }
 
-export function getBillingOrigin() {
-  const origin = new URL(process.env.DOMAIN_URL ?? '')
-  if (origin.username || origin.password || !['http:', 'https:'].includes(origin.protocol)) throw new Error('Invalid billing origin.')
+export function getBillingOrigin(requestOrigin?: string | null) {
+  const preview = process.env.VERCEL_ENV === 'preview'
+  const deploymentHost = process.env.VERCEL_BRANCH_URL || process.env.VERCEL_URL
+  const value = preview ? requestOrigin || (deploymentHost ? `https://${deploymentHost}` : process.env.DOMAIN_URL) : process.env.DOMAIN_URL
+  const origin = new URL(value ?? '')
+  if (origin.username || origin.password || !['http:', 'https:'].includes(origin.protocol) || origin.pathname !== '/' || origin.search || origin.hash)
+    throw new Error('Invalid billing origin.')
   if (process.env.NODE_ENV === 'production' && origin.protocol !== 'https:') throw new Error('Billing requires HTTPS in production.')
+  // Use the same project-bound host allowlist as authentication. Never return a Preview buyer to production,
+  // even if DOMAIN_URL was accidentally inherited from the Production environment.
+  if (preview && (origin.protocol !== 'https:' || !getAuthAllowedHosts(process.env).includes(origin.host) || origin.hostname === 'kalodeal.com'))
+    throw new Error('Invalid Preview billing origin.')
   return origin.origin
 }
 
 export function getStripeLiveMode() {
   const key = process.env.STRIPE_SECRET_KEY ?? ''
-  if (/^(sk|rk)_live_/.test(key)) return true
-  if (/^(sk|rk)_test_/.test(key)) return false
-  throw new Error('Stripe mode is not configured.')
+  const live = /^(sk|rk)_live_/.test(key) ? true : /^(sk|rk)_test_/.test(key) ? false : null
+  if (live === null) throw new Error('Stripe mode is not configured.')
+  if ((process.env.VERCEL_ENV === 'preview' && live) || (process.env.VERCEL_ENV === 'production' && !live))
+    throw new Error('Stripe mode does not match the deployment environment.')
+  return live
 }
 
 export async function getPlanPrice(plan: PaidPlan) {
   getRecognizedPrices()
-  const price = await getStripe().prices.retrieve(getPlanPriceId(plan))
+  const livemode = getStripeLiveMode()
+  const id = getPlanPriceId(plan)
+  const price = await getStripe().prices.retrieve(id)
   if (
+    price.id !== id ||
     !price.active ||
-    price.livemode !== getStripeLiveMode() ||
+    price.livemode !== livemode ||
     price.type !== 'recurring' ||
+    price.billing_scheme !== 'per_unit' ||
+    price.transform_quantity !== null ||
     price.recurring?.interval !== 'month' ||
     price.recurring.interval_count !== 1 ||
     price.recurring.usage_type !== 'licensed' ||
@@ -63,15 +79,14 @@ export async function getPlanPrice(plan: PaidPlan) {
 }
 
 export async function getPortalConfiguration() {
-  const prices = getRecognizedPrices()
   const configurationId = process.env.STRIPE_PORTAL_CONFIGURATION_ID
   if (configurationId) {
     const configuration = await getStripe().billingPortal.configurations.retrieve(configurationId)
-    return configuration.livemode === getStripeLiveMode() && isSafePortalConfiguration(configuration, prices) ? configuration : null
+    return configuration.livemode === getStripeLiveMode() && isSafePortalConfiguration(configuration) ? configuration : null
   }
   for await (const configuration of getStripe().billingPortal.configurations.list({ is_default: true, limit: 1 })) {
     const full = await getStripe().billingPortal.configurations.retrieve(configuration.id)
-    if (full.livemode === getStripeLiveMode() && isSafePortalConfiguration(full, prices)) return full
+    if (full.livemode === getStripeLiveMode() && isSafePortalConfiguration(full)) return full
   }
   return null
 }

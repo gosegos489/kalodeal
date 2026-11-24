@@ -2,20 +2,26 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
+import { useSearchParams } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/components/ui/toast'
 import { register } from '../actions/register'
+import { getPricingReturnTo } from '../login-redirect'
 import { registerSchema } from '../schemas/register'
 import type { RegisterInput } from '../types/auth'
+import { AuthValidationError } from './auth-validation-error'
 
 export default function RegisterForm() {
-  const router = useRouter()
+  const t = useTranslations('Auth')
+  const locale = useLocale()
+  const [submitted, setSubmitted] = useState(false)
+  const returnTo = getPricingReturnTo(useSearchParams().get('returnTo'))
   const registerForm = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: { accountType: 'PERSONAL', name: '', email: '', password: '', confirm_password: '' }
@@ -23,25 +29,24 @@ export default function RegisterForm() {
   const isSubmitting = registerForm.formState.isSubmitting
   const onSubmit = registerForm.handleSubmit(async (data) => {
     try {
-      const { error } = await register(data)
+      const { error } = await register(data, returnTo ?? undefined, locale)
 
       if (error) {
         const message =
           error.status === 429
-            ? 'Too many attempts. Please try again later.'
-            : error.code === 'USER_ALREADY_EXISTS'
-              ? 'An account with this email already exists.'
-              : error.message || 'Something went wrong'
+            ? t('feedback.tooManyAttempts')
+            : error.code === 'USER_ALREADY_EXISTS' || error.code === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL'
+              ? t('feedback.alreadyExists')
+              : t('feedback.registrationFailed')
 
-        toast.add({ title: 'Registration failed', description: message, type: 'error' })
+        toast.add({ title: t('feedback.registrationFailed'), description: message, type: 'error' })
         return
       }
 
       registerForm.reset()
-      toast.add({ title: 'Check your email', description: 'Please check your email to verify your account.', type: 'success' })
-      router.push('/')
+      setSubmitted(true)
     } catch {
-      toast.add({ title: 'Registration failed', description: 'Please try again.', type: 'error' })
+      toast.add({ title: t('feedback.registrationFailed'), description: t('feedback.retry'), type: 'error' })
     }
   })
 
@@ -54,6 +59,15 @@ export default function RegisterForm() {
 
   const handleToggleConfirmPassword = () => {
     setShowConfirmPassword((prev) => !prev)
+  }
+
+  if (submitted) {
+    return (
+      <div role="status" className="space-y-2">
+        <p className="font-medium">{t('feedback.checkEmail')}</p>
+        <p className="text-muted-foreground text-sm">{t('feedback.verifyEmail')}</p>
+      </div>
+    )
   }
 
   return (
@@ -69,19 +83,19 @@ export default function RegisterForm() {
               if (value === 'PERSONAL' || value === 'BUSINESS') field.onChange(value)
             }}
           >
-            <TabsList className="h-auto w-full" aria-label="Account type">
+            <TabsList className="h-auto w-full" aria-label={t('common.accountType')}>
               <TabsTrigger value="PERSONAL" disabled={isSubmitting} className="min-h-10 whitespace-normal">
-                Personal Account
+                {t('common.personalAccount')}
               </TabsTrigger>
               <TabsTrigger value="BUSINESS" disabled={isSubmitting} className="min-h-10 whitespace-normal">
-                Business Account
+                {t('common.businessAccount')}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="PERSONAL" className="text-muted-foreground pt-2">
-              For individuals selling personal items.
+              {t('common.personalDescription')}
             </TabsContent>
             <TabsContent value="BUSINESS" className="text-muted-foreground pt-2">
-              For businesses, shops and professional sellers.
+              {t('common.businessDescription')}
             </TabsContent>
           </Tabs>
         )}
@@ -92,19 +106,19 @@ export default function RegisterForm() {
           control={registerForm.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Display name (optional)</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t('common.name')}</FieldLabel>
 
               <Input
                 {...field}
                 id={field.name}
                 aria-invalid={fieldState.invalid}
-                placeholder="Enter your name"
+                placeholder={t('common.namePlaceholder')}
                 autoComplete="name"
                 disabled={isSubmitting}
                 type="text"
               />
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && <AuthValidationError error={fieldState.error} />}
             </Field>
           )}
         />
@@ -114,19 +128,19 @@ export default function RegisterForm() {
           control={registerForm.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t('common.email')}</FieldLabel>
 
               <Input
                 {...field}
                 id={field.name}
                 aria-invalid={fieldState.invalid}
-                placeholder="Enter your email"
-                autoComplete="name"
+                placeholder={t('common.emailPlaceholder')}
+                autoComplete="email"
                 type="email"
                 disabled={isSubmitting}
               />
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && <AuthValidationError error={fieldState.error} />}
             </Field>
           )}
         />
@@ -136,14 +150,14 @@ export default function RegisterForm() {
           control={registerForm.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t('common.password')}</FieldLabel>
 
               <div className="relative">
                 <Input
                   {...field}
                   id={field.name}
                   aria-invalid={fieldState.invalid}
-                  placeholder="Enter your password"
+                  placeholder={t('common.passwordPlaceholder')}
                   autoComplete="new-password"
                   type={password ? 'text' : 'password'}
                   disabled={isSubmitting}
@@ -151,7 +165,7 @@ export default function RegisterForm() {
                 />
 
                 <button
-                  aria-label={password ? 'Hide password' : 'Show password'}
+                  aria-label={password ? t('common.hidePassword') : t('common.showPassword')}
                   onClick={handleTogglePassword}
                   className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer"
                   type="button"
@@ -160,7 +174,7 @@ export default function RegisterForm() {
                 </button>
               </div>
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && <AuthValidationError error={fieldState.error} />}
             </Field>
           )}
         />
@@ -170,14 +184,14 @@ export default function RegisterForm() {
           control={registerForm.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Confirm Password</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t('common.confirmPassword')}</FieldLabel>
 
               <div className="relative">
                 <Input
                   {...field}
                   id={field.name}
                   aria-invalid={fieldState.invalid}
-                  placeholder="Confirm Password"
+                  placeholder={t('common.confirmPlaceholder')}
                   autoComplete="new-password"
                   type={confirmPassword ? 'text' : 'password'}
                   disabled={isSubmitting}
@@ -185,7 +199,7 @@ export default function RegisterForm() {
                 />
 
                 <button
-                  aria-label={confirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  aria-label={confirmPassword ? t('common.hideConfirmPassword') : t('common.showConfirmPassword')}
                   onClick={handleToggleConfirmPassword}
                   className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer"
                   type="button"
@@ -194,14 +208,14 @@ export default function RegisterForm() {
                 </button>
               </div>
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && <AuthValidationError error={fieldState.error} />}
             </Field>
           )}
         />
       </FieldGroup>
 
       <Button className="w-full max-w-50 cursor-pointer" type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Signing up...' : 'Sign up'}
+        {isSubmitting ? t('common.signingUp') : t('common.signUp')}
       </Button>
     </form>
   )

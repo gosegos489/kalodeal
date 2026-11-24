@@ -1,9 +1,12 @@
+import { useTranslations } from 'next-intl'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LoadingStatus } from '@/shared/ui/loading-status'
 
 export function AccountPlanSkeleton() {
+  const t = useTranslations('Workspace')
+
   return (
-    <LoadingStatus label="Loading your current plan" className="bg-card space-y-6 rounded-xl border p-6">
+    <LoadingStatus label={t('loadingYourCurrentPlan')} className="bg-card space-y-6 rounded-xl border p-6">
       <div className="space-y-2">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-5 w-full" />
@@ -28,8 +31,10 @@ export function AccountPlanSkeleton() {
 }
 
 export function AccountAnalyticsSkeleton() {
+  const t = useTranslations('Workspace')
+
   return (
-    <LoadingStatus label="Loading listing analytics" className="flex flex-col gap-6">
+    <LoadingStatus label={t('loadingListingAnalytics')} className="flex flex-col gap-6">
       <div className="space-y-2">
         <Skeleton className="h-8 w-36" />
         <Skeleton className="h-5 w-full" />
@@ -63,8 +68,10 @@ export function AccountAnalyticsSkeleton() {
 }
 
 export function AccountSettingsSkeleton() {
+  const t = useTranslations('Workspace')
+
   return (
-    <LoadingStatus label="Loading account settings" className="grid gap-6 xl:grid-cols-2">
+    <LoadingStatus label={t('loadingAccountSettings')} className="grid gap-6 xl:grid-cols-2">
       {[0, 1, 2].map((index) => (
         <div key={index} className="bg-card flex min-w-0 flex-col gap-6 rounded-xl border p-6">
           <div className="space-y-2 border-b pb-6">
@@ -86,8 +93,10 @@ export function AccountSettingsSkeleton() {
 }
 
 export function AccountContentSkeleton() {
+  const t = useTranslations('Workspace')
+
   return (
-    <div role="status" aria-label="Loading account content" className="flex flex-col gap-6">
+    <div role="status" aria-label={t('loadingAccountContent')} className="flex flex-col gap-6">
       <div aria-hidden="true" className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-2">
           <Skeleton className="h-8 w-56 max-w-full motion-reduce:animate-none" />
@@ -108,7 +117,7 @@ export function AccountContentSkeleton() {
           </div>
         ))}
       </div>
-      <span className="sr-only">Loading account content...</span>
+      <span className="sr-only">{t('loadingAccountContent175')}</span>
     </div>
   )
 }

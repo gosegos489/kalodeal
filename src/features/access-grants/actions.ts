@@ -1,7 +1,7 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import 'server-only'
+import { revalidateLocalizedPath as revalidatePath } from '@/i18n/revalidate-path'
 import type { ActionMessageResult, ActionResult } from '@/lib/action-result'
 import prisma from '@/lib/prisma'
 import { captureServerException } from '@/lib/sentry-server'

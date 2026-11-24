@@ -8,8 +8,72 @@ export type RecognizedPrices = Partial<Record<string, PaidPlan>>
 export function hasPlanPrice(subscription: Stripe.Subscription, prices: RecognizedPrices) {
   return subscription.items.data.some((item) => !!prices[item.price.id])
 }
-export function isOpenSubscription(subscription: Stripe.Subscription) {
+export function isOpenSubscription(subscription: { status: string }) {
   return subscription.status !== 'canceled' && subscription.status !== 'incomplete_expired'
+}
+
+export function hasStripeSubscriptionToManage(
+  subscription: { stripeSubscriptionId: string | null; stripeStatus: string | null; status: string } | null
+) {
+  return (
+    !!subscription?.stripeSubscriptionId &&
+    (subscription.stripeStatus ? isOpenSubscription({ status: subscription.stripeStatus }) : subscription.status !== 'EXPIRED')
+  )
+}
+
+function isPaidInvoiceForSubscription(invoice: Stripe.Invoice, subscription: Stripe.Subscription) {
+  const id = (value: string | { id: string } | null | undefined) => (typeof value === 'string' ? value : value?.id)
+  return (
+    invoice.status === 'paid' &&
+    invoice.livemode === subscription.livemode &&
+    id(invoice.customer) === id(subscription.customer) &&
+    id(invoice.parent?.subscription_details?.subscription) === subscription.id &&
+    !invoice.lines.has_more
+  )
+}
+
+// An upgrade can finish before the initial purchase webhook arrives. Recover only a fully
+// invoiced, paid base period from Stripe; a proration invoice alone cannot establish that period.
+export function recoverPaidSubscriptionPeriod(
+  subscription: Stripe.Subscription,
+  previous: PreviousSubscription,
+  prices: RecognizedPrices,
+  invoices: Stripe.Invoice[],
+  now = new Date()
+): PreviousSubscription {
+  const item = subscription.items.data.length === 1 && !subscription.items.has_more ? subscription.items.data[0] : undefined
+  if (!item || !['active', 'past_due', 'unpaid'].includes(subscription.status) || subscription.pause_collection) return previous
+  if (item.current_period_start * 1000 > now.getTime() || item.current_period_end * 1000 <= now.getTime()) return previous
+  const plans = invoices
+    .filter((invoice) => isPaidInvoiceForSubscription(invoice, subscription))
+    .flatMap((invoice) =>
+      invoice.lines.data.flatMap((line) => {
+        const details = line.parent?.subscription_item_details
+        const price = line.pricing?.price_details?.price
+        const plan = prices[typeof price === 'string' ? price : (price?.id ?? '')]
+        return plan &&
+          details?.subscription === subscription.id &&
+          details.subscription_item === item.id &&
+          !details.proration &&
+          line.quantity === 1 &&
+          line.currency === item.price.currency &&
+          line.period.start <= item.current_period_start &&
+          line.period.end >= item.current_period_end
+          ? [plan]
+          : []
+      })
+    )
+  const plan = plans.sort((a, b) => PLAN_LIMITS[b].price - PLAN_LIMITS[a].price)[0]
+  if (!plan) return previous
+  const samePeriod = previous.stripeSubscriptionId === subscription.id && previous.currentPeriodStart.getTime() === item.current_period_start * 1000
+  return {
+    plan,
+    status: 'ACTIVE',
+    stripeSubscriptionId: subscription.id,
+    currentPeriodStart: new Date(item.current_period_start * 1000),
+    currentPeriodEnd: new Date(item.current_period_end * 1000),
+    boostsUsed: samePeriod ? previous.boostsUsed : 0
+  }
 }
 
 // Derive from a fresh Stripe object under the owner's lock, never from event metadata.
@@ -40,13 +104,15 @@ export function getSubscriptionUpdate(subscription: Stripe.Subscription, previou
     !!item &&
     typeof invoice === 'object' &&
     invoice !== null &&
-    invoice.status === 'paid' &&
-    !invoice.lines.has_more &&
+    isPaidInvoiceForSubscription(invoice, subscription) &&
     invoice.lines.data.some((line) => {
       const details = line.parent?.subscription_item_details
       const price = line.pricing?.price_details?.price
       if (
-        details?.subscription_item !== item.id ||
+        details?.subscription !== subscription.id ||
+        details.subscription_item !== item.id ||
+        line.quantity !== 1 ||
+        line.currency !== item.price.currency ||
         (typeof price === 'string' ? price : price?.id) !== item.price.id ||
         line.period.end < item.current_period_end
       )
@@ -58,9 +124,10 @@ export function getSubscriptionUpdate(subscription: Stripe.Subscription, previou
         previousPaid &&
         !!plan &&
         PLAN_LIMITS[plan].price > PLAN_LIMITS[previous.plan].price &&
-        line.amount > 0 &&
+        line.amount >= 0 &&
         previous.currentPeriodStart.getTime() === periodStart.getTime() &&
         previous.currentPeriodEnd.getTime() === periodEnd.getTime() &&
+        line.period.start >= item.current_period_start &&
         line.period.start * 1000 <= now.getTime()
       )
     })
@@ -94,25 +161,18 @@ export function getSubscriptionUpdate(subscription: Stripe.Subscription, previou
   }
 }
 
-export function isSafePortalConfiguration(configuration: Stripe.BillingPortal.Configuration, prices: RecognizedPrices) {
+export function isSafePortalConfiguration(configuration: Stripe.BillingPortal.Configuration) {
   const features = configuration.features
-  const updates = features.subscription_update
-  const safeChanges =
-    !updates.enabled ||
-    (updates.default_allowed_updates.length === 1 &&
-      updates.default_allowed_updates[0] === 'price' &&
-      updates.proration_behavior === 'always_invoice' &&
-      updates.billing_cycle_anchor !== 'now' &&
-      updates.schedule_at_period_end.conditions.some((condition) => condition.type === 'decreasing_item_amount') &&
-      updates.products?.length === 1 &&
-      updates.products.every((product) => product.prices.length > 0 && product.prices.every((price) => !!prices[price])))
+  // Plan changes go through the app: the Portal cannot schedule cross-product downgrades.
+  // A generic Portal session must not offer an immediate downgrade that bypasses that policy.
   return (
     configuration.active &&
     features.payment_method_update.enabled &&
+    features.invoice_history.enabled &&
     features.customer_update.enabled &&
     features.customer_update.allowed_updates.includes('address') &&
     features.subscription_cancel.enabled &&
     features.subscription_cancel.mode === 'at_period_end' &&
-    safeChanges
+    !features.subscription_update.enabled
   )
 }

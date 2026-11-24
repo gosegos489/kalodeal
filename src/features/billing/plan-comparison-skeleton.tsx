@@ -1,10 +1,12 @@
+import { getTranslations } from 'next-intl/server'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LoadingStatus } from '@/shared/ui/loading-status'
 import { pricingCtaClassName } from './pricing-cta'
 
-export function PlanComparisonSkeleton() {
+export async function PlanComparisonSkeleton() {
+  const t = await getTranslations('Pricing')
   return (
-    <LoadingStatus label="Loading plans" className="space-y-6">
+    <LoadingStatus label={t('loading')} className="space-y-6">
       <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[0, 1, 2, 3].map((index) => (
           <div key={index} aria-hidden="true" className="bg-card flex flex-col gap-6 rounded-xl border p-6">

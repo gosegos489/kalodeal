@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import {
   AlertDialog,
@@ -31,6 +32,8 @@ export function getFormAttributes(form: ListingFormApi): ListingAttributes {
 }
 
 export function useAttributeChange(form: ListingFormApi) {
+  const t = useTranslations('Workspace')
+
   const [pending, setPending] = useState<{ attributes: ListingAttributes; categoryId?: string } | null>(null)
   const apply = (attributes: ListingAttributes, categoryId?: string) => {
     const next = fillAttributeFormDefaults(attributes)
@@ -54,14 +57,13 @@ export function useAttributeChange(form: ListingFormApi) {
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Change listing type?</AlertDialogTitle>
+          <AlertDialogTitle>{t('changeListingType')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Some entered details do not apply to this selection and will be cleared. Your title, description, location, price and photos will be kept.
-            An incompatible rental period will also be cleared.
+            {t('someEnteredDetailsDoNotApplyToThisSelectionAndWillBeClearedYourTitleDescriptionLocati')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Keep current selection</AlertDialogCancel>
+          <AlertDialogCancel>{t('keepCurrentSelection')}</AlertDialogCancel>
           <AlertDialogAction
             type="button"
             onClick={() => {
@@ -69,7 +71,7 @@ export function useAttributeChange(form: ListingFormApi) {
               setPending(null)
             }}
           >
-            Change and clear details
+            {t('changeAndClearDetails')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

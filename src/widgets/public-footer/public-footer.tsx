@@ -28,7 +28,10 @@ async function FooterNavigation({ locale }: { locale: Locale }) {
               return (
                 <li key={label}>
                   <Suspense fallback={null}>
-                    <FooterLink href={localizeHref(href, locale)} label={label === 'browse' || label === 'saved' ? t(label) : nav(label)} />
+                    <FooterLink
+                      href={localizeHref(!session && (href === '/sell' || href.startsWith('/account')) ? '/login' : href, locale)}
+                      label={label === 'browse' || label === 'saved' ? t(label) : nav(label)}
+                    />
                   </Suspense>
                 </li>
               )

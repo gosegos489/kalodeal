@@ -1,73 +1,90 @@
-# Kalodeal agent guide
+# KaloDeal
 
-Kalodeal is a Cyprus classifieds marketplace for buyers, personal sellers and business sellers. Read [PRODUCT.md](PRODUCT.md) for product and UX context and [DESIGN.md](DESIGN.md) before visual or frontend changes. Current code and migrations define implemented behavior.
+## Перед изменением
 
-## Workflow
+Откройте «Текущая задача» и журнал в [docs/QA.md](docs/QA.md). Сверьте их с `git status --short --branch`, `git diff` и новыми файлами. Перед действием запишите ID. После проверки укажите наблюдение в браузере, ответ сервера, состояние данных, команду, изменённые файлы и один следующий шаг. Общие решения интерфейса описаны в [DESIGN.md](DESIGN.md).
 
-1. Trace the request through its current route, feature, data access and tests. Check Git status and preserve in-progress work.
-2. Read [PRODUCT.md](PRODUCT.md) when the task affects product behavior, copy or user journeys.
-3. Read [DESIGN.md](DESIGN.md) before changing the frontend or visual system.
-4. Use [Impeccable](.agents/skills/impeccable/SKILL.md) for interface design, layout, hierarchy, typography, color, accessibility, responsive design and design audits.
-5. Use [emil-design-eng](.agents/skills/emil-design-eng/SKILL.md) or a narrower installed Emil skill for motion, gestures, interaction feedback and component craftsmanship. Use the design skills for UI work and skip this workflow for unrelated backend-only tasks.
-6. Reuse the existing components, variants and semantic tokens.
-7. Implement the smallest coherent solution through the existing entry points.
-8. Verify the affected behavior with appropriate tests and visual checks.
-9. Review the final diff and report verification gaps.
+## Карта репозитория
 
-When guidance conflicts, apply security, correctness and accessibility first. Then follow explicit user requirements, verified product requirements, the established Kalodeal design system, and relevant skill recommendations in that order.
+- `src/app` — Next App Router. Группы `(localized)/[locale]`, `(public)`, `(auth)`, `(protected)` задают витрину, общие страницы, вход и кабинет. Внутри protected раздельные layouts для user, moderator и admin. `src/proxy.ts` отвечает за локаль и режим разработки сайта. Проверки прав выполняют серверные обработчики.
+- `src/app/api` — Better Auth, создание объявлений, фото и просмотры, приватные и публичные аватары, иконки категорий, сообщения и счётчики, токен Ably, webhook Stripe. Остальные операции в основном используют server actions в `src/features`.
+- `src/features` — формы, валидация, запросы и рабочие процессы отдельных функций. `src/entities` — категории, география, объявления, публичные продавцы и документы. `src/lib` — Prisma, роли, сессии, тарифы и лимиты, адаптеры сервисов. `src/components/ui`, `src/shared/ui`, `src/widgets` — примитивы, общие компоненты и секции.
+- `prisma/models` и `prisma/migrations` — PostgreSQL. Prisma генерирует клиент в игнорируемый `src/generated/prisma`. `prisma/seeds` — справочник категорий и два юридических документа. `emails` — шаблоны Resend. `src/i18n` — маршрутизация, словари EN/EL, подписи атрибутов.
+- На исходном коммите `4114798` нет отслеживаемых README, workflow CI, браузерного тест-раннера и общего seed пользователей/объявлений. Тесты рядом с модулями используют `node:test` и tsx.
 
-## Stack and repository map
+## Локальная среда
 
-Next.js 16 App Router uses React 19, strict TypeScript, Cache Components and next-intl. The UI uses Tailwind CSS 4, shadcn components built on Base UI and Lucide. The backend uses Prisma 7 over PostgreSQL and Better Auth. Integrations include Stripe billing, Ably messaging, S3-compatible R2 storage, Upstash Redis, Resend and Sentry. React Email templates live in [emails](emails).
+В этой копии установлены Node 26.13.0 и pnpm 12.4.2. Версия pnpm закреплена в package.json. При свежей установке задайте URL тестовой БД **до** `pnpm install --frozen-lockfile` (postinstall вызывает Prisma). Используйте отдельную пустую PostgreSQL. Для примера ниже пользователь qa должен иметь доступ к своей базе kalodeal_qa.
 
-| Path | Responsibility |
+```sh
+export DATABASE_DIRECT_URL='postgresql://qa@localhost:5432/kalodeal_qa'
+export DATABASE_POOL_URL="$DATABASE_DIRECT_URL"
+pnpm exec prisma migrate deploy
+pnpm exec prisma generate
+node --import tsx prisma/seeds/category.seed.ts
+node --import tsx prisma/seeds/legal.seed.ts
+```
+
+Seed категорий вызывает create для каждого slug и рассчитан на пустой справочник. Юридический seed использует upsert. Пользователей создавайте через /register, письма принимайте тестовым почтовым сервисом. Назначайте служебные роли только фикстурам в тестовой БД. Объявления создаются через /sell.
+
+Для `pnpm dev` используйте `http://localhost:3000` (разрешённый host Better Auth), `SHOW_UNDER_DEVELOPMENT=false`, локальные DOMAIN_URL, BETTER_AUTH_URL и собственный BETTER_AUTH_SECRET. Prisma CLI читает DATABASE_DIRECT_URL через dotenv, приложение использует DATABASE_POOL_URL. Next также загружает .env.local. Переопределяйте **обе** строки подключения в окружении процесса.
+
+| Путь | Что настроить на стенде |
 | --- | --- |
-| [src/app](src/app) | Route groups, layouts, route handlers, metadata and route-level loading/error UI |
-| [src/entities](src/entities) | Domain catalogues, shared domain queries and entity presentation |
-| [src/features](src/features) | Product workflows and their actions, schemas, queries and UI |
-| [src/components/ui](src/components/ui), [src/shared/ui](src/shared/ui), [src/widgets](src/widgets) | Primitives, shared layout and route helpers, site chrome and consent |
-| [src/lib](src/lib), [src/i18n](src/i18n) | Integration clients and cross-cutting policy, locale routing and messages |
-| [prisma](prisma) | Split PostgreSQL models, migrations and seed scripts |
+| Регистрация / восстановление | RESEND_API_KEY, RESEND_FROM_EMAIL. У установленного SDK RESEND_BASE_URL может указывать на локальный приёмник POST /emails, возвращающий JSON с id. Ссылка находится в HTML письма. |
+| Поиск и мутации с лимитами | UPSTASH_REDIS_REST_URL и UPSTASH_REDIS_REST_TOKEN. При отказе запросы с лимитером могут вернуть 503. |
+| Фотографии и иконки | R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL. Для аватаров также AVATAR_ENCRYPTION_SECRET. Модуль R2 проверяет конфигурацию при импорте. |
+| Подписки | Тестовый STRIPE_SECRET_KEY, STRIPE_{PLUS,PRO,BUSINESS}_PRICE_ID, STRIPE_WEBHOOK_SECRET для обработчика /api/webhook/stripe, совместимая конфигурация портала. Проверка цены включает валюту, сумму и месячный интервал. |
+| Чат и наблюдаемость | ABLY_CHAT_API_KEY для realtime. Отдельно настраиваются аналитика и Sentry. Для локального прогона можно отключить GA/отправку Sentry, оставив идентификаторы пустыми. |
 
-## Code and data
+### Подготовка AUTH-04
 
-- Follow the neighboring TypeScript, [Prettier](.prettierrc) and [ESLint](eslint.config.mjs) conventions. Reuse the `@/` alias, typed props and `cn` for class composition in application code. Keep App Router entries focused on route composition. Put domain reads and mutations with their entity or feature.
-- Prefer Server Components and server-side reads. Use client components for browser state and interaction. Use the existing React Hook Form and Zod patterns for interactive forms. Keep search, filter, sorting and pagination state in the URL with nuqs and the shared server parser. TanStack Query is available in the app provider. Follow the feature's existing data pattern.
-- Keep Prisma, credentials and integration clients on the server. Validate untrusted input at every action or route boundary and use the existing safe error and result conventions. Preserve scoped queries, explicit selections, transactions, ownership locks and conditional versions where concurrent changes can race. Maintain compatibility with legacy listings, categories and billing data.
-- Use [cache tags](src/lib/cache-tags.ts) and existing cache lifetimes for bounded public data. Invalidate affected paths or tags on writes. Keep private, permission-sensitive and expiry-sensitive reads current. Preserve pagination, image sizing, lazy loading, route fallbacks and metadata behavior. Add client JavaScript only where the interaction needs it.
-- Preserve English unprefixed and Greek `/el` URLs on the homepage, categories and listing detail. Reuse [locale routing](src/i18n/routing.ts) and message catalogs on those surfaces.
+В оболочке с переменными QA-базы и приложения создайте почтовый файл для стенда и запустите локальный приёмник Resend:
 
-## Authorization, privacy and billing
+```sh
+export QA_MAIL_FILE="$(mktemp "${TMPDIR:-/tmp}/kalodeal-auth-mail.XXXXXXXX")"
+printf 'QA_MAIL_FILE=%s\n' "$QA_MAIL_FILE"
+export RESEND_BASE_URL=http://127.0.0.1:53961
+export RESEND_API_KEY=re_local_qa RESEND_FROM_EMAIL=qa@example.test
+node --input-type=module <<'JS' &
+import { createServer } from 'node:http'
+import { appendFileSync } from 'node:fs'
+createServer(async (req, res) => {
+  if (req.method !== 'POST' || req.url !== '/emails') return res.writeHead(404).end()
+  const chunks = []
+  for await (const chunk of req) chunks.push(chunk)
+  const message = JSON.parse(Buffer.concat(chunks).toString())
+  appendFileSync(process.env.QA_MAIL_FILE, JSON.stringify(message) + '\n')
+  res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ id: crypto.randomUUID() }))
+}).listen(53961, '127.0.0.1')
+JS
+pnpm dev --hostname localhost
+```
 
-- Check authorization in each protected entry point. Use [auth utilities](src/lib/auth-utils.ts) for fresh mutation sessions and ban checks, and apply ownership, role, participant and state checks server-side. Recheck permissions inside existing transaction locks where changes can race. The moderator role is staff-only. Admin retains marketplace access.
-- Minimize public data and preserve listing eligibility, approved identity display and privacy-safe seller names. Keep phone reveals, conversation access and staff reads scoped. Preserve signed/private asset access, upload type and size checks, cleanup, the avatar encryption envelope and the separate `AVATAR_ENCRYPTION_SECRET`. Key rotation must preserve access to existing objects. Keep secrets out of the repository, client bundles, URLs and logs. Preserve [Sentry redaction](src/lib/sentry-privacy.ts) and the Google Analytics consent gate. Check current call sites before relying on a rate-limit helper.
-- Use the [plan catalog](src/lib/plan-limits.ts) for prices and limits. Preserve paid-period entitlements, reserved listing slots, downgrade behavior, credit and Featured constraints, and legacy Pro Price compatibility. Billing relies on recognized Stripe Prices and supported configuration in the matching Stripe mode.
-- [Stripe reconciliation](src/features/billing/webhook.ts) verifies signatures against the raw request body and derives entitlements from mode-checked events and authoritative Stripe state under the owner's lock. Keep event and invoice processing idempotent. Keep subscription/customer checks and Billing Portal safeguards. Checkout redirects are display and polling signals. Use Stripe test mode and isolated data for local billing verification. Dashboard and live configuration changes require explicit authorization.
+Заранее сохраните путь из `QA_MAIL_FILE` для терминала с Playwright. Зарегистрируйте отдельный адрес вида `auth04@qa.example.test` на `http://localhost:3000/register`. В записи этого адресата в JSONL откройте ссылку подтверждения из поля `html`. В терминале с тестами экспортируйте тот же `QA_MAIL_FILE` и адрес как `QA_RESET_EMAIL`. Оба прогона используют один аккаунт и файл, каждый раз получают свежее письмо и меняют пароль.
 
-## Development and verification
+## Команды
 
-Use the pnpm version pinned in [package.json](package.json). Node.js 24 was used for the verification pass. The install runs Prisma client generation. Use a local or isolated development environment, with `DATABASE_DIRECT_URL` for Prisma CLI and `DATABASE_POOL_URL` for application queries. Enable external services only as needed for the route being verified. The historical README named Vercel as the deployment target. Confirm the actual environment and its configured services before deployment.
-
-| Command | Purpose |
+| Команда | Назначение |
 | --- | --- |
-| `pnpm install --frozen-lockfile` | Restore locked dependencies and generate Prisma Client |
-| `pnpm dev` | Run the Next.js development server |
-| `pnpm email:dev` | Preview React Email templates on port 3001 |
-| `pnpm exec prisma generate` | Regenerate ignored client output from the checked-in schema |
-| `pnpm exec prisma validate` | Validate the schema with a local direct URL configured |
-| `pnpm lint` | Run repository ESLint |
-| `pnpm exec tsc --noEmit --incremental false` | Check TypeScript with generated Prisma and Next types available |
-| `pnpm exec tsx --test src/entities/location/catalog.test.ts src/entities/user/seller-categories.test.ts src/features/account/settings/*.test.ts` | Run focused offline catalog, seller and profile tests |
-| `pnpm exec next build` | Compile the app when the required development services are configured |
-| `pnpm build` | Deploys Prisma migrations first, generates the client, then builds Next.js. Use only against an explicitly intended database. |
-| `pnpm start` | Serve an existing production build |
+| `pnpm dev` | Next dev, порт 3000. |
+| `pnpm lint` | ESLint по проекту. |
+| `pnpm exec next typegen` и `pnpm exec tsc --noEmit --incremental false` | Генерация типов маршрутов на чистой копии и строгая проверка TS. |
+| `pnpm test` | Запускает `src/**/*.test.ts` через node:test. Корневой `tsconfig.test.json` задаёт alias для `server-only`. |
+| `pnpm test:e2e --list` | Показывает сценарии из `tests/browser/` по корневому `playwright.config.ts`. |
+| `pnpm test:e2e --grep AUTH-04` | Запустите из корня после старта `pnpm dev` с QA-переменными на localhost:3000 и локального приёмника Resend. Задайте `QA_RESET_EMAIL` подтверждённой фикстуры, пароль которой тест сменит, и `QA_MAIL_FILE` — путь к JSONL-файлу приёмника с полями `to`, `subject`, `html`. Для установленного Chrome задайте `PLAYWRIGHT_CHANNEL=chrome`. |
+| `pnpm build` | Последовательно применяет миграции, генерирует Prisma и собирает Next. Запускайте на тестовом подключении, включая DATABASE_DIRECT_URL. Для Geist требуется доступ к Google Fonts при холодной сборке. |
+| `pnpm start` | Обслуживание готовой production-сборки. |
+| `pnpm email:dev` | Просмотр шаблонов писем, порт 3001. |
 
-Authentication tests in `src/features/auth/account-type.test.ts` use in-memory adapters. Outside Next.js the test process needs to resolve `server-only` to Next's server marker. Keep any runner mapping scoped to tests. Use an isolated database for `prisma migrate dev`. Review migration SQL and test compatibility before deploying it. Validate relevant roles, access, loading/empty/error states and legacy records when behavior changes.
+Статус фактических запусков и ограничения среды собраны в журнале QA. После правки запустите тест дефекта, смежные тесты, lint и TypeScript. Для изменений маршрутов, RSC или конфигурации проверьте сборку и соответствующий путь в браузере.
 
-For UI changes, use a running app and representative desktop and mobile widths. Check keyboard and touch input, focus, reduced motion and available locales. For billing or listing visibility changes, verify normal, retry, expired and concurrent paths as appropriate. A change is done when the requested behavior works through its entry point, suitable checks pass or their limits are recorded, and the diff contains only authorized changes.
+<!-- BEGIN:nextjs-agent-rules -->
 
-## Project-local design skills
+# This is NOT the Next.js you know
 
-Codex discovers skill folders in [.agents/skills](.agents/skills). If the current session lacks a new skill, open its `SKILL.md` directly and follow its linked playbook. Start a fresh Codex session from the repo root if needed for discovery. Keep the skill sources, [Emil lockfile](skills-lock.json) and [hook manifest](.codex/hooks.json) shareable through Git. Keep platform binaries and local settings out of Git.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
-For Impeccable, use `$impeccable init` to refresh product context when needed and `$impeccable document` to refresh the incumbent design system and [sidecar](.impeccable/design.json). Review the hook in Codex with `/hooks` and follow the normal per-command trust prompts. The hook checks UI edits and end-of-turn changes. The project's [Live configuration](.impeccable/live/config.json) targets the shared document for local design sessions. For Emil, choose the narrowest applicable motion, performance, gesture or touch workflow. Review upstream code and permissions before updating either skill set.
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

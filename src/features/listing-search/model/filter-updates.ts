@@ -17,10 +17,26 @@ export function getFilterUpdate(current: SearchFilters, updates: FilterUpdates):
   }
   if ('category' in updates && updates.category !== current.category) {
     for (const key of [...PROPERTY_FILTER_KEYS, ...VEHICLE_FILTER_KEYS]) patch[key] = null
-    patch.pricePeriod = null
-    patch.minPrice = null
-    patch.maxPrice = null
-    patch.sort = null
+    const profile = getCategoryAttributeProfile(updates.category ?? '')
+    const previousProfile = getCategoryAttributeProfile(current.category)
+    const leavesRental =
+      previousProfile.kind === 'property' &&
+      previousProfile.transaction === 'rent' &&
+      !(profile.kind === 'property' && profile.transaction === 'rent')
+    const period = updates.pricePeriod ?? current.pricePeriod
+    const compatiblePeriod =
+      !leavesRental &&
+      (!period ||
+        profile.kind === 'generic' ||
+        (profile.kind === 'property' && profile.transaction === 'rent'
+          ? profile.pricePeriods.some((value) => value === period)
+          : period === 'ONE_OFF'))
+    if (!compatiblePeriod) {
+      patch.pricePeriod = null
+      patch.minPrice = null
+      patch.maxPrice = null
+      if (current.sort === 'PRICE_LOW' || current.sort === 'PRICE_HIGH') patch.sort = null
+    }
   }
   const next = { ...current, ...patch }
   const profile = getCategoryAttributeProfile(next.category ?? '')

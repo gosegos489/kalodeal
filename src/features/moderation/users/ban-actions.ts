@@ -1,10 +1,10 @@
 'use server'
 
 import { APIError } from 'better-auth/api'
-import { revalidatePath } from 'next/cache'
 import 'server-only'
 import { AvatarError } from '@/features/account/settings/avatar-lifecycle'
 import { getSettingsActor } from '@/features/account/settings/server'
+import { revalidateLocalizedPath as revalidatePath } from '@/i18n/revalidate-path'
 import type { ActionMessageResult } from '@/lib/action-result'
 import { auth } from '@/lib/auth'
 import { getAuthHeaders } from '@/lib/auth-utils'

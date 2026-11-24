@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function AccountPlaceholder({
@@ -12,6 +13,8 @@ export function AccountPlaceholder({
   icon: LucideIcon
   children?: React.ReactNode
 }) {
+  const t = useTranslations('Workspace')
+
   return (
     <Card>
       <CardHeader>
@@ -22,7 +25,7 @@ export function AccountPlaceholder({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-start gap-4">
-        <p className="text-muted-foreground text-sm">Coming soon.</p>
+        <p className="text-muted-foreground text-sm">{t('comingSoon')}</p>
         {children}
       </CardContent>
     </Card>

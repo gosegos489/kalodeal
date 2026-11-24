@@ -1,6 +1,7 @@
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import 'server-only'
+import { type Locale, localizeHref } from '@/i18n/routing'
 import { canUseMarketplace, getAccountDestination } from './account-role'
 import { auth } from './auth'
 import { hasActiveBan } from './ban-status'
@@ -27,11 +28,11 @@ export async function getMutationSession() {
   return session && !hasActiveBan(session.user) ? session : null
 }
 
-export async function requireGuest() {
+export async function requireGuest(locale: Locale = 'en') {
   const session = await getSession(true)
 
   if (session) {
-    redirect(getAccountDestination(session.user.role))
+    redirect(localizeHref(getAccountDestination(session.user.role), locale))
   }
 }
 
@@ -45,9 +46,9 @@ export async function requireUser() {
   return session
 }
 
-export async function requireMarketplaceUser() {
+export async function requireMarketplaceUser(locale: Locale = 'en') {
   const session = await getMutationSession()
-  if (!session) redirect('/login')
+  if (!session) redirect(localizeHref('/login', locale))
   if (!canUseMarketplace(session.user.role)) redirect('/moderator')
   return session
 }

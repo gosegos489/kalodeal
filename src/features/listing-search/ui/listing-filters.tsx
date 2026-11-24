@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { CYPRUS_LOCATIONS, getAreas } from '@/entities/location/catalog'
 import { getCategoryAttributeProfile } from '@/features/listing-attributes/rules'
 import { getFilterUpdate } from '../model/filter-updates'
+import { getPriceComparisonPeriod, withPriceComparisonDefaults } from '../model/price-comparison'
 import { type FilterUpdates, SEARCH_DEFAULTS, type SearchFilters, parseListingSearch } from '../model/search-params'
 import { useListingSearch } from '../model/use-listing-search'
 import { ActiveFilters } from './active-filters'
@@ -26,15 +27,16 @@ export function ListingFilters({ categories, children }: { categories: SearchCat
   const values = { ...SEARCH_DEFAULTS, ...useWatch({ control: form.control }) }
   const profile = getCategoryAttributeProfile(values.category)
   function change(updates: FilterUpdates) {
-    const patch = getFilterUpdate(form.getValues(), updates)
-    if (updates.minPrice || updates.maxPrice || updates.sort === 'PRICE_LOW' || updates.sort === 'PRICE_HIGH') {
-      if (!values.currency) patch.currency = 'EUR'
-      if (!values.pricePeriod && !(profile.kind === 'property' && profile.transaction === 'rent')) patch.pricePeriod = 'ONE_OFF'
+    const current = form.getValues()
+    const next = { ...current }
+    for (const [key, value] of Object.entries(getFilterUpdate(current, updates))) next[key as keyof SearchFilters] = value ?? ''
+    for (const [key, value] of Object.entries(withPriceComparisonDefaults(next))) {
+      if (value !== current[key as keyof SearchFilters]) form.setValue(key as keyof SearchFilters, value, { shouldDirty: true })
     }
-    for (const [key, value] of Object.entries(patch)) form.setValue(key as keyof SearchFilters, value ?? '', { shouldDirty: true })
     form.clearErrors()
   }
-  const submit = form.handleSubmit(async (values) => {
+  const submit = form.handleSubmit(async (input) => {
+    const values = withPriceComparisonDefaults(input)
     const parsed = parseListingSearch(values, getCategoryAttributeProfile(values.category))
     if (!parsed.success) {
       form.setError('root', { message: t('invalidFilters') })
@@ -44,8 +46,7 @@ export function ListingFilters({ categories, children }: { categories: SearchCat
   })
   const disabled = search.isPending || form.formState.isSubmitting
   const control = { values, change, disabled }
-  const rental = profile.kind === 'property' && profile.transaction === 'rent'
-  const periods = rental ? [...profile.pricePeriods] : profile.kind === 'generic' ? ['ONE_OFF', 'DAY', 'WEEK', 'MONTH', 'YEAR'] : ['ONE_OFF']
+  const period = getPriceComparisonPeriod(values.category, values.pricePeriod) ?? 'ONE_OFF'
   const fields = (
     <>
       <FilterSelect
@@ -74,13 +75,7 @@ export function ListingFilters({ categories, children }: { categories: SearchCat
         <legend className="float-left mb-4 text-sm font-semibold">{t('price')}</legend>
         <div className="clear-both space-y-4">
           <FilterSelect {...control} name="currency" placeholder={t('allCurrencies')} options={enumOptions(['EUR', 'USD'])} />
-          <FilterSelect
-            {...control}
-            name="pricePeriod"
-            placeholder={rental ? t('allRentalPeriods') : t('allPricePeriods')}
-            options={enumOptions(periods)}
-          />
-          <FilterRange {...control} label={t('priceRange')} from="minPrice" to="maxPrice" max={999_999_999.99} step={0.01} />
+          <FilterRange {...control} label={t(`priceRanges.${period}`)} from="minPrice" to="maxPrice" max={999_999_999.99} step={0.01} />
           <p className="text-muted-foreground text-xs leading-relaxed">{t('priceNote')}</p>
         </div>
       </fieldset>

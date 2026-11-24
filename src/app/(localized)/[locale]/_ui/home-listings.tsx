@@ -73,7 +73,10 @@ export async function HomeListings({ searchParams }: HomePageProps) {
                 {t('adjustFilters')}
               </a>
             ) : favoriteState.canUseMarketplace ? (
-              <Link href="/sell" className="text-primary text-sm font-medium underline underline-offset-4">
+              <Link
+                href={favoriteState.isAuthenticated ? '/sell' : '/login'}
+                className="text-primary text-sm font-medium underline underline-offset-4"
+              >
                 {t('postListing')}
               </Link>
             ) : (

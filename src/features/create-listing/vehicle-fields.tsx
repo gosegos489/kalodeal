@@ -1,16 +1,19 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useWatch } from 'react-hook-form'
-import { FieldError } from '@/components/ui/field'
 import { getVehicleBodyTypes, getVehicleFields } from '@/features/listing-attributes/rules'
 import { ATTRIBUTE_LIMITS } from '@/features/listing-attributes/schema'
 import { OTHER_VEHICLE_MAKE, OTHER_VEHICLE_MODEL, getVehicleMakes, getVehicleModels } from '@/features/listing-attributes/vehicle-catalog'
 import { selectVehicleMake } from '@/features/listing-attributes/vehicle-selection'
 import { VehicleColor, VehicleCondition, VehicleFuel, VehicleTransmission, type VehicleType } from '@/generated/prisma/enums'
+import { WorkspaceFieldError as FieldError } from '@/shared/ui/workspace-field-error'
 import { AttributeNumber, AttributeSelect, AttributeText, enumOptions } from './attribute-controls'
 import type { ListingFormApi } from './types'
 
 export function VehicleFields({ form, vehicleType, disabled }: { form: ListingFormApi; vehicleType: VehicleType; disabled: boolean }) {
+  const t = useTranslations('Workspace')
+
   const vehicle = useWatch({ control: form.control, name: 'vehicleDetails' })
   const fields = getVehicleFields(vehicleType)
   const ensureVehicle = () => {
@@ -22,15 +25,15 @@ export function VehicleFields({ form, vehicleType, disabled }: { form: ListingFo
     <section className="bg-card flex min-w-0 flex-col gap-6 rounded-2xl border p-5 shadow-xs sm:p-7" aria-labelledby="vehicle-heading">
       <div className="space-y-1 border-b pb-5">
         <h2 id="vehicle-heading" className="text-lg font-semibold">
-          {vehicleType === 'MOTORCYCLE' ? 'Motorcycle' : vehicleType === 'VAN' ? 'Van' : 'Car'} details
+          {vehicleType === 'MOTORCYCLE' ? t('motorcycleDetails') : vehicleType === 'VAN' ? t('vanDetails') : t('carDetails')}
         </h2>
-        <p className="text-muted-foreground text-sm">Add the characteristics you know. Choose Other if your make or model is missing.</p>
+        <p className="text-muted-foreground text-sm">{t('addTheCharacteristicsYouKnowChooseOtherIfYourMakeOrModelIsMissing')}</p>
       </div>
       <div className="grid min-w-0 gap-5 sm:grid-cols-2">
         <AttributeSelect
           {...control}
           name="vehicleDetails.make"
-          label="Make"
+          label={t('make')}
           searchable
           options={getVehicleMakes(vehicleType).map(({ key, label }) => ({ value: key, label }))}
           onChange={(make) => {
@@ -43,7 +46,7 @@ export function VehicleFields({ form, vehicleType, disabled }: { form: ListingFo
           {...control}
           disabled={disabled || !vehicle?.make}
           name="vehicleDetails.model"
-          label="Model"
+          label={t('model')}
           searchable
           options={getVehicleModels(vehicle?.make ?? '', vehicleType).map(({ key, label }) => ({ value: key, label }))}
           onChange={(model) => {
@@ -56,23 +59,23 @@ export function VehicleFields({ form, vehicleType, disabled }: { form: ListingFo
           }}
         />
         {vehicle?.make === OTHER_VEHICLE_MAKE && (
-          <AttributeText {...control} name="vehicleDetails.otherMake" label="Make name (required for Other make)" maxLength={60} />
+          <AttributeText {...control} name="vehicleDetails.otherMake" label={t('makeNameRequiredForOtherMake')} maxLength={60} />
         )}
         {vehicle?.model === OTHER_VEHICLE_MODEL && (
-          <AttributeText {...control} name="vehicleDetails.otherModel" label="Model name (required for Other model)" maxLength={80} />
+          <AttributeText {...control} name="vehicleDetails.otherModel" label={t('modelNameRequiredForOtherModel')} maxLength={80} />
         )}
         <AttributeNumber
           {...control}
           name="vehicleDetails.year"
-          label="Year"
+          label={t('year')}
           min={ATTRIBUTE_LIMITS.vehicleYearMin}
           max={Math.min(new Date().getUTCFullYear() + 1, ATTRIBUTE_LIMITS.yearMax)}
         />
-        <AttributeNumber {...control} name="vehicleDetails.mileage" label="Mileage (km)" max={ATTRIBUTE_LIMITS.mileage} />
+        <AttributeNumber {...control} name="vehicleDetails.mileage" label={t('mileageKm')} max={ATTRIBUTE_LIMITS.mileage} />
         <AttributeSelect
           {...control}
           name="vehicleDetails.fuel"
-          label="Fuel type"
+          label={t('fuelType')}
           options={enumOptions(Object.values(VehicleFuel))}
           onChange={(fuel) => {
             form.setValue('vehicleDetails.fuel', Object.values(VehicleFuel).find((value) => value === fuel) ?? null, {
@@ -88,17 +91,17 @@ export function VehicleFields({ form, vehicleType, disabled }: { form: ListingFo
         <AttributeSelect
           {...control}
           name="vehicleDetails.transmission"
-          label="Transmission"
+          label={t('transmission')}
           options={enumOptions(Object.values(VehicleTransmission))}
         />
         {fields.includes('bodyType') && (
-          <AttributeSelect {...control} name="vehicleDetails.bodyType" label="Body type" options={enumOptions(bodies)} />
+          <AttributeSelect {...control} name="vehicleDetails.bodyType" label={t('bodyType')} options={enumOptions(bodies)} />
         )}
         {vehicle?.fuel !== 'ELECTRIC' && (
           <AttributeNumber
             {...control}
             name="vehicleDetails.engineCapacity"
-            label="Engine capacity (cm³)"
+            label={t('engineCapacityCm')}
             min={1}
             max={ATTRIBUTE_LIMITS.engineCapacity}
           />
@@ -106,13 +109,15 @@ export function VehicleFields({ form, vehicleType, disabled }: { form: ListingFo
         <AttributeNumber
           {...control}
           name="vehicleDetails.seats"
-          label="Seats"
+          label={t('seats')}
           min={1}
           max={vehicleType === 'MOTORCYCLE' ? 2 : ATTRIBUTE_LIMITS.seats}
         />
-        {fields.includes('doors') && <AttributeNumber {...control} name="vehicleDetails.doors" label="Doors" min={1} max={ATTRIBUTE_LIMITS.doors} />}
-        <AttributeSelect {...control} name="vehicleDetails.condition" label="Condition" options={enumOptions(Object.values(VehicleCondition))} />
-        <AttributeSelect {...control} name="vehicleDetails.color" label="Color" options={enumOptions(Object.values(VehicleColor))} />
+        {fields.includes('doors') && (
+          <AttributeNumber {...control} name="vehicleDetails.doors" label={t('doors')} min={1} max={ATTRIBUTE_LIMITS.doors} />
+        )}
+        <AttributeSelect {...control} name="vehicleDetails.condition" label={t('condition')} options={enumOptions(Object.values(VehicleCondition))} />
+        <AttributeSelect {...control} name="vehicleDetails.color" label={t('color')} options={enumOptions(Object.values(VehicleColor))} />
       </div>
       {form.formState.errors.vehicleDetails?.message && <FieldError errors={[form.formState.errors.vehicleDetails]} />}
       {form.formState.errors.vehicleDetails?.vehicleType && <FieldError errors={[form.formState.errors.vehicleDetails.vehicleType]} />}

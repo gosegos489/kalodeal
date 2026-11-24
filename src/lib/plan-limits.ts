@@ -56,10 +56,6 @@ export const PAID_PLANS: PaidPlan[] = ['PLUS', 'PRO', 'BUSINESS']
 export const LISTING_PLANS: ListingPlan[] = ['FREE', ...PAID_PLANS]
 export const MAX_LISTING_PHOTOS = Math.max(...LISTING_PLANS.map((plan) => PLAN_LIMITS[plan].imagesPerListing))
 
-export function formatPlanPrice(plan: ListingPlan) {
-  return new Intl.NumberFormat('en', { style: 'currency', currency: PLAN_LIMITS[plan].currency }).format(PLAN_LIMITS[plan].price / 100)
-}
-
 export function getPaidListingPlan(
   subscription: { plan: ListingPlan; status: string; currentPeriodStart: Date; currentPeriodEnd: Date } | null,
   now = new Date()

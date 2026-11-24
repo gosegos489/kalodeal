@@ -1,3 +1,4 @@
+import { getLocale } from 'next-intl/server'
 import 'server-only'
 import { getListingImageUrl } from '@/entities/listing/listing-summary'
 import { listingIdSchema } from '@/entities/listing/schema'
@@ -9,7 +10,7 @@ import { getUserAccess } from '@/lib/user-access'
 import type { EditableListing } from './types'
 
 export async function getEditableListing(id: unknown): Promise<(EditableListing & { categoryName: string; categorySlug: string }) | null> {
-  const session = await requireMarketplaceUser()
+  const session = await requireMarketplaceUser(await getLocale())
   const parsed = listingIdSchema.safeParse(id)
   if (!parsed.success) return null
 

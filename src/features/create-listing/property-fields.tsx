@@ -1,13 +1,15 @@
 'use client'
 
+import { useMessages, useTranslations } from 'next-intl'
 import { Controller, useWatch } from 'react-hook-form'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { previewCategoryAttributeChange } from '@/features/listing-attributes/category-change'
 import { propertyTypeLabels } from '@/features/listing-attributes/labels'
 import { type CategoryAttributeProfile, getPropertyAmenities, getPropertyFields } from '@/features/listing-attributes/rules'
 import { ATTRIBUTE_LIMITS } from '@/features/listing-attributes/schema'
 import { PropertyEnergyRating, PropertyFurnishing, PropertyParking, PropertyType } from '@/generated/prisma/enums'
+import { WorkspaceFieldError as FieldError } from '@/shared/ui/workspace-field-error'
 import { AttributeBoolean, AttributeNumber, AttributeSelect, AttributeText, attributeLabel, enumOptions } from './attribute-controls'
 import type { ListingFormApi } from './types'
 import { getFormAttributes, useAttributeChange } from './use-attribute-change'
@@ -23,6 +25,10 @@ export function PropertyFields({
   categorySlug: string
   disabled: boolean
 }) {
+  const t = useTranslations('Workspace')
+  const messages = useMessages()
+  const values: Record<string, string> = messages.Attributes.values
+
   const property = useWatch({ control: form.control, name: 'propertyDetails' })
   const type = property?.propertyType ?? (profile.propertyTypes.length === 1 ? profile.propertyTypes[0] : undefined)
   const fields = type ? getPropertyFields(profile, type) : []
@@ -36,9 +42,9 @@ export function PropertyFields({
     <section className="bg-card flex min-w-0 flex-col gap-6 rounded-2xl border p-5 shadow-xs sm:p-7" aria-labelledby="property-heading">
       <div className="space-y-1 border-b pb-5">
         <h2 id="property-heading" className="text-lg font-semibold">
-          Property details
+          {t('propertyDetails')}
         </h2>
-        <p className="text-muted-foreground text-sm">Add the characteristics that apply. These details are optional.</p>
+        <p className="text-muted-foreground text-sm">{t('addTheCharacteristicsThatApplyTheseDetailsAreOptional')}</p>
       </div>
       <AttributeSelect
         form={form}
@@ -46,8 +52,8 @@ export function PropertyFields({
         name="propertyDetails.propertyType"
         displayValue={property?.propertyType ?? ''}
         allowEmpty={profile.propertyTypes.length > 1}
-        label="Property type"
-        placeholder="Not specified"
+        label={t('propertyType')}
+        placeholder={t('notSpecified')}
         options={profile.propertyTypes.map((value) => ({ value, label: propertyTypeLabels[value] }))}
         onChange={(value) => {
           const parsed = Object.values(PropertyType).find((item) => item === value)
@@ -66,7 +72,7 @@ export function PropertyFields({
           <AttributeNumber
             {...control}
             name="propertyDetails.plotArea"
-            label="Plot area (m²)"
+            label={t('plotAreaM')}
             min={0.01}
             max={ATTRIBUTE_LIMITS.plotArea}
             step={0.01}
@@ -76,50 +82,50 @@ export function PropertyFields({
           <AttributeNumber
             {...control}
             name="propertyDetails.propertyArea"
-            label="Property area (m²)"
+            label={t('propertyAreaM')}
             min={0.01}
             max={ATTRIBUTE_LIMITS.propertyArea}
             step={0.01}
           />
         )}
         {fields.includes('bedrooms') && (
-          <AttributeNumber {...control} name="propertyDetails.bedrooms" label="Bedrooms" max={ATTRIBUTE_LIMITS.rooms} />
+          <AttributeNumber {...control} name="propertyDetails.bedrooms" label={t('bedrooms')} max={ATTRIBUTE_LIMITS.rooms} />
         )}
         {fields.includes('bathrooms') && (
-          <AttributeNumber {...control} name="propertyDetails.bathrooms" label="Bathrooms" max={ATTRIBUTE_LIMITS.rooms} />
+          <AttributeNumber {...control} name="propertyDetails.bathrooms" label={t('bathrooms')} max={ATTRIBUTE_LIMITS.rooms} />
         )}
         {fields.includes('constructionYear') && (
           <AttributeNumber
             {...control}
             name="propertyDetails.constructionYear"
-            label="Construction year"
+            label={t('constructionYear')}
             min={ATTRIBUTE_LIMITS.constructionYearMin}
             max={Math.min(new Date().getUTCFullYear() + 1, ATTRIBUTE_LIMITS.yearMax)}
           />
         )}
         {fields.includes('parking') && (
-          <AttributeSelect {...control} name="propertyDetails.parking" label="Parking" options={enumOptions(Object.values(PropertyParking))} />
+          <AttributeSelect {...control} name="propertyDetails.parking" label={t('parking')} options={enumOptions(Object.values(PropertyParking))} />
         )}
-        {fields.includes('airConditioning') && <AttributeBoolean {...control} name="propertyDetails.airConditioning" label="Air conditioning" />}
+        {fields.includes('airConditioning') && <AttributeBoolean {...control} name="propertyDetails.airConditioning" label={t('airConditioning')} />}
         {fields.includes('furnishing') && (
           <AttributeSelect
             {...control}
             name="propertyDetails.furnishing"
-            label="Furnishing"
+            label={t('furnishing')}
             options={enumOptions(Object.values(PropertyFurnishing))}
           />
         )}
-        {fields.includes('petsAllowed') && <AttributeBoolean {...control} name="propertyDetails.petsAllowed" label="Pets allowed" />}
-        {fields.includes('onlineViewing') && <AttributeBoolean {...control} name="propertyDetails.onlineViewing" label="Online viewing" />}
+        {fields.includes('petsAllowed') && <AttributeBoolean {...control} name="propertyDetails.petsAllowed" label={t('petsAllowed')} />}
+        {fields.includes('onlineViewing') && <AttributeBoolean {...control} name="propertyDetails.onlineViewing" label={t('onlineViewing')} />}
         {fields.includes('energyRating') && (
           <AttributeSelect
             {...control}
             name="propertyDetails.energyRating"
-            label="Energy efficiency"
+            label={t('energyEfficiency')}
             options={enumOptions(Object.values(PropertyEnergyRating))}
           />
         )}
-        {fields.includes('postalCode') && <AttributeText {...control} name="propertyDetails.postalCode" label="Postal code" maxLength={16} />}
+        {fields.includes('postalCode') && <AttributeText {...control} name="propertyDetails.postalCode" label={t('postalCode')} maxLength={16} />}
       </div>
       {type && fields.includes('amenities') && (
         <Controller
@@ -128,7 +134,7 @@ export function PropertyFields({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <fieldset className="space-y-3" disabled={disabled}>
-                <legend className="text-sm font-medium">Included amenities</legend>
+                <legend className="text-sm font-medium">{t('includedAmenities')}</legend>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {getPropertyAmenities(type).map((amenity, index) => (
                     <FieldLabel
@@ -150,7 +156,7 @@ export function PropertyFields({
                           field.onChange(checked ? [...(field.value ?? []), amenity] : (field.value ?? []).filter((item) => item !== amenity))
                         }}
                       />
-                      {attributeLabel(amenity)}
+                      {values[amenity] ?? attributeLabel(amenity)}
                     </FieldLabel>
                   ))}
                 </div>
@@ -160,7 +166,7 @@ export function PropertyFields({
           )}
         />
       )}
-      {!type && <FieldDescription>Choose a property type to see its available characteristics.</FieldDescription>}
+      {!type && <FieldDescription>{t('chooseAPropertyTypeToSeeItsAvailableCharacteristics')}</FieldDescription>}
       {form.formState.errors.propertyDetails?.message && <FieldError errors={[form.formState.errors.propertyDetails]} />}
       {dialog}
     </section>

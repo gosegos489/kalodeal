@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
   // These SDK flags work with Next's compiler in both Turbopack and webpack.
   compiler: { define: { __SENTRY_DEBUG__: false, __SENTRY_TRACING__: false } },
   cacheComponents: true,
+  redirects: async () => [
+    { source: '/categories', destination: '/', permanent: true },
+    { source: '/en/categories', destination: '/', permanent: true },
+    { source: '/el/categories', destination: '/el', permanent: true }
+  ],
   experimental: { globalNotFound: true },
   serverExternalPackages: ['ably'],
   images: {

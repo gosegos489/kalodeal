@@ -1,14 +1,18 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Controller } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { CONTACT_US_QUESTIONS } from './schema'
 import { useContactUs } from './useContactUs'
 
 export default function ContactUsForm() {
+  const t = useTranslations('ContactUs')
+  const topics = CONTACT_US_QUESTIONS.map((value) => ({ value, label: t(`topics.${value}`) }))
   const { form, isSubmitting, onSubmit } = useContactUs()
 
   return (
@@ -19,9 +23,16 @@ export default function ContactUsForm() {
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t('email')}</FieldLabel>
 
-              <Input {...field} id={field.name} type="email" placeholder="Enter your email" autoComplete="email" aria-invalid={fieldState.invalid} />
+              <Input
+                {...field}
+                id={field.name}
+                type="email"
+                placeholder={t('emailPlaceholder')}
+                autoComplete="email"
+                aria-invalid={fieldState.invalid}
+              />
 
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
@@ -33,18 +44,19 @@ export default function ContactUsForm() {
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>What can we help you with?</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t('topic')}</FieldLabel>
 
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value} onValueChange={field.onChange} items={topics}>
                 <SelectTrigger id={field.name} aria-invalid={fieldState.invalid} className="w-full">
-                  <SelectValue placeholder="Select a topic" />
+                  <SelectValue placeholder={t('topicPlaceholder')} />
                 </SelectTrigger>
 
                 <SelectContent>
-                  <SelectItem value="GENERAL">General</SelectItem>
-                  <SelectItem value="TECHNICAL">Technical</SelectItem>
-                  <SelectItem value="BILLING">Billing</SelectItem>
-                  <SelectItem value="OTHER">Other</SelectItem>
+                  {topics.map(({ value, label }) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -58,13 +70,13 @@ export default function ContactUsForm() {
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Message</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t('message')}</FieldLabel>
 
               <Textarea
                 className="min-h-50"
                 {...field}
                 id={field.name}
-                placeholder="Tell us how we can help..."
+                placeholder={t('messagePlaceholder')}
                 rows={6}
                 aria-invalid={fieldState.invalid}
               />
@@ -76,7 +88,7 @@ export default function ContactUsForm() {
       </FieldGroup>
 
       <Button className="w-full cursor-pointer" type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Sending...' : 'Send message'}
+        {isSubmitting ? t('sending') : t('send')}
       </Button>
     </form>
   )

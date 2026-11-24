@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
+import { type Locale, localizeHref } from '@/i18n/routing'
 import { openListingConversation } from './actions'
 
 const defaultLabels = {
@@ -17,18 +18,22 @@ const defaultLabels = {
 export function MessageSellerButton({
   listingId,
   isAuthenticated,
-  labels = defaultLabels
+  labels = defaultLabels,
+  loginHref = '/login',
+  locale = 'en'
 }: {
   listingId: string
   isAuthenticated: boolean
   labels?: typeof defaultLabels
+  locale?: Locale
+  loginHref?: string
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   if (!isAuthenticated) {
     return (
-      <Button nativeButton={false} size="lg" className="w-full" render={<Link href="/login" />}>
+      <Button nativeButton={false} size="lg" className="w-full" render={<Link href={loginHref} />}>
         <MessageCircle aria-hidden="true" /> {labels.message}
       </Button>
     )
@@ -39,11 +44,11 @@ export function MessageSellerButton({
       try {
         const result = await openListingConversation({ listingId })
         if (!result.success) {
-          setError(result.message)
-          toast.add({ title: labels.error, description: result.message, type: 'error' })
+          setError(locale === 'en' ? result.message : labels.retry)
+          toast.add({ title: labels.error, description: locale === 'en' ? result.message : labels.retry, type: 'error' })
           return
         }
-        router.push(`/account/messages/${result.data.conversationId}`)
+        router.push(localizeHref(`/account/messages/${result.data.conversationId}`, locale))
       } catch {
         setError(labels.retry)
       }

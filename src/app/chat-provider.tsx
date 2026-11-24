@@ -4,7 +4,7 @@ import type { Realtime } from 'ably'
 import { z } from 'zod'
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { inboxChannel, presenceChannel } from '@/features/messages/channels'
-import { type RealtimeAvailability, subscribeToRealtimeUpdates } from '@/features/messages/realtime-state'
+import { enterOwnPresence, type RealtimeAvailability, subscribeToRealtimeUpdates } from '@/features/messages/realtime-state'
 import { canUseMarketplace } from '@/lib/account-role'
 import { authClient } from '@/lib/auth-client'
 
@@ -192,10 +192,7 @@ function MessagingSession({ children, userId }: { children: React.ReactNode; use
     if (!realtime || !userId) return
     const channel = realtime.channels.get(presenceChannel(userId))
     // A signed, fixed clientId and presence-only capability prevent impersonation.
-    void channel.presence.enter().catch(() => {})
-    return () => {
-      void channel.presence.leave().catch(() => {})
-    }
+    return enterOwnPresence(channel)
   }, [realtime, userId])
 
   return (

@@ -8,7 +8,9 @@
     "postinstall": "prisma generate",
     "email:dev": "email dev --port 3001",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "playwright test",
+    "test": "TSX_TSCONFIG_PATH=./tsconfig.test.json node --import tsx --test \"src/**/*.test.ts\""
   },
   "dependencies": {
     "@ably/chat": "^1.4.0",
@@ -57,6 +59,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/jsonwebtoken": "^9.0.10",

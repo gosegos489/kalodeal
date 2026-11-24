@@ -4,18 +4,16 @@ import { betterAuth } from 'better-auth/minimal'
 import { nextCookies } from 'better-auth/next-js'
 import { admin } from 'better-auth/plugins'
 import 'server-only'
-import React from 'react'
 import { accountTypeSchema } from '@/entities/user/account-type'
 import { guardAuthAccountType, guardAuthProfileData, prepareNewProfileName } from '@/features/account/settings/auth-profile'
 import { displayNameSchema } from '@/features/account/settings/schema'
+import { registrationEmailSchema } from '@/features/auth/schemas/register'
 import { captureServerExceptionAfterResponse } from '@/lib/sentry-server'
-import ResetPasswordEmail from '../../emails/ResetPasswordEmail'
-import VerifyEmail from '../../emails/VerifyEmail'
+import { sendAuthEmail } from './auth-email'
 import { getAuthOriginOptions } from './auth-origins'
 import { ac, adminRole, moderatorRole, userRole } from './auth-permissions'
 import { authorizeAuthMutation, normalizeBanUpdate } from './auth-security'
 import prisma from './prisma'
-import { resend, resendFrom } from './resend'
 
 export const auth = betterAuth({
   ...getAuthOriginOptions(process.env),
@@ -31,6 +29,10 @@ export const auth = betterAuth({
       const banBody = await authorizeAuthMutation(ctx)
       if (banBody) return { context: { ...ctx, body: banBody } }
       const isSignUp = ctx.path === '/sign-up/email'
+      if (isSignUp) {
+        const email = registrationEmailSchema.safeParse(ctx.body?.email)
+        if (!email.success) throw new APIError('BAD_REQUEST', { message: email.error.issues[0].message })
+      }
       const isProfileUpdate = ctx.path === '/update-user'
       const isAdminProfile = ctx.path === '/admin/update-user' || ctx.path === '/admin/create-user'
       if (!isSignUp && !isProfileUpdate && !isAdminProfile) return
@@ -121,27 +123,18 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 32,
 
-    async sendResetPassword({ user, url }) {
-      await resend.emails.send({
-        from: resendFrom,
-        to: user.email,
-        subject: 'Reset your KaloDeal password',
-        react: React.createElement(ResetPasswordEmail, { verificationUrl: url })
-      })
+    async sendResetPassword({ user, url }, request) {
+      await sendAuthEmail({ kind: 'reset', email: user.email, url }, request)
     }
   },
 
   emailVerification: {
     sendOnSignUp: true,
+    sendOnSignIn: true,
     autoSignInAfterVerification: true,
 
-    async sendVerificationEmail({ user, url }) {
-      await resend.emails.send({
-        from: resendFrom,
-        to: user.email,
-        subject: 'Verify your KaloDeal email address',
-        react: React.createElement(VerifyEmail, { verificationUrl: url })
-      })
+    async sendVerificationEmail({ user, url }, request) {
+      await sendAuthEmail({ kind: 'verification', email: user.email, url }, request)
     }
   },
 

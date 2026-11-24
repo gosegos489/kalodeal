@@ -1,9 +1,11 @@
 'use client'
 
+import { useMessages, useTranslations } from 'next-intl'
 import { Controller, type UseFormReturn, useWatch } from 'react-hook-form'
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { isAreaInDistrict } from '@/entities/location/catalog'
 import { AreaSelect, DistrictSelect } from '@/entities/location/ui/location-selects'
+import { WorkspaceFieldError as FieldError } from '@/shared/ui/workspace-field-error'
 import type { CreateListingInput, CreateListingValues } from './types'
 
 export function ListingLocationFields({
@@ -15,6 +17,11 @@ export function ListingLocationFields({
   disabled: boolean
   missingLocation: boolean
 }) {
+  const t = useTranslations('Workspace')
+  const location = useTranslations('Locations')
+  const messages = useMessages()
+  const labels = { ...messages.Locations, districts: messages.Locations, noMatches: location('noMatches') }
+
   const district = useWatch({ control: form.control, name: 'district' })
 
   return (
@@ -25,8 +32,9 @@ export function ListingLocationFields({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>District</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t('district')}</FieldLabel>
               <DistrictSelect
+                labels={labels}
                 id={field.name}
                 inputRef={field.ref}
                 onBlur={field.onBlur}
@@ -50,8 +58,9 @@ export function ListingLocationFields({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Area</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t('area')}</FieldLabel>
               <AreaSelect
+                labels={labels}
                 key={district}
                 district={district}
                 id={field.name}
@@ -69,9 +78,7 @@ export function ListingLocationFields({
         />
       </div>
       <FieldDescription>
-        {missingLocation
-          ? 'This listing has no location yet. Choose a district and area before saving.'
-          : 'Choose the area where your item or service is available.'}
+        {missingLocation ? t('thisListingHasNoLocationYetChooseADistrictAndAreaBeforeSaving') : t('chooseTheAreaWhereYourItemOrServiceIsAvailable')}
       </FieldDescription>
     </div>
   )

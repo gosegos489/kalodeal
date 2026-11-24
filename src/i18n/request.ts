@@ -1,6 +1,7 @@
 import { hasLocale } from 'next-intl'
 import { getRequestConfig } from 'next-intl/server'
 import { locale as rootLocale } from 'next/root-params'
+import { DISPLAY_TIME_ZONE, formats } from './formats'
 import { routing } from './routing'
 
 export default getRequestConfig(async ({ locale: override }) => {
@@ -9,7 +10,8 @@ export default getRequestConfig(async ({ locale: override }) => {
   const locale = hasLocale(routing.locales, value) ? value : routing.defaultLocale
   return {
     locale,
-    timeZone: 'Asia/Nicosia',
+    timeZone: DISPLAY_TIME_ZONE,
+    formats,
     messages: (await import(`./messages/${locale}.json`)).default
   }
 })

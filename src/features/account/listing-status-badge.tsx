@@ -1,7 +1,9 @@
 import { CheckCheck, CircleCheck, CircleX, Clock, EyeOff } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
 import { listingStatusLabels } from '@/entities/listing/lifecycle'
 import type { ListingStatus } from '@/generated/prisma/enums'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
 
 const statuses = {
   PENDING: { icon: Clock, className: 'border-chart-4/40 bg-chart-4/15 text-foreground' },
@@ -14,11 +16,14 @@ const statuses = {
 } satisfies Record<ListingStatus, { icon: typeof Clock; className: string }>
 
 export function ListingStatusBadge({ status }: { status: ListingStatus }) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const { icon: Icon, className } = statuses[status]
 
   return (
     <Badge variant="outline" className={`${className} h-6 gap-1.5 px-2.5 font-semibold`}>
-      <Icon aria-hidden="true" /> {listingStatusLabels[status]}
+      <Icon aria-hidden="true" /> {copy(listingStatusLabels[status])}
     </Badge>
   )
 }

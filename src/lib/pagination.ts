@@ -20,7 +20,7 @@ type GetPaginationParams = {
 }
 
 export function getPagination({ pageParam, totalItems, pageSize = 10 }: GetPaginationParams) {
-  const requestedPage = paginationPageParser.parseServerSide(typeof pageParam === 'string' ? pageParam : undefined)
+  const requestedPage = paginationPageParser.parseServerSide(pageParam)
   const totalPages = Math.ceil(totalItems / pageSize)
   const page = Math.min(requestedPage, Math.max(1, totalPages))
 

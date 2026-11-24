@@ -2,16 +2,22 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
 import { Button } from '@/components/ui/button'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
+import { WorkspaceFieldError as FieldError } from '@/shared/ui/workspace-field-error'
 import { changeAccountPassword } from './actions'
 import { passwordChangeSchema } from './schema'
 
 export function SecurityForm({ email, hasPassword }: { email: string; hasPassword: boolean }) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const form = useForm<z.infer<typeof passwordChangeSchema>>({
     resolver: zodResolver(passwordChangeSchema),
     defaultValues: { currentPassword: '', password: '', confirm_password: '' }
@@ -25,19 +31,19 @@ export function SecurityForm({ email, hasPassword }: { email: string; hasPasswor
         try {
           const changed = await changeAccountPassword(data)
           toast.add({
-            title: changed.success ? 'Password changed successfully' : 'Could not change your password',
-            description: changed.message,
+            title: changed.success ? t('passwordChangedSuccessfully') : t('couldNotChangeYourPassword'),
+            description: copy(changed.message, true),
             type: changed.success ? 'success' : 'error'
           })
           if (changed.success) form.reset()
         } catch {
-          toast.add({ title: 'Could not change your password', description: 'Please try again.', type: 'error' })
+          toast.add({ title: t('couldNotChangeYourPassword'), description: t('pleaseTryAgain'), type: 'error' })
         }
       })}
     >
       <FieldGroup className="gap-6">
         <Field>
-          <FieldLabel htmlFor="account-email">Email</FieldLabel>
+          <FieldLabel htmlFor="account-email">{t('email')}</FieldLabel>
           <Input id="account-email" type="email" value={email} readOnly autoComplete="email" />
         </Field>
         {hasPassword ? (
@@ -49,7 +55,7 @@ export function SecurityForm({ email, hasPassword }: { email: string; hasPasswor
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={`security-${name}`}>
-                    {name === 'currentPassword' ? 'Current password' : name === 'password' ? 'New password' : 'Confirm new password'}
+                    {name === 'currentPassword' ? t('currentPassword') : name === 'password' ? t('newPassword') : t('confirmNewPassword')}
                   </FieldLabel>
                   <Input
                     {...field}
@@ -65,13 +71,14 @@ export function SecurityForm({ email, hasPassword }: { email: string; hasPasswor
             />
           ))
         ) : (
-          <p className="text-muted-foreground text-sm">This account uses an external sign-in provider. Manage its password with that provider.</p>
+          <p className="text-muted-foreground text-sm">{t('thisAccountUsesAnExternalSignInProviderManageItsPasswordWithThatProvider')}</p>
         )}
       </FieldGroup>
       {hasPassword && (
         <div className="mt-auto border-t pt-5">
           <Button type="submit" disabled={busy} className="w-full sm:w-auto">
-            {busy && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}Change password
+            {busy && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
+            {t('changePassword')}
           </Button>
         </div>
       )}

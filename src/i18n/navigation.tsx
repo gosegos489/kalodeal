@@ -5,5 +5,7 @@ import { localizeHref } from './routing'
 
 export async function Link({ href, ...props }: ComponentProps<typeof NextLink>) {
   const locale = await getLocale()
-  return <NextLink href={typeof href === 'string' ? localizeHref(href, locale) : href} {...props} />
+  const localizedHref =
+    typeof href === 'string' ? localizeHref(href, locale) : { ...href, ...(href.pathname && { pathname: localizeHref(href.pathname, locale) }) }
+  return <NextLink href={localizedHref} {...props} />
 }

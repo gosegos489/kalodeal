@@ -1,9 +1,11 @@
 import { MessageCircle } from 'lucide-react'
-import Link from 'next/link'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { notFound, redirect } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
+import { Link } from '@/i18n/navigation'
+import { localizeHref } from '@/i18n/routing'
 import { cn } from '@/lib/utils'
-import NuqsPagination from '@/shared/ui/NuqsPagination'
+import NuqsPagination from '@/shared/ui/workspace-pagination'
 import { ChatView } from './chat-view'
 import { formatConversationTime, formatUnreadBadge } from './format-time'
 import { MessagesRealtime } from './realtime'
@@ -16,6 +18,10 @@ export type MessagesPageProps = { searchParams: Promise<Record<string, string | 
 export { MessagesHeading, MessagesLoading } from './messages-skeleton'
 
 export async function MessagesScreen({ searchParams, params }: MessagesPageProps & { params?: Promise<{ conversationId: string }> }) {
+  const locale = await getLocale()
+
+  const t = await getTranslations('Workspace')
+
   const [query, route] = await Promise.all([searchParams, params])
   const selected = route?.conversationId
   const reference = new Date().toISOString()
@@ -26,7 +32,7 @@ export async function MessagesScreen({ searchParams, params }: MessagesPageProps
     list = loaded[0]
     detail = loaded[1]
   } catch (error) {
-    if (error instanceof MessagingError && error.status === 401) redirect('/login')
+    if (error instanceof MessagingError && error.status === 401) redirect(localizeHref('/login', locale))
     if (error instanceof MessagingError && error.status === 404) notFound()
     throw error
   }
@@ -34,13 +40,13 @@ export async function MessagesScreen({ searchParams, params }: MessagesPageProps
   return (
     <MessagesRealtime conversationId={selected} otherId={detail?.otherId}>
       <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside aria-label="Conversations" className={cn('bg-card min-w-0 rounded-xl border', selected && 'hidden xl:block')}>
+        <aside aria-label={t('conversations')} className={cn('bg-card min-w-0 rounded-xl border', selected && 'hidden xl:block')}>
           {!list.conversations.length ? (
             <div className="text-muted-foreground flex flex-col items-center gap-3 p-6 text-center text-sm">
               <MessageCircle aria-hidden="true" className="size-8" />
-              <p>No conversations yet. Open a listing and choose Message seller to get started.</p>
+              <p>{t('noConversationsYetOpenAListingAndChooseMessageSellerToGetStarted')}</p>
               <Link href="/" className="text-primary underline">
-                Browse listings
+                {t('browseListings')}
               </Link>
             </div>
           ) : (
@@ -63,17 +69,17 @@ export async function MessagesScreen({ searchParams, params }: MessagesPageProps
                           {conversation.otherName}
                         </p>
                         <time dateTime={conversation.lastMessageAt} className="text-muted-foreground text-[10px]">
-                          {formatConversationTime(conversation.lastMessageAt, reference)}
+                          {formatConversationTime(conversation.lastMessageAt, reference, locale)}
                         </time>
                       </div>
                       <p className="text-muted-foreground mt-0.5 truncate text-xs">{conversation.listingTitle}</p>
                       <div className="mt-1.5 flex items-center justify-between gap-2">
                         <p className={cn('truncate text-xs', conversation.unreadCount > 0 ? 'font-medium' : 'text-muted-foreground')}>
-                          {conversation.lastMessageOwn && 'You: '}
-                          {conversation.lastMessage ?? 'No messages yet'}
+                          {conversation.lastMessageOwn && t('youPrefix')}
+                          {conversation.lastMessage ?? t('noMessagesYet')}
                         </p>
                         {conversation.unreadCount > 0 && (
-                          <Badge className="shrink-0 tabular-nums" aria-label={`${conversation.unreadCount} unread messages`}>
+                          <Badge className="shrink-0 tabular-nums" aria-label={t('valueUnreadMessages', { value0: conversation.unreadCount })}>
                             {formatUnreadBadge(conversation.unreadCount)}
                           </Badge>
                         )}
@@ -86,7 +92,7 @@ export async function MessagesScreen({ searchParams, params }: MessagesPageProps
           )}
           {list.totalPages > 1 && (
             <div className="border-t p-2">
-              <NuqsPagination totalPages={list.totalPages} ariaLabel="Conversation pages" />
+              <NuqsPagination totalPages={list.totalPages} ariaLabel={t('conversationPages')} />
             </div>
           )}
         </aside>
@@ -94,7 +100,7 @@ export async function MessagesScreen({ searchParams, params }: MessagesPageProps
           <ChatView key={detail.id} conversation={detail} reference={reference} />
         ) : (
           <div className="text-muted-foreground bg-card hidden min-h-96 items-center justify-center rounded-xl border border-dashed p-8 text-center text-sm xl:flex">
-            Choose a conversation to read and send messages.
+            {t('chooseAConversationToReadAndSendMessages')}
           </div>
         )}
       </div>

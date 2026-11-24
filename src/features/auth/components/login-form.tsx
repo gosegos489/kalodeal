@@ -2,20 +2,26 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
 import { login } from '../actions/login'
-import { getLoginErrorMessage } from '../login-error'
+import { getLoginErrorKey } from '../login-error'
 import { loginSchema } from '../schemas/login'
 import type { LoginInput } from '../types/auth'
+import { AuthValidationError } from './auth-validation-error'
 
 export default function LoginForm() {
-  const returnTo = useSearchParams().get('returnTo')
+  const t = useTranslations('Auth')
+  const locale = useLocale()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get('returnTo')
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' }
@@ -23,10 +29,10 @@ export default function LoginForm() {
   const isSubmitting = form.formState.isSubmitting
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      const { error } = await login(data, returnTo ?? undefined)
-      if (error) toast.add({ title: 'Login failed', description: getLoginErrorMessage(error), type: 'error' })
+      const { error } = await login(data, returnTo ?? undefined, locale)
+      if (error) toast.add({ title: t('feedback.loginFailed'), description: t(`feedback.${getLoginErrorKey(error)}`), type: 'error' })
     } catch {
-      toast.add({ title: 'Login failed', description: 'Could not sign in. Please try again.', type: 'error' })
+      toast.add({ title: t('feedback.loginFailed'), description: t('feedback.retry'), type: 'error' })
     }
   })
 
@@ -38,15 +44,28 @@ export default function LoginForm() {
 
   return (
     <form className="flex flex-col items-center justify-center gap-6" onSubmit={onSubmit}>
+      {searchParams.get('error') === 'TOKEN_EXPIRED' && (
+        <Alert>
+          <AlertTitle>{t('feedback.verificationExpired')}</AlertTitle>
+          <AlertDescription>{t('feedback.signInForLink')}</AlertDescription>
+        </Alert>
+      )}
       <FieldGroup>
         <Controller
           name="email"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-              <Input {...field} id={field.name} type="email" aria-invalid={fieldState.invalid} placeholder="Enter your email" autoComplete="email" />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              <FieldLabel htmlFor={field.name}>{t('common.email')}</FieldLabel>
+              <Input
+                {...field}
+                id={field.name}
+                type="email"
+                aria-invalid={fieldState.invalid}
+                placeholder={t('common.emailPlaceholder')}
+                autoComplete="email"
+              />
+              {fieldState.invalid && <AuthValidationError error={fieldState.error} />}
             </Field>
           )}
         />
@@ -56,33 +75,38 @@ export default function LoginForm() {
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t('common.password')}</FieldLabel>
 
               <div className="relative">
                 <Input
                   {...field}
                   id={field.name}
                   aria-invalid={fieldState.invalid}
-                  placeholder="Enter your password"
+                  placeholder={t('common.passwordPlaceholder')}
                   autoComplete="current-password"
                   type={password ? 'text' : 'password'}
                   disabled={isSubmitting}
                   className="pr-10"
                 />
 
-                <button onClick={handleTogglePassword} className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer" type="button">
+                <button
+                  aria-label={password ? t('common.hidePassword') : t('common.showPassword')}
+                  onClick={handleTogglePassword}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer"
+                  type="button"
+                >
                   {password ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                 </button>
               </div>
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && <AuthValidationError error={fieldState.error} />}
             </Field>
           )}
         />
       </FieldGroup>
 
       <Button className="w-full max-w-50 cursor-pointer" type="submit" disabled={isSubmitting}>
-        Login
+        {isSubmitting ? t('common.signingIn') : t('common.signIn')}
       </Button>
     </form>
   )

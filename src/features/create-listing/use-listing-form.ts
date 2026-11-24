@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { type FieldPath, useForm } from 'react-hook-form'
 import { useState, useTransition } from 'react'
@@ -9,6 +10,8 @@ import { DEFAULT_LISTING_CURRENCY } from '@/entities/listing/currency'
 import { updateListing } from '@/features/edit-listing/actions'
 import type { EditableListing } from '@/features/edit-listing/types'
 import { propertyDetailsSchema, vehicleDetailsSchema } from '@/features/listing-attributes/schema'
+import { localizeHref } from '@/i18n/routing'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
 import type { ListingPlan } from '@/lib/plan-limits'
 import { createListing } from './actions'
 import { normalizeEmptyFormDetails } from './form-values'
@@ -17,6 +20,11 @@ import type { CreateListingInput, CreateListingValues, ListingCategoryOption } f
 import { validateListingCategoryAttributes } from './validation'
 
 export function useListingForm(plan: ListingPlan, categories: ListingCategoryOption[], listing?: EditableListing) {
+  const locale = useLocale()
+
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [submissionError, setSubmissionError] = useState<string | null>(null)
@@ -74,41 +82,45 @@ export function useListingForm(plan: ListingPlan, categories: ListingCategoryOpt
                 focused = true
               }
             }
-            setSubmissionError(result.message)
-            toast.add({ title: listing ? 'Could not save listing' : 'Could not publish listing', description: result.message, type: 'error' })
+            setSubmissionError(copy(result.message, true))
+            toast.add({
+              title: listing ? t('couldNotSaveListing') : t('couldNotPublishListing'),
+              description: copy(result.message, true),
+              type: 'error'
+            })
             if (!listing) router.refresh()
             return
           }
           if (updated?.success) {
             toast.add({
-              title: updated.data.changed ? 'Listing updated' : 'No changes to save',
+              title: updated.data.changed ? t('listingUpdated') : t('noChangesToSave'),
               description:
                 updated.data.status === 'PENDING'
-                  ? 'Your listing is awaiting moderation. You can view it in My listings.'
-                  : 'Your listing status is unchanged. You can view it in My listings.',
+                  ? t('yourListingIsAwaitingModerationYouCanViewItInMyListings')
+                  : t('yourListingStatusIsUnchangedYouCanViewItInMyListings'),
               type: 'success'
             })
-            router.push('/account/listings')
+            router.push(localizeHref('/account/listings', locale))
           } else {
             form.reset()
             toast.add({
-              title: 'Listing submitted',
-              description: 'Your listing is awaiting moderation. You can view it in My listings.',
+              title: t('listingSubmitted'),
+              description: t('yourListingIsAwaitingModerationYouCanViewItInMyListings'),
               type: 'success'
             })
           }
           router.refresh()
         } catch {
-          setSubmissionError('Check your connection and try again.')
+          setSubmissionError(t('checkYourConnectionAndTryAgain'))
           toast.add({
-            title: listing ? 'Could not save listing' : 'Could not publish listing',
-            description: 'Check your connection and try again.',
+            title: listing ? t('couldNotSaveListing') : t('couldNotPublishListing'),
+            description: t('checkYourConnectionAndTryAgain'),
             type: 'error'
           })
         }
       })
     },
-    () => setSubmissionError('Please check the highlighted fields before submitting.')
+    () => setSubmissionError(t('pleaseCheckTheHighlightedFieldsBeforeSubmitting'))
   )
   return { form, isSubmitting: isSubmitting || isPending, onSubmit, submissionError }
 }

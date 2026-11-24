@@ -1,5 +1,7 @@
+import { getLocale } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 import 'server-only'
+import { localizeHref } from '@/i18n/routing'
 import { canUseMarketplace } from '@/lib/account-role'
 import { getSession } from '@/lib/auth-utils'
 import { hasActiveBan } from '@/lib/ban-status'
@@ -20,7 +22,7 @@ export async function getSettingsPageActor(moderator = false) {
   try {
     return await getSettingsActor(moderator)
   } catch (error) {
-    if (error instanceof AvatarError) redirect(moderator ? '/' : '/login')
+    if (error instanceof AvatarError) redirect(moderator ? '/' : localizeHref('/login', await getLocale()))
     throw error
   }
 }

@@ -17,7 +17,6 @@ export function getCategoryBreadcrumbs(
 ): SeoBreadcrumb[] {
   return [
     { label: { en, el }[locale].Categories.home, href: localizeHref('/', locale) },
-    { label: { en, el }[locale].Categories.categories, href: localizeHref('/categories', locale) },
     ...[...ancestors, category].map((category) => ({
       label: categoryName(category, names),
       href: localizeHref(getCategoryPath(category.slug), locale)

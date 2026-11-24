@@ -2,21 +2,27 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Flag } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Controller, useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import { useId, useState } from 'react'
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Field, FieldError, FieldLabel } from '@/components/ui/field'
+import { Field, FieldLabel } from '@/components/ui/field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
 import { reportConversationUser } from '@/features/moderation/chat-reports/chat-report-actions'
+import { createWorkspaceCopy } from '@/i18n/workspace-copy'
+import { WorkspaceFieldError as FieldError } from '@/shared/ui/workspace-field-error'
 import { createChatReportSchema, reportReasons } from './report-schema'
 
 const formSchema = createChatReportSchema.omit({ conversationId: true })
 
 export function ReportUserButton({ conversationId, otherName }: { conversationId: string; otherName: string }) {
+  const t = useTranslations('Workspace')
+  const copy = createWorkspaceCopy(t)
+
   const id = useId()
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,14 +33,14 @@ export function ReportUserButton({ conversationId, otherName }: { conversationId
     try {
       const result = await reportConversationUser({ conversationId, ...input })
       if (!result.success) {
-        setError(result.message)
+        setError(copy(result.message, true))
         return
       }
-      toast.add({ type: 'success', title: 'Report received', description: result.message })
+      toast.add({ type: 'success', title: t('reportReceived'), description: copy(result.message, true) })
       setOpen(false)
       form.reset()
     } catch {
-      setError('Could not submit your report. Please try again.')
+      setError(t('couldNotSubmitYourReportPleaseTryAgain'))
     }
   })
 
@@ -50,7 +56,7 @@ export function ReportUserButton({ conversationId, otherName }: { conversationId
         }}
       >
         <Flag aria-hidden="true" />
-        Report user
+        {t('reportUser')}
       </Button>
       <AlertDialog
         open={open}
@@ -60,8 +66,10 @@ export function ReportUserButton({ conversationId, otherName }: { conversationId
       >
         <AlertDialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle>Report {otherName}</AlertDialogTitle>
-            <AlertDialogDescription>A moderator can review this conversation to investigate your report.</AlertDialogDescription>
+            <AlertDialogTitle>
+              {t('report')} {otherName}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{t('aModeratorCanReviewThisConversationToInvestigateYourReport')}</AlertDialogDescription>
           </AlertDialogHeader>
           <form onSubmit={submit} className="flex flex-col gap-4">
             <Controller
@@ -69,15 +77,20 @@ export function ReportUserButton({ conversationId, otherName }: { conversationId
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel id={`${id}-reason`}>Reason</FieldLabel>
-                  <Select items={reportReasons} value={field.value} onValueChange={field.onChange} disabled={busy}>
+                  <FieldLabel id={`${id}-reason`}>{t('reason')}</FieldLabel>
+                  <Select
+                    items={reportReasons.map((reason) => ({ ...reason, label: copy(reason.label) }))}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={busy}
+                  >
                     <SelectTrigger className="w-full" aria-labelledby={`${id}-reason`}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {reportReasons.map((reason) => (
                         <SelectItem key={reason.value} value={reason.value}>
-                          {reason.label}
+                          {copy(reason.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -91,7 +104,7 @@ export function ReportUserButton({ conversationId, otherName }: { conversationId
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`${id}-details`}>Details (optional)</FieldLabel>
+                  <FieldLabel htmlFor={`${id}-details`}>{t('detailsOptional')}</FieldLabel>
                   <Textarea {...field} id={`${id}-details`} rows={3} maxLength={500} disabled={busy} aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -104,10 +117,10 @@ export function ReportUserButton({ conversationId, otherName }: { conversationId
             )}
             <div className="flex flex-wrap justify-end gap-2">
               <Button type="button" variant="outline" disabled={busy} onClick={() => setOpen(false)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={busy} aria-busy={busy}>
-                {busy ? 'Submitting…' : 'Submit report'}
+                {busy ? t('submitting') : t('submitReport')}
               </Button>
             </div>
           </form>

@@ -63,3 +63,23 @@ export function subscribeToRealtimeUpdates(channel: RealtimeChannel, refresh: ()
     channel.off('suspended', failed)
   }
 }
+
+type OwnPresenceChannel = {
+  attach(): Promise<unknown>
+  presence: { enter(): Promise<void>; leave(): Promise<void> }
+}
+
+export function enterOwnPresence(channel: OwnPresenceChannel) {
+  let disposed = false
+  let entering = false
+  // Ably's implicit attach in presence.enter() can reject separately from enter().
+  void channel.attach().then(async () => {
+    if (disposed) return
+    entering = true
+    await channel.presence.enter()
+  }).catch(() => {})
+  return () => {
+    disposed = true
+    if (entering) void channel.presence.leave().catch(() => {})
+  }
+}
