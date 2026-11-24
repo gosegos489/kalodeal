@@ -1,0 +1,411 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-24T15:14:33Z",
+  "title": "Design System: Kalodeal",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Action Blue",
+        "tonalRamp": [
+          "oklch(0.15 0.0387 263)",
+          "oklch(0.27 0.0774 263)",
+          "oklch(0.38 0.1398 263)",
+          "oklch(0.49 0.1892 263)",
+          "oklch(0.6 0.2150 263)",
+          "oklch(0.71 0.1763 263)",
+          "oklch(0.83 0.1032 263)",
+          "oklch(0.95 0.0344 263)"
+        ]
+      },
+      "primary-foreground": {
+        "role": "neutral",
+        "displayName": "On Action Blue",
+        "tonalRamp": [
+          "oklch(0.15 0.0000 0)",
+          "oklch(0.27 0.0000 0)",
+          "oklch(0.38 0.0000 0)",
+          "oklch(0.49 0.0000 0)",
+          "oklch(0.6 0.0000 0)",
+          "oklch(0.71 0.0000 0)",
+          "oklch(0.83 0.0000 0)",
+          "oklch(0.95 0.0000 0)"
+        ]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Secondary Blue",
+        "tonalRamp": [
+          "oklch(0.15 0.0387 263)",
+          "oklch(0.27 0.0774 263)",
+          "oklch(0.38 0.1398 263)",
+          "oklch(0.49 0.1892 263)",
+          "oklch(0.6 0.2150 263)",
+          "oklch(0.71 0.1763 263)",
+          "oklch(0.83 0.1032 263)",
+          "oklch(0.95 0.0344 263)"
+        ]
+      },
+      "secondary-foreground": {
+        "role": "neutral",
+        "displayName": "On Secondary Blue",
+        "tonalRamp": [
+          "oklch(0.15 0.0000 0)",
+          "oklch(0.27 0.0000 0)",
+          "oklch(0.38 0.0000 0)",
+          "oklch(0.49 0.0000 0)",
+          "oklch(0.6 0.0000 0)",
+          "oklch(0.71 0.0000 0)",
+          "oklch(0.83 0.0000 0)",
+          "oklch(0.95 0.0000 0)"
+        ]
+      },
+      "accent": {
+        "role": "tertiary",
+        "displayName": "Lime Accent",
+        "tonalRamp": [
+          "oklch(0.15 0.0373 129)",
+          "oklch(0.27 0.0745 129)",
+          "oklch(0.38 0.1346 129)",
+          "oklch(0.49 0.1822 129)",
+          "oklch(0.6 0.2070 129)",
+          "oklch(0.71 0.1697 129)",
+          "oklch(0.83 0.0994 129)",
+          "oklch(0.95 0.0331 129)"
+        ]
+      },
+      "accent-foreground": {
+        "role": "neutral",
+        "displayName": "On Lime",
+        "tonalRamp": [
+          "oklch(0.15 0.0000 0)",
+          "oklch(0.27 0.0000 0)",
+          "oklch(0.38 0.0000 0)",
+          "oklch(0.49 0.0000 0)",
+          "oklch(0.6 0.0000 0)",
+          "oklch(0.71 0.0000 0)",
+          "oklch(0.83 0.0000 0)",
+          "oklch(0.95 0.0000 0)"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Cool Canvas",
+        "tonalRamp": [
+          "oklch(0.15 0.0005 248)",
+          "oklch(0.27 0.0011 248)",
+          "oklch(0.38 0.0020 248)",
+          "oklch(0.49 0.0026 248)",
+          "oklch(0.6 0.0030 248)",
+          "oklch(0.71 0.0025 248)",
+          "oklch(0.83 0.0014 248)",
+          "oklch(0.95 0.0005 248)"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "oklch(0.15 0.0000 0)",
+          "oklch(0.27 0.0000 0)",
+          "oklch(0.38 0.0000 0)",
+          "oklch(0.49 0.0000 0)",
+          "oklch(0.6 0.0000 0)",
+          "oklch(0.71 0.0000 0)",
+          "oklch(0.83 0.0000 0)",
+          "oklch(0.95 0.0000 0)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card Surface",
+        "tonalRamp": [
+          "oklch(0.15 0.0000 0)",
+          "oklch(0.27 0.0000 0)",
+          "oklch(0.38 0.0000 0)",
+          "oklch(0.49 0.0000 0)",
+          "oklch(0.6 0.0000 0)",
+          "oklch(0.71 0.0000 0)",
+          "oklch(0.83 0.0000 0)",
+          "oklch(0.95 0.0000 0)"
+        ]
+      },
+      "card-foreground": {
+        "role": "neutral",
+        "displayName": "Card Ink",
+        "tonalRamp": [
+          "oklch(0.15 0.0000 0)",
+          "oklch(0.27 0.0000 0)",
+          "oklch(0.38 0.0000 0)",
+          "oklch(0.49 0.0000 0)",
+          "oklch(0.6 0.0000 0)",
+          "oklch(0.71 0.0000 0)",
+          "oklch(0.83 0.0000 0)",
+          "oklch(0.95 0.0000 0)"
+        ]
+      },
+      "popover": {
+        "role": "neutral",
+        "displayName": "Popover Surface",
+        "tonalRamp": [
+          "oklch(0.15 0.0000 0)",
+          "oklch(0.27 0.0000 0)",
+          "oklch(0.38 0.0000 0)",
+          "oklch(0.49 0.0000 0)",
+          "oklch(0.6 0.0000 0)",
+          "oklch(0.71 0.0000 0)",
+          "oklch(0.83 0.0000 0)",
+          "oklch(0.95 0.0000 0)"
+        ]
+      },
+      "popover-foreground": {
+        "role": "neutral",
+        "displayName": "Popover Ink",
+        "tonalRamp": [
+          "oklch(0.15 0.0000 0)",
+          "oklch(0.27 0.0000 0)",
+          "oklch(0.38 0.0000 0)",
+          "oklch(0.49 0.0000 0)",
+          "oklch(0.6 0.0000 0)",
+          "oklch(0.71 0.0000 0)",
+          "oklch(0.83 0.0000 0)",
+          "oklch(0.95 0.0000 0)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Surface",
+        "tonalRamp": [
+          "oklch(0.15 0.0007 248)",
+          "oklch(0.27 0.0014 248)",
+          "oklch(0.38 0.0026 248)",
+          "oklch(0.49 0.0035 248)",
+          "oklch(0.6 0.0040 248)",
+          "oklch(0.71 0.0033 248)",
+          "oklch(0.83 0.0019 248)",
+          "oklch(0.95 0.0006 248)"
+        ]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "tonalRamp": [
+          "oklch(0.15 0.0000 0)",
+          "oklch(0.27 0.0000 0)",
+          "oklch(0.38 0.0000 0)",
+          "oklch(0.49 0.0000 0)",
+          "oklch(0.6 0.0000 0)",
+          "oklch(0.71 0.0000 0)",
+          "oklch(0.83 0.0000 0)",
+          "oklch(0.95 0.0000 0)"
+        ]
+      },
+      "destructive": {
+        "role": "destructive",
+        "displayName": "Destructive Red",
+        "tonalRamp": [
+          "oklch(0.15 0.0441 27.325)",
+          "oklch(0.27 0.0882 27.325)",
+          "oklch(0.38 0.1593 27.325)",
+          "oklch(0.49 0.2156 27.325)",
+          "oklch(0.6 0.2450 27.325)",
+          "oklch(0.71 0.2009 27.325)",
+          "oklch(0.83 0.1176 27.325)",
+          "oklch(0.95 0.0392 27.325)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "tonalRamp": [
+          "oklch(0.15 0.0007 248)",
+          "oklch(0.27 0.0014 248)",
+          "oklch(0.38 0.0026 248)",
+          "oklch(0.49 0.0035 248)",
+          "oklch(0.6 0.0040 248)",
+          "oklch(0.71 0.0033 248)",
+          "oklch(0.83 0.0019 248)",
+          "oklch(0.95 0.0006 248)"
+        ]
+      },
+      "input": {
+        "role": "neutral",
+        "displayName": "Input Border",
+        "tonalRamp": [
+          "oklch(0.15 0.0007 248)",
+          "oklch(0.27 0.0014 248)",
+          "oklch(0.38 0.0026 248)",
+          "oklch(0.49 0.0035 248)",
+          "oklch(0.6 0.0040 248)",
+          "oklch(0.71 0.0033 248)",
+          "oklch(0.83 0.0019 248)",
+          "oklch(0.95 0.0006 248)"
+        ]
+      },
+      "ring": {
+        "role": "primary",
+        "displayName": "Focus Blue",
+        "tonalRamp": [
+          "oklch(0.15 0.0387 263)",
+          "oklch(0.27 0.0774 263)",
+          "oklch(0.38 0.1398 263)",
+          "oklch(0.49 0.1892 263)",
+          "oklch(0.6 0.2150 263)",
+          "oklch(0.71 0.1763 263)",
+          "oklch(0.83 0.1032 263)",
+          "oklch(0.95 0.0344 263)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Route Display",
+        "purpose": "Prominent headings on selling and pricing routes."
+      },
+      "title": {
+        "displayName": "Listing Emphasis",
+        "purpose": "Listing-card prices and emphasized values."
+      },
+      "body": {
+        "displayName": "Compact Body",
+        "purpose": "Supporting copy and compact account surfaces."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-xs",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Low elevation used by listing cards."
+      },
+      {
+        "name": "shadow-lg",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "Depth for transient sheets and toasts."
+      }
+    ],
+    "motion": [
+      {
+        "name": "dialog-and-menu",
+        "value": "100ms",
+        "purpose": "Current dialog and dropdown fade or scale."
+      },
+      {
+        "name": "sheet-backdrop",
+        "value": "150ms",
+        "purpose": "Current sheet backdrop opacity transition."
+      },
+      {
+        "name": "sheet-panel",
+        "value": "200ms ease-in-out",
+        "purpose": "Current sheet panel opacity and displacement."
+      },
+      {
+        "name": "photo-preview",
+        "value": "150ms",
+        "purpose": "Current listing photo fade."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "2xl",
+        "value": "1536px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Apply filters",
+      "html": "<button class=\"ds-button\" type=\"button\">Apply filters</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;height:2rem;padding:0 .625rem;border:1px solid transparent;border-radius:var(--radius-lg, 0.625rem);background:var(--primary, oklch(0.546 0.215 263));color:var(--primary-foreground, oklch(0.985 0 0));font-family:var(--font-geist-sans,Geist,Arial,sans-serif);font-size:.875rem;font-weight:500;line-height:1.25rem}@media (hover:hover){.ds-button:hover{background:color-mix(in oklch,var(--primary, oklch(0.546 0.215 263)) 80%,transparent)}}.ds-button:focus-visible{outline:2px solid var(--ring, oklch(0.546 0.215 263));outline-offset:2px}.ds-button:active{transform:translateY(1px)}@media (prefers-reduced-motion:reduce){.ds-button:active{transform:none}}"
+    },
+    {
+      "name": "Outline button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Reset filters",
+      "html": "<button class=\"ds-button\" type=\"button\">Reset filters</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;height:2rem;padding:0 .625rem;border:1px solid var(--border, oklch(0.922 0.004 248));border-radius:var(--radius-lg, 0.625rem);background:var(--background, oklch(0.984 0.003 248));color:var(--foreground, oklch(0.145 0 0));font-family:var(--font-geist-sans,Geist,Arial,sans-serif);font-size:.875rem;font-weight:500;line-height:1.25rem}@media (hover:hover){.ds-button:hover{background:var(--muted, oklch(0.97 0.004 248))}}.ds-button:focus-visible{outline:2px solid var(--ring, oklch(0.546 0.215 263));outline-offset:2px}.ds-button:active{transform:translateY(1px)}@media (prefers-reduced-motion:reduce){.ds-button:active{transform:none}}"
+    },
+    {
+      "name": "Ghost button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "All categories",
+      "html": "<button class=\"ds-button\" type=\"button\">All categories</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;height:2rem;padding:0 .625rem;border:1px solid transparent;border-radius:var(--radius-lg, 0.625rem);background:transparent;color:var(--foreground, oklch(0.145 0 0));font-family:var(--font-geist-sans,Geist,Arial,sans-serif);font-size:.875rem;font-weight:500;line-height:1.25rem}@media (hover:hover){.ds-button:hover{background:var(--muted, oklch(0.97 0.004 248))}}.ds-button:focus-visible{outline:2px solid var(--ring, oklch(0.546 0.215 263));outline-offset:2px}.ds-button:active{transform:translateY(1px)}@media (prefers-reduced-motion:reduce){.ds-button:active{transform:none}}"
+    },
+    {
+      "name": "Text input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Shared text input at mobile size.",
+      "html": "<label class=\"ds-label\">Keyword<input class=\"ds-input\" type=\"search\" placeholder=\"Search listings\"></label>",
+      "css": ".ds-label{display:grid;gap:.5rem;font-family:var(--font-geist-sans,Geist,Arial,sans-serif);color:var(--foreground, oklch(0.145 0 0));font-size:.875rem}.ds-input{min-width:0;height:2rem;padding:.25rem .625rem;border:1px solid var(--input, oklch(0.922 0.004 248));border-radius:var(--radius-lg, 0.625rem);background:transparent;color:var(--foreground, oklch(0.145 0 0));font:inherit;font-size:1rem}.ds-input::placeholder{color:var(--muted-foreground, oklch(0.556 0 0))}.ds-input:focus-visible{outline:2px solid var(--ring, oklch(0.546 0.215 263));outline-offset:2px}"
+    },
+    {
+      "name": "Status badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Compact text label for a published listing.",
+      "html": "<span class=\"ds-badge\">Published</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;height:1.25rem;padding:.125rem .5rem;border-radius:var(--radius-4xl, 1.625rem);background:var(--primary, oklch(0.546 0.215 263));color:var(--primary-foreground, oklch(0.985 0 0));font-family:var(--font-geist-sans,Geist,Arial,sans-serif);font-size:.75rem;font-weight:500}"
+    },
+    {
+      "name": "Shared card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "White surface for a compact account summary.",
+      "html": "<article class=\"ds-card\"><strong class=\"ds-title\">Listing allowance</strong><span>1 listing slot</span></article>",
+      "css": ".ds-card{display:grid;gap:.5rem;padding:1rem;border-radius:var(--radius-xl, 0.875rem);background:var(--card, oklch(1 0 0));color:var(--card-foreground, oklch(0.145 0 0));box-shadow:0 0 0 1px color-mix(in oklch,var(--foreground, oklch(0.145 0 0)) 10%,transparent);font-family:var(--font-geist-sans,Geist,Arial,sans-serif);font-size:.875rem;line-height:1.25rem}.ds-title{font-size:1rem;font-weight:500}"
+    },
+    {
+      "name": "Primary navigation",
+      "kind": "nav",
+      "refersTo": "primary-nav",
+      "description": "Desktop public navigation on the header surface.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Primary\"><a class=\"ds-link\" href=\"#categories\">Categories</a><a class=\"ds-link\" href=\"#pricing\">Pricing</a></nav>",
+      "css": ".ds-nav{display:flex;gap:1.5rem;padding:.75rem 1rem;border-bottom:1px solid var(--border, oklch(0.922 0.004 248));background:var(--card, oklch(1 0 0));font-family:var(--font-geist-sans,Geist,Arial,sans-serif);font-size:.875rem}.ds-link{color:var(--foreground, oklch(0.145 0 0));text-decoration:none}.ds-link:hover{color:var(--primary, oklch(0.546 0.215 263))}.ds-link:focus-visible{outline:2px solid var(--ring, oklch(0.546 0.215 263));outline-offset:2px}"
+    },
+    {
+      "name": "Listing card",
+      "kind": "card",
+      "refersTo": "listing-card",
+      "description": "Listing summary with its no-photo state.",
+      "html": "<article class=\"ds-listing\"><div class=\"ds-photo\">No photo</div><div class=\"ds-content\"><small>Home &amp; Garden</small><a class=\"ds-title\" href=\"#listing\">Dining table</a><strong class=\"ds-price\">€90</strong><small>Limassol</small></div></article>",
+      "css": ".ds-listing{overflow:hidden;border:1px solid var(--border, oklch(0.922 0.004 248));border-radius:var(--radius-2xl, 1.125rem);background:var(--card, oklch(1 0 0));color:var(--foreground, oklch(0.145 0 0));font-family:var(--font-geist-sans,Geist,Arial,sans-serif);box-shadow:0 1px 2px 0 rgb(0 0 0 / .05)}.ds-photo{display:grid;place-items:center;aspect-ratio:4/3;background:var(--muted, oklch(0.97 0.004 248));color:var(--muted-foreground, oklch(0.556 0 0));font-size:.75rem}.ds-content{display:grid;gap:.5rem;padding:1rem}.ds-title{color:inherit;font-weight:600;text-decoration:none}.ds-title:hover,.ds-price{color:var(--primary, oklch(0.546 0.215 263))}.ds-title:focus-visible{outline:2px solid var(--ring, oklch(0.546 0.215 263));outline-offset:2px}.ds-price{font-size:1.125rem}.ds-content small{font-size:.75rem;color:var(--muted-foreground, oklch(0.556 0 0))}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Clear local discovery and contact.",
+    "overview": "Kalodeal should feel like a trustworthy, approachable place to find and advertise things in Cyprus. Keep browsing easy to scan, make the next action predictable, and give listing photos room to carry the personality of the marketplace. Use the existing blue and lime wordmark, cool neutral canvas and clear type hierarchy.\n\nGive each page a clear purpose. Discovery prioritizes category, location, price and a useful result set. Listing detail makes the item and seller easy to understand. Account pages keep status and next actions visible. Pricing makes allowances and eligibility easy to compare.",
+    "keyCharacteristics": [
+      "Cool canvas and white surfaces",
+      "Blue actions and purposeful lime accents",
+      "Restrained elevation and clear mobile hierarchy"
+    ],
+    "dos": [
+      "Use semantic tokens, shared components and meaningful titles. Let imagery and real content set the visual density.",
+      "Use enough space for interaction targets and visible focus. Keep key price, location and eligibility information readable with zoom and long localized copy.",
+      "Keep optional gradients, translucency, shadows, pills, decoration and motion tied to a clear purpose. Avoid repeated nested cards, decorative badges and generic dashboards in browsing flows."
+    ]
+  }
+}

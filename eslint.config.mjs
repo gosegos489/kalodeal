@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored Impeccable tooling is maintained upstream.
+    ".agents/skills/impeccable/scripts/**",
   ]),
 ]);
 

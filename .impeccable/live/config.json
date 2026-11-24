@@ -1,0 +1,6 @@
+{
+  "files": ["src/shared/ui/site-document.tsx"],
+  "insertBefore": "</body>",
+  "commentSyntax": "jsx",
+  "cspChecked": true
+}

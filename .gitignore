@@ -43,6 +43,6 @@ next-env.d.ts
 
 /src/generated/
 
-# Agents
-AGENTS.md
-DESIGN.md
+# Local design tooling
+/.agents/skills/impeccable/scripts/bin/
+/.impeccable/config.local.json
